@@ -9,7 +9,10 @@
 #define CINT 180
 #define IS_SPECTRUM(sys_id) (sys_id == RF_MAKE_ID("ZX82"))
 
-uint32_t zx_std_color(uint32_t color, bool is_fg) {
+uint32_t zx_std_color(uint32_t color, uint32_t default_color, bool is_fg) {
+    if (color == RF_COLOR_DEFAULT) {
+        color = default_color;
+    }
     if (color == RF_COLOR_DEFAULT) {
         return is_fg ? RF_COLOR_BLACK : RF_COLOR_WHITE;
     }
@@ -20,7 +23,7 @@ uint32_t zx_std_color(uint32_t color, bool is_fg) {
 
 uint32_t zx_map_border_color (uint32_t sys_id, uint32_t color) {
     if (IS_SPECTRUM(sys_id)) {
-        color = zx_std_color(color, false);
+        color = zx_std_color(color, RF_COLOR_DEFAULT, false);
         color &= ~RF_COLOR_BRIGHT;  // border can not be bright
         return zx_rgb_color(color);
     } else {
@@ -34,8 +37,8 @@ void zx_render_cell (const RF_RenderCommand* cmd) {
     if (!cmd || !cmd->cell) { return; }
 
     if (IS_SPECTRUM(cmd->sys_id)) {
-        fg = zx_std_color(cmd->cell->fg, true);
-        bg = zx_std_color(cmd->cell->bg, false);
+        fg = zx_std_color(cmd->cell->fg, cmd->default_fg, true);
+        bg = zx_std_color(cmd->cell->bg, cmd->default_bg, false);
         // resolve the BRIGHT attribute -- can't have different BRIGHTness for FG and BG!
         #define IS_BRIGHT(c) (((c) != RF_COLOR_BLACK) && (((c) & RF_COLOR_BRIGHT) != 0))
         bool fg_bright = IS_BRIGHT(fg);

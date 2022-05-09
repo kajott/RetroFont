@@ -7,7 +7,7 @@ int main(void) {
     srand(0x13375EED);
 
     RF_Context* ctx = RF_CreateContext(RF_MAKE_ID("ZX82"));
-    RF_SetFont(ctx, RF_MAKE_ID("ZX80"));
+    //RF_SetFont(ctx, RF_MAKE_ID("ZX80"));
     RF_ResizeScreen(ctx, 0, 0, true);
 
     RF_Cell *c = ctx->screen;
@@ -26,7 +26,8 @@ int main(void) {
         c->codepoint = 32 + (rand() % 95);
         ++c;
     }
-    RF_Invalidate(ctx);
+    //RF_SetBackgroundColor(ctx, 0x123456);
+    RF_Invalidate(ctx, true);
 
     RF_Render(ctx, 0);
 

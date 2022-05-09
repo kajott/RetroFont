@@ -74,6 +74,8 @@ struct s_RF_RenderCommand {
     uint32_t sys_id;
     RF_Coord cell_size;
     RF_Coord font_size;
+    uint32_t default_fg;
+    uint32_t default_bg;
     bool is_cursor;
     bool blink_phase;
 };
@@ -124,6 +126,8 @@ struct s_RF_Context {
     size_t stride;
     RF_Coord bitmap_size;
     RF_Coord cursor_pos;
+    uint32_t default_fg;
+    uint32_t default_bg;
     uint32_t border_color;
     bool border_color_changed;
     bool has_border;
@@ -154,11 +158,13 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
 //! move the cursor to a new position
 void RF_MoveCursor(RF_Context* ctx, uint16_t new_col, uint16_t new_row);
 
-//! set the border color
-#define RF_SetBorderColor(ctx, c) do { (ctx)->border_color = c; (ctx)->border_color_changed = true; } while(0)
+//! set the global colors
+#define RF_SetForegroundColor(ctx, c) do { (ctx)->default_fg = c;   RF_Invalidate(ctx, false); } while(0)
+#define RF_SetBackgroundColor(ctx, c) do { (ctx)->default_bg = c;   RF_Invalidate(ctx, false); } while(0)
+#define RF_SetBorderColor(ctx, c)     do { (ctx)->border_color = c; (ctx)->border_color_changed = true; } while(0)
 
 //! invalidate the whole screen
-void RF_Invalidate(RF_Context* ctx);
+void RF_Invalidate(RF_Context* ctx, bool with_border);
 
 //! render the screen (i.e. the "dirty" parts of it)
 //! \returns true if anything changed, false otherwise

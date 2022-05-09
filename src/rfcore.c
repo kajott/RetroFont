@@ -29,7 +29,7 @@ RF_Context* RF_CreateContext(uint32_t sys_id) {
         }
     }
     if (!ctx->system ||!RF_SetFont(ctx, 0)) { free((void*)ctx); return NULL; }
-    ctx->border_color = RF_COLOR_DEFAULT;
+    ctx->default_fg = ctx->default_bg = ctx->border_color = RF_COLOR_DEFAULT;
     return ctx;
 }
 
@@ -53,7 +53,7 @@ bool RF_SetFont(RF_Context* ctx, uint32_t font_id) {
         }
     }
     if (result) {
-        RF_Invalidate(ctx);
+        RF_Invalidate(ctx, false);
         memset((void*)ctx->glyph_offset_cache, 0xFF, sizeof(ctx->glyph_offset_cache));
     }
     return result;
@@ -114,7 +114,7 @@ void RF_MoveCursor(RF_Context* ctx, uint16_t new_col, uint16_t new_row) {
     ctx->cursor_pos.y = new_row;
 }
 
-void RF_Invalidate(RF_Context* ctx) {
+void RF_Invalidate(RF_Context* ctx, bool with_border) {
     RF_Cell *c;
     if (!ctx || !ctx->screen) { return; }
     c = ctx->screen;
@@ -122,7 +122,7 @@ void RF_Invalidate(RF_Context* ctx) {
         c->dirty = 1;
         ++c;
     }
-    ctx->border_color_changed = true;
+    if (with_border) { ctx->border_color_changed = true; }
 }
 
 #define PUT_PIXEL(p, color) do { \
@@ -156,6 +156,8 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     cmd.sys_id = ctx->system->sys_id;
     cmd.cell_size = ctx->system->cell_size;
     cmd.font_size = ctx->system->font_size;
+    cmd.default_fg = ctx->default_fg;
+    cmd.default_bg = ctx->default_bg;
     cmd.blink_phase = ctx->system->blink_interval_msec ? (((time_msec / ctx->system->blink_interval_msec) & 1) != 0) : false;
     for (uint16_t y = 0;  y < ctx->screen_size.y;  ++y) {
         cmd.pixel = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * ctx->system->cell_size.y) * ctx->stride
