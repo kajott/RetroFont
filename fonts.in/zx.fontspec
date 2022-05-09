@@ -1,0 +1,34 @@
+source "zx.pbm" 8x8
+
+font "ZX80" "Sinclair ZX80"
+    # first few codes is mostly block graphics
+    map 7 ' ' '"' U+258C U+2584 U+2598 U+259D U+2596 U+2597 U+259E U+2592 U+1FB8F U+1FB8E
+    map 7.12 U+00A3 "$:?"    # pound sign and a bit of ASCII
+    map 8 "()-+*/=><;,.0123" # more ASCII
+    map 9 '4'..'9' 'A'..'J'
+    map 10 'K'..'Z'
+    alias 'a'..'z' 'A'..'Z'  # no lowercase -> simulate with uppercase
+    alias U+FFFD '?'         # replacement character = question mark
+
+font "ZX81" "Sinclair ZX81"
+    map 0 ' ' - '"' - '$' - - - '('..'/'  # some basic characters missing
+    map 1 '0'..'?'
+    map 2 - 'A'..'O'         # no '@'
+    map 3 'P'..'Z'
+    map 4 U+00A3             # pound sign, nothing else
+    # graphics characters (reduced set):
+    map 6.1 U+259D U+2598 U+2580 - - - - U+2596 U+259E U+258C U+259B
+    map 7.9 U+2592 U+1FB8F U+1FB8E  # some extra half-shaded graphics
+    alias 'a'..'z' 'A'..'Z'  # no lowercase -> simulate with uppercase
+    alias U+FFFD '?'         # replacement character = question mark
+
+font "ZX82" "Sinclair ZX Spectrum"
+    map 0 ' '..'/'
+    map 1 '0'..'?'
+    map 2 '@'..'O'
+    map 3 'P'..'_'
+    map 4 U+00A3 'a'..'o'    # pound sign instead of backtick
+    map 5 'p'..'~' U+00A9    # copyright sign at 127
+    # graphics characters:
+    map 6.1 U+259D U+2598 U+2580 U+2597 U+2590 U+259A U+259C U+2596 U+259E U+258C U+259B U+2584 U+259F U+2599 U+2588
+    alias U+FFFD '?'         # replacement character = question mark
