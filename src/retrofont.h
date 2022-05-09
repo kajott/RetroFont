@@ -129,6 +129,7 @@ struct s_RF_Context {
     uint32_t default_fg;
     uint32_t default_bg;
     uint32_t border_color;
+    uint32_t border_rgb;
     bool border_color_changed;
     bool has_border;
     bool last_blink_phase;
