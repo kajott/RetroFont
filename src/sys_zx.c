@@ -66,5 +66,5 @@ RF_SysClass zxclass = {
 };
 
 //                            sys_id,             name,                   class,    scrsz,    cellsz,  fontsz,  b_ul,    b_lr,  double, blink, default_font_id
-RF_System RF_Sys_ZX8x     = { RF_MAKE_ID("ZX81"), "Sinclair ZX80 / ZX81", &zxclass, {32,24}, { 8, 8}, { 8, 8}, {32,24}, {32,24}, false,   0, RF_MAKE_ID("ZX81") };
-RF_System RF_Sys_Spectrum = { RF_MAKE_ID("ZX82"), "Sinclair ZX Spectrum", &zxclass, {32,24}, { 8, 8}, { 8, 8}, {32,24}, {32,24}, false, 320, RF_MAKE_ID("ZX82") };
+RF_System RF_Sys_ZX8x     = { RF_MAKE_ID("ZX81"), "Sinclair ZX80 / ZX81", &zxclass, {32,24}, { 8, 8}, { 8, 8}, {48,48}, {48,56}, false,   0, RF_MAKE_ID("ZX81") };
+RF_System RF_Sys_Spectrum = { RF_MAKE_ID("ZX82"), "Sinclair ZX Spectrum", &zxclass, {32,24}, { 8, 8}, { 8, 8}, {48,48}, {48,56}, false, 320, RF_MAKE_ID("ZX82") };
