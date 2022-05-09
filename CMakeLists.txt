@@ -9,6 +9,7 @@ add_executable (rftest
     src/rftest.c
     src/rfcore.c
     src/sys_zx.c
+    src/sys_c64.c
     src/fonts.c
 )
 add_library (retrofont_thirdparty STATIC

@@ -1,0 +1,27 @@
+source "c64.pbm" 8x8
+
+font "C64u" "Commodore C64 (unshifted)"
+    map 0 '@'..'O'
+    map 1 'P'..'Z' '[' U+00A3 ']'
+    map 2 ' '..'/'
+    map 3 '0'..'?'
+    alias 'a'..'z' 'A'..'Z'  # no lowercase -> simulate with uppercase
+    # lots of PETSCII graphics:
+    map 1.14                                                                                                           U+2911  U+2190
+    map 4 U+2501  U+2660 U+1FB72 U+1FB78 U+1FB77 U+1FB76 U+1FB79 U+1FB71 U+1FB73 U+256E  U+2570  U+256F U+1FB7C U+2572 U+2571  U+1FB7D
+    map 5 U+1FB7E U+25CF U+1FB7A U+2665  U+1FB70 U+256D  U+2573  U+25CB  U+2663  U+1FB74 U+2666  U+254B U+1FB8C U+2503 U+03C0  U+25E5
+    map 6 -       U+258C U+2584  U+2594  U+2581  U+258E  U+1FB95 U+1FB87 U+1FB8F U+1FB99 U+1FB87 U+2523 U+2597  U+2517 U+2513  U+2582
+    map 7 U+250F  U+253B U+2533  U+252B  U+258E  U+258D  U+1FB88 U+1FB82 U+1FB83 U+2583  U+1FB7F U+2596 U+259D  U+251B U+2598  U+259A
+
+font "C64s" "Commodore C64 (shifted)"
+    map 8 '@' 'a'..'o'
+    map 9 'p'..'z' '[' U+00A3 ']'
+    map 10 ' '..'/'
+    map 11 '0'..'?'
+    map 12 U+2501 'A'..'O'
+    map 13 'P'..'Z'
+    # lots of PETSCII graphics:
+    map 9.14                                                                                                         U+2911  U+2190
+    map 13.11                                                                                  U+254B U+1FB8C U+2503 U+1FB96 U+1FB98
+    map 14   -      U+258C U+2584 U+2594 U+2581 U+258E U+1FB95 U+1FB87 U+1FB8F U+1FB99 U+1FB87 U+2523 U+2597  U+2517 U+2513  U+2582
+    map 15   U+250F U+253B U+2533 U+252B U+258E U+258D U+1FB88 U+1FB82 U+1FB83 U+2583  U+2713  U+2596 U+259D  U+251B U+2598  U+259A

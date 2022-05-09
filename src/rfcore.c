@@ -9,10 +9,14 @@
 
 extern RF_System RF_Sys_ZX8x;
 extern RF_System RF_Sys_Spectrum;
+extern RF_System RF_Sys_C64_PAL;
+extern RF_System RF_Sys_C64_NTSC;
 
 const RF_System* RF_SystemList[] = {
     &RF_Sys_ZX8x,
     &RF_Sys_Spectrum,
+    &RF_Sys_C64_PAL,
+    &RF_Sys_C64_NTSC,
     NULL
 };
 

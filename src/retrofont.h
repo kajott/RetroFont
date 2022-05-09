@@ -25,17 +25,18 @@ typedef struct s_RF_Font          RF_Font;
 typedef struct s_RF_GlyphMapEntry RF_GlyphMapEntry;
 typedef struct s_RF_Context       RF_Context;
 
-#define RF_IS_RGB_COLOR(c) (((c) & (~0xFFFFFFul)) == 0ul)
 #define RF_COLOR_DEFAULT ((uint32_t)(-1))  //!< platform default FG/BG color
-#define RF_COLOR_BLACK   0x1000000  //!< standard black color
-#define RF_COLOR_BLUE    0x1000001  //!< standard blue color
-#define RF_COLOR_GREEN   0x1000002  //!< standard green color
-#define RF_COLOR_CYAN    0x1000003  //!< standard cyan color
-#define RF_COLOR_RED     0x1000004  //!< standard red color
-#define RF_COLOR_MAGENTA 0x1000005  //!< standard magenta color
-#define RF_COLOR_YELLOW  0x1000006  //!< standard yellow color
-#define RF_COLOR_WHITE   0x1000007  //!< standard white (or light gray) color
-#define RF_COLOR_BRIGHT  0x0000008  //!< OR'ed into the RF_COLOR_* codes
+#define RF_COLOR_BLACK   0x1000000ul  //!< standard black color
+#define RF_COLOR_BLUE    0x1000001ul  //!< standard blue color
+#define RF_COLOR_GREEN   0x1000002ul  //!< standard green color
+#define RF_COLOR_CYAN    0x1000003ul  //!< standard cyan color
+#define RF_COLOR_RED     0x1000004ul  //!< standard red color
+#define RF_COLOR_MAGENTA 0x1000005ul  //!< standard magenta color
+#define RF_COLOR_YELLOW  0x1000006ul  //!< standard yellow color
+#define RF_COLOR_WHITE   0x1000007ul  //!< standard white (or light gray) color
+#define RF_COLOR_BRIGHT  0x0000008ul  //!< OR'ed into the RF_COLOR_* codes
+#define RF_IS_RGB_COLOR(c) (((c) & (~0xFFFFFFul)) == 0ul)
+#define RF_IS_STD_COLOR(c) (((c) & (~(RF_COLOR_WHITE | RF_COLOR_BRIGHT))) == 0ul)
 #define RF_COLOR_RGB(r,g,b) (((r) << 16) | ((g) << 8) | (b))
 #define RF_COLOR_R(c) ((uint8_t)((c) >> 16))
 #define RF_COLOR_G(c) ((uint8_t)((c) >>  8))

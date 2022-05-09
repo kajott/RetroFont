@@ -6,16 +6,14 @@
 int main(void) {
     srand(0x13375EED);
 
-    RF_Context* ctx = RF_CreateContext(RF_MAKE_ID("ZX82"));
-    //RF_SetFont(ctx, RF_MAKE_ID("ZX80"));
+    RF_Context* ctx = RF_CreateContext(RF_MAKE_ID("C64P"));
+    RF_SetFont(ctx, RF_MAKE_ID("C64u"));
     RF_ResizeScreen(ctx, 0, 0, true);
 
     RF_Cell *c = ctx->screen;
     for (size_t i = ctx->screen_size.x * ctx->screen_size.y;  i;  --i) {
         c->fg = RF_COLOR_BLACK | (rand() & 15);
-        do {
-            c->bg = RF_COLOR_BLACK | (rand() & 15);
-        } while (c->bg == c->fg);
+        do { c->bg = RF_COLOR_BLACK | (rand() & 15); } while (c->bg == c->fg);
         uint16_t r = (uint16_t) rand();
         c->bold      = r >> 0;
         c->dim       = r >> 1;
