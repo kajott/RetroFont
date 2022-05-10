@@ -6,6 +6,7 @@ set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 11)
 
 set (SYSTEMS
+    src/sys_generic.c
     src/sys_zx.c
     src/sys_c64.c
     src/sys_pc.c

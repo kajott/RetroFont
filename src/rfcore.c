@@ -7,12 +7,10 @@
 
 #include "retrofont.h"
 
-#define DEFAULT_SYSTEM_ID RF_MAKE_ID("ZX82")
-
 RF_Context* RF_CreateContext(uint32_t sys_id) {
     RF_Context* ctx = (RF_Context*) calloc(1, sizeof(RF_Context));
     if (!ctx) { return NULL; }
-    if (!sys_id) { sys_id = DEFAULT_SYSTEM_ID; ctx->system = RF_SystemList[0]; }
+    ctx->system = RF_SystemList[0];
 //printf("searching for sys_id 0x%08X\n", sys_id);
     for (const RF_System** p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
 //printf("                  == 0x%08X? -> %s\n", (*p_sys)->sys_id, ((*p_sys)->sys_id == sys_id) ? "YES" : "no");
@@ -21,7 +19,7 @@ RF_Context* RF_CreateContext(uint32_t sys_id) {
             break;
         }
     }
-    if (!ctx->system ||!RF_SetFont(ctx, 0)) { free((void*)ctx); return NULL; }
+    if (!ctx->system || !RF_SetFont(ctx, 0)) { free((void*)ctx); return NULL; }
     ctx->default_fg = ctx->default_bg = ctx->border_color = RF_COLOR_DEFAULT;
     return ctx;
 }
@@ -33,8 +31,8 @@ bool RF_SetFont(RF_Context* ctx, uint32_t font_id) {
 //printf("searching for font_id 0x%08X (%dx%d)\n", font_id, ctx->system->font_size.x, ctx->system->font_size.y);
     for (const RF_Font* font = RF_FontList;  font->font_id;  ++font) {
 //printf("                   == 0x%08X? (%dx%d) -> ", font->font_id, font->font_size.x, font->font_size.y);
-        if ((font->font_size.x != ctx->system->font_size.x)
-        ||  (font->font_size.y != ctx->system->font_size.y)) {
+        if ((ctx->system->font_size.x && (font->font_size.x != ctx->system->font_size.x))
+        ||  (ctx->system->font_size.y && (font->font_size.y != ctx->system->font_size.y))) {
 //printf("size mismatch\n");
             continue;  // font size doesn't match with current system
         }
@@ -62,14 +60,14 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
     RF_Coord bmpsize;
     uint8_t *new_bmp;
 
-    if (!ctx || !ctx->system) { return false; }
+    if (!ctx || !ctx->system || (!ctx->system->font_size.x && !ctx->font)) { return false; }
     if (!new_width)  { new_width  = ctx->system->default_screen_size.x; }
     if (!new_height) { new_height = ctx->system->default_screen_size.y; }
     c = new_screen = (RF_Cell*) malloc(sizeof(RF_Cell) * new_width * new_height);
     if (!new_screen) { return false; }
 
-    bmpsize.x = new_width  * ctx->system->cell_size.x;
-    bmpsize.y = new_height * ctx->system->cell_size.y;
+    bmpsize.x = new_width  * (ctx->system->cell_size.x + (ctx->system->font_size.x ? 0 : ctx->font->font_size.x));
+    bmpsize.y = new_height * (ctx->system->cell_size.y + (ctx->system->font_size.y ? 0 : ctx->font->font_size.y));
     if (with_border) {
         bmpsize.x += ctx->system->border_ul.x + ctx->system->border_lr.x;
         bmpsize.y += ctx->system->border_ul.y + ctx->system->border_lr.y;
@@ -96,7 +94,7 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
     ctx->bitmap = new_bmp;
     ctx->stride = bmpsize.x * 3;
     ctx->bitmap_size = bmpsize;
-    ctx->has_border = with_border;
+    ctx->has_border = with_border && ((ctx->system->border_lr.x | ctx->system->border_lr.y | ctx->system->border_ul.x | ctx->system->border_ul.y) != 0);
     ctx->border_color_changed = true;
     return true;
 }
@@ -135,14 +133,17 @@ static uint8_t* fill_border(uint8_t* p, uint32_t color, size_t count) {
 
 bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     bool result = false;
+    uint16_t csx, csy;
     RF_RenderCommand cmd;
     if (!ctx || !ctx->system || !ctx->font || !ctx->screen || !ctx->bitmap) { return false; }
+    csx = ctx->system->cell_size.x + (ctx->system->font_size.x ? 0 : ctx->font->font_size.x);
+    csy = ctx->system->cell_size.y + (ctx->system->font_size.y ? 0 : ctx->font->font_size.y);
     if (ctx->border_color_changed) {
         uint32_t color = ctx->system->cls->map_border_color(ctx->system->sys_id, ctx->border_color);
         if (ctx->has_border) {
             uint8_t* p = fill_border(ctx->bitmap, color, ctx->bitmap_size.x * ctx->system->border_ul.y + ctx->system->border_ul.x);
-            for (uint16_t y = ctx->screen_size.y * ctx->system->cell_size.y;  y;  --y) {
-                p += ctx->screen_size.x * ctx->system->cell_size.x * 3;
+            for (uint16_t y = ctx->screen_size.y * csy;  y;  --y) {
+                p += ctx->screen_size.x * csx * 3;
                 if (y > 1) { p = fill_border(p, color, ctx->system->border_lr.x + ctx->system->border_ul.x); }
             }
             fill_border(p, color, ctx->system->border_lr.x + ctx->bitmap_size.x * ctx->system->border_lr.y);
@@ -154,13 +155,14 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     cmd.cell = ctx->screen;
     cmd.stride = ctx->stride;
     cmd.sys_id = ctx->system->sys_id;
-    cmd.cell_size = ctx->system->cell_size;
-    cmd.font_size = ctx->system->font_size;
+    cmd.cell_size.x = csx;
+    cmd.cell_size.y = csy;
+    cmd.font_size = ctx->font->font_size;
     cmd.default_fg = ctx->default_fg;
     cmd.default_bg = ctx->default_bg;
     cmd.blink_phase = ctx->system->blink_interval_msec ? (((time_msec / ctx->system->blink_interval_msec) & 1) != 0) : false;
     for (uint16_t y = 0;  y < ctx->screen_size.y;  ++y) {
-        cmd.pixel = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * ctx->system->cell_size.y) * ctx->stride
+        cmd.pixel = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * csy) * ctx->stride
                                 + (ctx->has_border ? ctx->system->border_ul.x : 0) * 3];
         for (uint16_t x = 0;  x < ctx->screen_size.x;  ++x) {
             cmd.is_cursor = (y == ctx->cursor_pos.y) && (x == ctx->cursor_pos.x);
@@ -195,7 +197,7 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
                 result = true;
             }
             ++cmd.cell;
-            cmd.pixel += ctx->system->cell_size.x * 3;
+            cmd.pixel += csx * 3;
         }
     }
     ctx->last_blink_phase = cmd.blink_phase;
