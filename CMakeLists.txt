@@ -5,12 +5,16 @@ project (retrofont)
 set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 11)
 
+set (SYSTEMS
+    src/sys_zx.c
+    src/sys_c64.c
+)
 add_executable (rftest
     src/rftest.c
     src/rfcore.c
-    src/sys_zx.c
-    src/sys_c64.c
     src/fonts.c
+    src/systems.c
+    ${SYSTEMS}
 )
 add_library (retrofont_thirdparty STATIC
     thirdparty/libtmt/tmt.c
@@ -38,4 +42,12 @@ add_custom_command (
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/util
     DEPENDS ${FONTSPECS}
     MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/util/font_import.py
+)
+
+add_custom_command (
+    OUTPUT ${CMAKE_SOURCE_DIR}/src/systems.c
+    COMMAND python3 update_systems.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/util
+    DEPENDS ${SYSTEMS}
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/util/update_systems.py
 )
