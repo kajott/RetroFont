@@ -1,14 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "retrofont.h"
 
-int main(void) {
+int main(int argc, char* argv[]) {
     srand(0x13375EED);
 
-    RF_Context* ctx = RF_CreateContext(RF_MAKE_ID("C64P"));
-    RF_SetFont(ctx, RF_MAKE_ID("C64u"));
+    uint32_t sys_id = 0;
+    uint32_t font_id = 0;
+    if ((argc > 1) && (strlen(argv[1]) == 4)) {  sys_id = RF_MAKE_ID(argv[1]); }
+    if ((argc > 2) && (strlen(argv[2]) == 4)) { font_id = RF_MAKE_ID(argv[2]); }
+
+    RF_Context* ctx = RF_CreateContext(sys_id);
+    if (!ctx) {
+        fprintf(stderr, "ERROR: no such system (sys_id=0x%08X)!\n", sys_id);
+        return 1;
+    }
+    if (font_id) {
+        if (!RF_SetFont(ctx, font_id)) {
+            fprintf(stderr, "ERROR: no such font (font_id=0x%08X) or incompatible size!\n", font_id);
+            return 1;
+        }
+    }
     RF_ResizeScreen(ctx, 0, 0, true);
+    printf("sytem: %s [%dx%d]\n", ctx->system->name, ctx->screen_size.x, ctx->screen_size.y);
+    printf("font: %s [%dx%d]\n", ctx->font->name, ctx->font->font_size.x, ctx->font->font_size.y);
 
     RF_Cell *c = ctx->screen;
     for (size_t i = ctx->screen_size.x * ctx->screen_size.y;  i;  --i) {
