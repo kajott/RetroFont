@@ -116,11 +116,12 @@ def warn(msg):
 
 if __name__ == "__main__":
     verbose = FORCE_VERBOSE or ("-v" in sys.argv)
-    srcdir = os.path.normpath(os.path.abspath(os.path.dirname(sys.argv[0])))
-    os.chdir(os.path.join(os.path.dirname(srcdir), "fonts.in"))
-    fonts = []
-    img = None
+    tooldir = os.path.normpath(os.path.abspath(os.path.dirname(sys.argv[0])))
+    os.chdir(os.path.join(os.path.dirname(tooldir), "fonts.in"))
+    allfonts = []
     for specfile in glob.glob("*.fontspec"):
+        fonts = []
+        img = None
         if verbose: print("- processing font spec:", specfile)
         with open(specfile, encoding='utf-8') as f:
             lineno = 0
@@ -207,6 +208,8 @@ if __name__ == "__main__":
                     continue
 
                 err(f"unrecognized line `{line}`")
+            allfonts += fonts
+    fonts = allfonts
     g_err_prefix = ""
 
     # build composite bitmap and resolve glyphs
@@ -225,7 +228,7 @@ if __name__ == "__main__":
     if verbose: print("- composite bitmap size:", len(bitmap), "bytes,", len(markers), "distinct glyphs")
 
     # generate fonts.c
-    os.chdir(srcdir)
+    os.chdir(os.path.join(os.path.dirname(tooldir), "src"))
     namelen = max(len(f.name) for f in fonts) + 3
     dumplen = max(b-a for a,b in segments) * 6
     me = os.path.basename(sys.argv[0])

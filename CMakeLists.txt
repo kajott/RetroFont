@@ -35,7 +35,7 @@ file (GLOB FONTSPECS fonts.in/*.fontspec)
 add_custom_command (
     OUTPUT ${CMAKE_SOURCE_DIR}/src/fonts.c
     COMMAND python3 font_import.py
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/util
     DEPENDS ${FONTSPECS}
-    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/src/font_import.py
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/util/font_import.py
 )
