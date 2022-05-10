@@ -13,7 +13,9 @@ RF_Context* RF_CreateContext(uint32_t sys_id) {
     RF_Context* ctx = (RF_Context*) calloc(1, sizeof(RF_Context));
     if (!ctx) { return NULL; }
     if (!sys_id) { sys_id = DEFAULT_SYSTEM_ID; ctx->system = RF_SystemList[0]; }
+//printf("searching for sys_id 0x%08X\n", sys_id);
     for (const RF_System** p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
+//printf("                  == 0x%08X? -> %s\n", (*p_sys)->sys_id, ((*p_sys)->sys_id == sys_id) ? "YES" : "no");
         if ((*p_sys)->sys_id == sys_id) {
             ctx->system = *p_sys;
             break;
@@ -28,11 +30,15 @@ bool RF_SetFont(RF_Context* ctx, uint32_t font_id) {
     bool result = false;
     if (!ctx || !ctx->system) { return false; }
     if (!font_id) { font_id = ctx->system->default_font_id; }
+//printf("searching for font_id 0x%08X (%dx%d)\n", font_id, ctx->system->font_size.x, ctx->system->font_size.y);
     for (const RF_Font* font = RF_FontList;  font->font_id;  ++font) {
+//printf("                   == 0x%08X? (%dx%d) -> ", font->font_id, font->font_size.x, font->font_size.y);
         if ((font->font_size.x != ctx->system->font_size.x)
         ||  (font->font_size.y != ctx->system->font_size.y)) {
+//printf("size mismatch\n");
             continue;  // font size doesn't match with current system
         }
+//printf("%s\n", (font->font_id == font_id) ? "YES" : "no");
         if (font->font_id == font_id) {  // font found
             ctx->font = font;
             result = true;

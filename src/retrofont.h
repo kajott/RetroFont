@@ -12,9 +12,9 @@
 //! create an ID from a string
 //! \note the 's' parameter *must* be at least 4 characters long!
 #define RF_MAKE_ID(s) ((((uint32_t)((s)[3])) << 24) \
-                     | (((uint32_t)((s)[3])) << 16) \
-                     | (((uint32_t)((s)[3])) <<  8) \
-                     |  ((uint32_t)((s)[3])))
+                     | (((uint32_t)((s)[2])) << 16) \
+                     | (((uint32_t)((s)[1])) <<  8) \
+                     |  ((uint32_t)((s)[0])))
 
 typedef struct s_RF_Coord         RF_Coord;
 typedef struct s_RF_Cell          RF_Cell;
