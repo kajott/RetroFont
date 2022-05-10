@@ -8,6 +8,7 @@ set (CMAKE_CXX_STANDARD 11)
 set (SYSTEMS
     src/sys_zx.c
     src/sys_c64.c
+    src/sys_pc.c
 )
 add_executable (rftest
     src/rftest.c

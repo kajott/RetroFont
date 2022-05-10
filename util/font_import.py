@@ -114,6 +114,11 @@ def err(msg):
 def warn(msg):
     print("WARNING:" + g_err_prefix, msg, file=sys.stderr)
 
+def map_glyph(target, cp, glyph):
+    if (cp in target) and (glyph != target[cp]):
+        warn(f"re-assigning glyph for U+{cp:04X}")
+    target[cp] = glyph
+
 if __name__ == "__main__":
     verbose = FORCE_VERBOSE or ("-v" in sys.argv)
     tooldir = os.path.normpath(os.path.abspath(os.path.dirname(sys.argv[0])))
@@ -121,7 +126,9 @@ if __name__ == "__main__":
     allfonts = []
     for specfile in glob.glob("*.fontspec"):
         fonts = []
+        maps = {}
         img = None
+        defmap = None
         if verbose: print("- processing font spec:", specfile)
         with open(specfile, encoding='utf-8') as f:
             lineno = 0
@@ -149,12 +156,18 @@ if __name__ == "__main__":
                         err("'font' command invalid without an active source image")
                         continue
                     fonts.append(Font(m.group(1), m.group(2), img))
-                    print
+                    defmap = None
+                    continue
+
+                m = re.match(f'defmap\s+"([^"]+)"', line, flags=re.I)
+                if m:
+                    defmap = m.group(1)
+                    maps[defmap] = {}
                     continue
 
                 m = re.match(r'map\s+(\d+)(\.(\d+))?\s+', line, flags=re.I)
                 if m:
-                    if not fonts:
+                    if not(fonts) and not(defmap):
                         err("'map' command invalid without an active font")
                         continue
                     gy = int(m.group(1))
@@ -169,19 +182,19 @@ if __name__ == "__main__":
                         for cp in cps:
                             if cp:
                                 try:
-                                    glyph = img.glyphs[(gy,gx)]
+                                    glyph = (gy,gx)
+                                    if not defmap:
+                                        glyph = img.glyphs[glyph]
                                 except KeyError:
                                     err(f"no glyph at location {gy}.{gx} (for U+{cp:04X})")
                                     break
-                                if (cp in fonts[-1].glyphs) and (glyph != fonts[-1].glyphs[cp]):
-                                    warn(f"re-assigning glyph for U+{cp:04X}")
-                                fonts[-1].glyphs[cp] = glyph
+                                map_glyph(maps[defmap] if defmap else fonts[-1].glyphs, cp, glyph)
                             gx += 1
                     continue
 
                 m = re.match(r'alias\s+', line, flags=re.I)
                 if m:
-                    if not fonts:
+                    if not(fonts) and not(defmap):
                         err("'alias' command invalid without an active font")
                         continue
                     line = line[m.end(0):]
@@ -198,13 +211,33 @@ if __name__ == "__main__":
                         for d, s in zip(dest, src):
                             if s and d:
                                 try:
-                                    glyph = fonts[-1].glyphs[s]
+                                    if defmap:
+                                        glyph = maps[defmap][s]
+                                    else:
+                                        glyph = fonts[-1].glyphs[s]
                                 except KeyError:
-                                    err(f"codepoint U+{s:04X} missing in font")
+                                    err(f"codepoint U+{s:04X} missing in " + ("map" if defmap else "font"))
                                     break
-                                if (d in fonts[-1].glyphs) and (glyph != fonts[-1].glyphs[d]):
-                                    warn(f"re-assigning glyph for U+{d:04X}")
-                                fonts[-1].glyphs[d] = glyph
+                                map_glyph(maps[defmap] if defmap else fonts[-1].glyphs, d, glyph)
+                    continue
+
+                m = re.match(f'usemap\s+"([^"]+)"', line, flags=re.I)
+                if m:
+                    if not fonts:
+                        err("'usemap' command invalid without an active font")
+                        continue
+                    try:
+                        src_map = maps[m.group(1)]
+                    except KeyError:
+                        err(f"undefined map '{m.group(1)}'")
+                        continue
+                    for cp, pos in sorted(src_map.items()):
+                        try:
+                            glyph = img.glyphs[pos]
+                        except KeyError:
+                            err(f"no glyph at location {gy}.{gx} (for U+{cp:04X})")
+                            break
+                        map_glyph(fonts[-1].glyphs, cp, glyph)
                     continue
 
                 err(f"unrecognized line `{line}`")
