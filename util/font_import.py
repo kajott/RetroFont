@@ -102,6 +102,7 @@ class Font:
         self.img = img
         self.font_size = self.img.font_size
         self.glyphs = {}
+        self.underline = 0
 
 ################################################################################
 
@@ -240,6 +241,14 @@ if __name__ == "__main__":
                         map_glyph(fonts[-1].glyphs, cp, glyph)
                     continue
 
+                m = re.match(f'underline\s+(\d+)', line, flags=re.I)
+                if m:
+                    if not fonts:
+                        err("'usemap' command invalid without an active font")
+                        continue
+                    fonts[-1].underline = int(m.group(1))
+                    continue
+
                 err(f"unrecognized line `{line}`")
             allfonts += fonts
     fonts = allfonts
@@ -287,9 +296,9 @@ if __name__ == "__main__":
         out.write('const RF_Font RF_FontList[] = {\n')
         for f in fonts:
             name = f'"{f.name}",'.ljust(namelen)
-            out.write(f'    {{ RF_MAKE_ID("{f.font_id}"), {name} {{{f.font_size.x:2d},{f.font_size.y:2d}}}, glyphmap_{f.font_id}, {len(f.glyphs):4d},{f.glyphs.get(0xFFFD,0):6d} }},\n')
+            out.write(f'    {{ RF_MAKE_ID("{f.font_id}"), {name} {{{f.font_size.x:2d},{f.font_size.y:2d}}}, glyphmap_{f.font_id}, {len(f.glyphs):4d},{f.glyphs.get(0xFFFD,0):6d}, {f.underline:2d} }},\n')
         name = "NULL,".ljust(namelen)
-        out.write(f'    {{ 0,                  {name} {{ 0, 0}}, NULL,             0,     0 }}\n')
+        out.write(f'    {{ 0,                  {name} {{ 0, 0}}, NULL,             0,     0,  0 }}\n')
         out.write('};\n')
 
     sys.exit(g_errors)

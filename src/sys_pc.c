@@ -34,6 +34,7 @@ uint32_t pc_map_border_color (uint32_t sys_id, uint32_t color) {
 
 void pc_render_cell (const RF_RenderCommand* cmd) {
     uint32_t fg, bg;
+    uint16_t cs = 0, ce = 0;
     if (!cmd || !cmd->cell) { return; }
 
     // resolve to standard color
@@ -52,9 +53,17 @@ void pc_render_cell (const RF_RenderCommand* cmd) {
     fg = pc_rgb_color(fg);
     bg = pc_rgb_color(bg);
 
+    // set cursor
+    if (cmd->is_cursor) {
+        ce = cmd->cell_size.y;
+        if (ce > 8) { --ce; }
+        cs = ce - 2;
+    }
+
     // render the main cell
-    RF_RenderCell(cmd, fg, bg, 0,0, false,
-        IS_MDA(cmd->sys_id) && cmd->cell->blink && cmd->blink_phase);
+    RF_RenderCell(cmd, fg,bg, 0,0, cs,ce, false,
+        IS_MDA(cmd->sys_id) && cmd->cell->blink && cmd->blink_phase,
+        IS_MDA(cmd->sys_id));
 
     // replicate the 9th column if required
     // - on actual VGA, this is done for characters 0xC0 to 0xDF;
@@ -73,8 +82,6 @@ void pc_render_cell (const RF_RenderCommand* cmd) {
             p += cmd->stride;
         }
     }
-
-    // TODO: render cursor
 }
 
 RF_SysClass pcclass = {

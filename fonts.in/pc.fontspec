@@ -190,21 +190,26 @@ font "PC8P" "PC 8x8 (Amstrad)"
 
 source "pc_8x14_mda.pbm" 8x14
 font "PC4M" "PC 8x14 (IBM MDA)"
+    underline 12
     usemap "cp437"
 
 source "pc_8x14_vga.pbm" 8x14
 font "PC4V" "PC 8x14 (IBM VGA)"
+    underline 12
     usemap "cp437"
 
 source "pc_8x14_ati.pbm" 8x14
 font "PC4A" "PC 8x14 (ATI)"
+    underline 12
     usemap "cp437"
 
 
 source "pc_8x16_vga.pbm" 8x16
 font "PC6V" "PC 8x16 (IBM VGA)"
+    underline 13
     usemap "cp437"
 
 source "pc_8x16_ati.pbm" 8x16
 font "PC6A" "PC 8x16 (ATI)"
+    underline 13
     usemap "cp437"

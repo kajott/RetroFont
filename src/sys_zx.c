@@ -57,7 +57,7 @@ void zx_render_cell (const RF_RenderCommand* cmd) {
 
     rev  = (cmd->cell->blink &&  cmd->blink_phase) ? 1 : 0;
     rev ^= (cmd->is_cursor   && !cmd->blink_phase) ? 1 : 0;
-    RF_RenderCell(cmd, fg, bg, 0,0, (bool)rev, false);
+    RF_RenderCell(cmd, fg, bg, 0,0, 0,0, (bool)rev, false, false);
 }
 
 RF_SysClass zxclass = {

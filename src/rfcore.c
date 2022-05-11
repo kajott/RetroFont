@@ -158,6 +158,7 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     cmd.cell_size.x = csx;
     cmd.cell_size.y = csy;
     cmd.font_size = ctx->font->font_size;
+    cmd.underline_row = ctx->font->underline_row;
     cmd.default_fg = ctx->default_fg;
     cmd.default_bg = ctx->default_bg;
     cmd.blink_phase = ctx->system->blink_interval_msec ? (((time_msec / ctx->system->blink_interval_msec) & 1) != 0) : false;
@@ -204,7 +205,15 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     return result;
 }
 
-void RF_RenderCell(const RF_RenderCommand* cmd, uint32_t fg, uint32_t bg, uint16_t offset_x, uint16_t offset_y, bool extra_reverse, bool force_invisible) {
+void RF_RenderCell(
+    const RF_RenderCommand* cmd,
+    uint32_t fg,         uint32_t bg,
+    uint16_t offset_x,   uint16_t offset_y,
+    uint16_t line_start, uint16_t line_end,
+    bool extra_reverse,
+    bool force_invisible,
+    bool allow_underline
+) {
     uint8_t *p, bits = 0;
     const uint8_t *g;
     uint32_t color;
@@ -212,17 +221,23 @@ void RF_RenderCell(const RF_RenderCommand* cmd, uint32_t fg, uint32_t bg, uint16
     if (cmd->cell->reverse) { extra_reverse = !extra_reverse; }
     if (extra_reverse) { uint32_t t = fg;  fg = bg;  bg = t; }
     if (cmd->cell->invisible || force_invisible) { fg = bg; }
+    if (line_start >= line_end) { line_start = cmd->cell_size.y; line_end = 0; }
+    if (allow_underline && cmd->underline_row && cmd->cell->underline) {
+        if (line_start >  cmd->underline_row)      { line_start = cmd->underline_row; }
+        if (line_end   < (cmd->underline_row + 1)) { line_end   = cmd->underline_row + 1; }
+    }
     g = cmd->glyph_data;
     for (uint16_t y = 0;  y < cmd->cell_size.y;  ++y) {
         bool core_row = (y >= offset_y) && (y < (offset_y + cmd->font_size.y));
+        bool line_row = (y >= line_start) && (y < line_end);
         p = &cmd->pixel[cmd->stride * y];
         bits = 0;
         for (uint16_t x = offset_x;  x;  --x) {
-            PUT_PIXEL(p, bg);
+            PUT_PIXEL(p, line_row ? fg : bg);
         }
         for (uint16_t x = 0;  x < (cmd->cell_size.x - offset_x);  ++x) {
             if (core_row && (x < cmd->font_size.x) && !(x & 7)) { bits = *g++; }
-            color = (bits & 1) ? fg : bg;
+            color = (line_row || (bits & 1)) ? fg : bg;
             PUT_PIXEL(p, color);
             bits >>= 1;
         }

@@ -75,6 +75,7 @@ struct s_RF_RenderCommand {
     uint32_t sys_id;
     RF_Coord cell_size;
     RF_Coord font_size;
+    uint32_t underline_row;
     uint32_t default_fg;
     uint32_t default_bg;
     bool is_cursor;
@@ -83,7 +84,15 @@ struct s_RF_RenderCommand {
 
 //! render a cell with specific RGB colors; honors the reverse and invisible flags,
 //! but can perform an extra reverse or force invisibility if needed for blinking
-void RF_RenderCell(const RF_RenderCommand* cmd, uint32_t fg, uint32_t bg, uint16_t offset_x, uint16_t offset_y, bool extra_reverse, bool force_invisible);
+void RF_RenderCell(
+    const RF_RenderCommand* cmd,
+    uint32_t fg,         uint32_t bg,
+    uint16_t offset_x,   uint16_t offset_y,
+    uint16_t line_start, uint16_t line_end,
+    bool extra_reverse,
+    bool force_invisible,
+    bool allow_underline
+);
 
 struct s_RF_SysClass {
     uint32_t (*map_border_color) (uint32_t sys_id, uint32_t color);
@@ -116,6 +125,7 @@ struct s_RF_Font {
     const RF_GlyphMapEntry *glyph_map;
     uint32_t glyph_count;
     uint32_t fallback_offset;
+    uint32_t underline_row;
 };
 
 struct s_RF_Context {
