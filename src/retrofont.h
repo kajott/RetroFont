@@ -91,7 +91,8 @@ void RF_RenderCell(
     uint16_t line_start, uint16_t line_end,
     bool extra_reverse,
     bool force_invisible,
-    bool allow_underline
+    bool allow_underline,
+    bool allow_bold
 );
 
 struct s_RF_SysClass {

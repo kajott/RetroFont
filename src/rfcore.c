@@ -212,7 +212,8 @@ void RF_RenderCell(
     uint16_t line_start, uint16_t line_end,
     bool extra_reverse,
     bool force_invisible,
-    bool allow_underline
+    bool allow_underline,
+    bool allow_bold
 ) {
     uint8_t *p, bits = 0;
     const uint8_t *g;
@@ -230,6 +231,7 @@ void RF_RenderCell(
     for (uint16_t y = 0;  y < cmd->cell_size.y;  ++y) {
         bool core_row = (y >= offset_y) && (y < (offset_y + cmd->font_size.y));
         bool line_row = (y >= line_start) && (y < line_end);
+        bool prev = false;
         p = &cmd->pixel[cmd->stride * y];
         bits = 0;
         for (uint16_t x = offset_x;  x;  --x) {
@@ -237,8 +239,9 @@ void RF_RenderCell(
         }
         for (uint16_t x = 0;  x < (cmd->cell_size.x - offset_x);  ++x) {
             if (core_row && (x < cmd->font_size.x) && !(x & 7)) { bits = *g++; }
-            color = (line_row || (bits & 1)) ? fg : bg;
+            color = (line_row || (bits & 1) || prev) ? fg : bg;
             PUT_PIXEL(p, color);
+            if (cmd->cell->bold && allow_bold) { prev = (bits & 1); }
             bits >>= 1;
         }
     }

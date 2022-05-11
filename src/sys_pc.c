@@ -66,7 +66,8 @@ void pc_render_cell (const RF_RenderCommand* cmd) {
     RF_RenderCell(cmd, fg,bg, 0,0, cs,ce,
         is_gfx && cmd->is_cursor,
         IS_MDA(cmd->sys_id) && cmd->cell->blink && cmd->blink_phase,
-        IS_MDA(cmd->sys_id) || is_gfx);
+        IS_MDA(cmd->sys_id) || is_gfx,
+        false);
 
     // replicate the 9th column if required
     // - on actual VGA, this is done for characters 0xC0 to 0xDF;

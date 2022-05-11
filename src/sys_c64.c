@@ -38,7 +38,7 @@ void c64_render_cell(const RF_RenderCommand* cmd) {
     fg = c64_map_color(cmd->sys_id, fg, true);
     bg = c64_map_color(cmd->sys_id, cmd->default_bg, false);
 
-    RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false);
+    RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false, false);
 }
 
 RF_SysClass c64class = {
