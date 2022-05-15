@@ -1,3 +1,8 @@
-_build*
 retrofont/src/fonts.c
 retrofont/src/systems.c
+
+_build*
+
+vswhere.exe
+ninja.exe
+cmake-*

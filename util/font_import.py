@@ -296,9 +296,10 @@ if __name__ == "__main__":
         out.write('const RF_Font RF_FontList[] = {\n')
         for f in fonts:
             name = f'"{f.name}",'.ljust(namelen)
-            out.write(f'    {{ RF_MAKE_ID("{f.font_id}"), {name} {{{f.font_size.x:2d},{f.font_size.y:2d}}}, glyphmap_{f.font_id}, {len(f.glyphs):4d},{f.glyphs.get(0xFFFD,0):6d}, {f.underline:2d} }},\n')
+            id_s = ','.join("'"+c+"'" for c in f.font_id)
+            out.write(f'    {{ RF_MAKE_ID({id_s}), {name} {{{f.font_size.x:2d},{f.font_size.y:2d}}}, glyphmap_{f.font_id}, {len(f.glyphs):4d},{f.glyphs.get(0xFFFD,0):6d}, {f.underline:2d} }},\n')
         name = "NULL,".ljust(namelen)
-        out.write(f'    {{ 0,                  {name} {{ 0, 0}}, NULL,             0,     0,  0 }}\n')
+        out.write(f'    {{ 0,                           {name} {{ 0, 0}}, NULL,             0,     0,  0 }}\n')
         out.write('};\n')
 
     sys.exit(g_errors)

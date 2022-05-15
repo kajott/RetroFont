@@ -14,7 +14,7 @@ const uint32_t c64_palettes[2][16] = {
 const uint8_t c64_default_color_map[16] = { 0, 6, 5, 3, 2, 4, 8, 15, 11, 14, 13, 3, 10, 4, 7, 1 };
 
 uint32_t c64_map_color(uint32_t sys_id, uint32_t color, bool is_fg) {
-    const uint32_t *pal = c64_palettes[(sys_id == RF_MAKE_ID("C64N")) ? 1 : 0];
+    const uint32_t *pal = c64_palettes[(sys_id == RF_MAKE_ID('C','6','4','N')) ? 1 : 0];
     if (color == RF_COLOR_DEFAULT) {
         return is_fg ? pal[14] : pal[6];
     }
@@ -41,11 +41,11 @@ void c64_render_cell(const RF_RenderCommand* cmd) {
     RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false, false);
 }
 
-RF_SysClass c64class = {
+const RF_SysClass c64class = {
     c64_map_border_color,
     c64_render_cell
 };
 
-//                            sys_id,             name,                   class,      scrsz,   cellsz,  fontsz,  b_ul,    b_lr,  double, blink, default_font_id
-RF_System RF_Sys_C64_PAL  = { RF_MAKE_ID("C64P"), "Commodore C64 (PAL)",  &c64class, {40,25}, { 8, 8}, { 8, 8}, {42,42}, {42,42}, false,   0, RF_MAKE_ID("C64s") };
-RF_System RF_Sys_C64_NTSC = { RF_MAKE_ID("C64N"), "Commodore C64 (NTSC)", &c64class, {40,25}, { 8, 8}, { 8, 8}, {46,17}, {46,17}, false,   0, RF_MAKE_ID("C64s") };
+//                                  sys_id,             name,                   class,      scrsz,   cellsz,  fontsz,  b_ul,    b_lr,  double, blink, default_font_id
+const RF_System RF_Sys_C64_PAL  = { RF_MAKE_ID('C','6','4','P'), "Commodore C64 (PAL)",  &c64class, {40,25}, { 8, 8}, { 8, 8}, {42,42}, {42,42}, false,     0, RF_MAKE_ID('C','6','4','s') };
+const RF_System RF_Sys_C64_NTSC = { RF_MAKE_ID('C','6','4','N'), "Commodore C64 (NTSC)", &c64class, {40,25}, { 8, 8}, { 8, 8}, {46,17}, {46,17}, false,     0, RF_MAKE_ID('C','6','4','s') };

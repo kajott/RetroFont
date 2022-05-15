@@ -12,7 +12,7 @@ RF_Context* RF_CreateContext(uint32_t sys_id) {
     if (!ctx) { return NULL; }
     ctx->system = RF_SystemList[0];
 //printf("searching for sys_id 0x%08X\n", sys_id);
-    for (const RF_System** p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
+    for (const RF_System* const* p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
 //printf("                  == 0x%08X? -> %s\n", (*p_sys)->sys_id, ((*p_sys)->sys_id == sys_id) ? "YES" : "no");
         if ((*p_sys)->sys_id == sys_id) {
             ctx->system = *p_sys;

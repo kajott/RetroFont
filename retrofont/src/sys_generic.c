@@ -25,10 +25,10 @@ void gen_render_cell (const RF_RenderCommand* cmd) {
     RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor, false, true, true);
 }
 
-RF_SysClass genclass = {
+const RF_SysClass genclass = {
     gen_map_border_color,
     gen_render_cell
 };
 
-//                           sys_id,            name,      class,    scrsz,   cellsz, fontsz, b_ul,  b_lr,  double, blink, default_font_id
-RF_System RF_Sys_Generic = { RF_COLOR_DEFAULT, "Generic", &genclass, {80,24}, {0,0},  {0,0},  {0,0}, {0,0}, false,   0, RF_MAKE_ID("PC6V") };
+//                                 sys_id,            name,      class,    scrsz,   cellsz, fontsz, b_ul,  b_lr,  double, blink, default_font_id
+const RF_System RF_Sys_Generic = { RF_COLOR_DEFAULT, "Generic", &genclass, {80,24}, {0,0},  {0,0},  {0,0}, {0,0}, false,      0, RF_MAKE_ID('P','C','6','V') };

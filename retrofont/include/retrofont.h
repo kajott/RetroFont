@@ -5,16 +5,21 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RF_GLYPH_CACHE_MIN  32
 #define RF_GLYPH_CACHE_MAX 255
 #define RF_GLYPH_CACHE_SIZE (RF_GLYPH_CACHE_MAX - RF_GLYPH_CACHE_MIN + 1)
 
 //! create an ID from a string
 //! \note the 's' parameter *must* be at least 4 characters long!
-#define RF_MAKE_ID(s) ((((uint32_t)((s)[3])) << 24) \
-                     | (((uint32_t)((s)[2])) << 16) \
-                     | (((uint32_t)((s)[1])) <<  8) \
-                     |  ((uint32_t)((s)[0])))
+#define RF_MAKE_ID_S(s) ((((uint32_t)(((const char*)(s))[3])) << 24) \
+                       | (((uint32_t)(((const char*)(s))[2])) << 16) \
+                       | (((uint32_t)(((const char*)(s))[1])) <<  8) \
+                       |  ((uint32_t)(((const char*)(s))[0])))
+#define RF_MAKE_ID(a,b,c,d) (((d) << 24) | ((c) << 16) | ((b) << 8) | (a))
 
 typedef struct s_RF_Coord         RF_Coord;
 typedef struct s_RF_Cell          RF_Cell;
@@ -75,9 +80,9 @@ struct s_RF_RenderCommand {
     uint32_t sys_id;
     RF_Coord cell_size;
     RF_Coord font_size;
-    uint32_t underline_row;
     uint32_t default_fg;
     uint32_t default_bg;
+    uint16_t underline_row;
     bool is_cursor;
     bool blink_phase;
 };
@@ -126,7 +131,7 @@ struct s_RF_Font {
     const RF_GlyphMapEntry *glyph_map;
     uint32_t glyph_count;
     uint32_t fallback_offset;
-    uint32_t underline_row;
+    uint16_t underline_row;
 };
 
 struct s_RF_Context {
@@ -148,9 +153,9 @@ struct s_RF_Context {
     uint32_t glyph_offset_cache[RF_GLYPH_CACHE_SIZE];
 };
 
-extern const RF_System* RF_SystemList[];
-extern const RF_Font    RF_FontList[];
-extern const uint8_t    RF_GlyphBitmaps[];
+extern const RF_System* const RF_SystemList[];
+extern const RF_Font          RF_FontList[];
+extern const uint8_t          RF_GlyphBitmaps[];
 
 //! create empty context with specified system ID
 //! \note before the context can be used, RF_ResizeScreen() must be called
@@ -187,5 +192,9 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec);
 void RF_DestroyContext(RF_Context* ctx);
 
 #define RF_FreeContext(ctx) do { RF_DestroyContext(ctx); (ctx) = NULL; } while(0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

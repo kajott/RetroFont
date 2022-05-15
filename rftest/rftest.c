@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,8 +12,8 @@ int main(int argc, char* argv[]) {
 
     uint32_t sys_id = 0;
     uint32_t font_id = 0;
-    if ((argc > 1) && (strlen(argv[1]) == 4)) {  sys_id = RF_MAKE_ID(argv[1]); }
-    if ((argc > 2) && (strlen(argv[2]) == 4)) { font_id = RF_MAKE_ID(argv[2]); }
+    if ((argc > 1) && (strlen(argv[1]) == 4)) {  sys_id = RF_MAKE_ID_S(argv[1]); }
+    if ((argc > 2) && (strlen(argv[2]) == 4)) { font_id = RF_MAKE_ID_S(argv[2]); }
 
     RF_Context* ctx = RF_CreateContext(sys_id);
     if (!ctx) {

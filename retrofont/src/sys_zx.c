@@ -7,7 +7,7 @@
 #include "retrofont.h"
 
 #define CINT 180
-#define IS_SPECTRUM(sys_id) (sys_id == RF_MAKE_ID("ZX82"))
+#define IS_SPECTRUM(sys_id) (sys_id == RF_MAKE_ID('Z','X','8','2'))
 
 uint32_t zx_std_color(uint32_t color, uint32_t default_color, bool is_fg) {
     if (color == RF_COLOR_DEFAULT) {
@@ -60,11 +60,11 @@ void zx_render_cell (const RF_RenderCommand* cmd) {
     RF_RenderCell(cmd, fg, bg, 0,0, 0,0, (bool)rev, false, false, false);
 }
 
-RF_SysClass zxclass = {
+const RF_SysClass zxclass = {
     zx_map_border_color,
     zx_render_cell
 };
 
-//                            sys_id,             name,                   class,    scrsz,    cellsz,  fontsz,  b_ul,    b_lr,  double, blink, default_font_id
-RF_System RF_Sys_ZX8x     = { RF_MAKE_ID("ZX81"), "Sinclair ZX80 / ZX81", &zxclass, {32,24}, { 8, 8}, { 8, 8}, {48,48}, {48,56}, false,   0, RF_MAKE_ID("ZX81") };
-RF_System RF_Sys_Spectrum = { RF_MAKE_ID("ZX82"), "Sinclair ZX Spectrum", &zxclass, {32,24}, { 8, 8}, { 8, 8}, {48,48}, {48,56}, false, 320, RF_MAKE_ID("ZX82") };
+//                                  sys_id,             name,                   class,    scrsz,    cellsz,  fontsz,  b_ul,    b_lr,  double, blink, default_font_id
+const RF_System RF_Sys_ZX8x     = { RF_MAKE_ID('Z','X','8','1'), "Sinclair ZX80 / ZX81", &zxclass, {32,24}, { 8, 8}, { 8, 8}, {48,48}, {48,56}, false,   0, RF_MAKE_ID('Z','X','8','1') };
+const RF_System RF_Sys_Spectrum = { RF_MAKE_ID('Z','X','8','2'), "Sinclair ZX Spectrum", &zxclass, {32,24}, { 8, 8}, { 8, 8}, {48,48}, {48,56}, false, 320, RF_MAKE_ID('Z','X','8','2') };
