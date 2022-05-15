@@ -10,7 +10,7 @@ if __name__ == "__main__":
         sysfiles = re.findall(r'sys_\w+\.c', f.read())
 
     # enumerate systems from these files
-    os.chdir("src")
+    os.chdir(os.path.join("retrofont", "src"))
     systems = []
     for fn in sysfiles:
         with open(fn) as f:

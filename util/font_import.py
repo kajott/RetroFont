@@ -270,7 +270,7 @@ if __name__ == "__main__":
     if verbose: print("- composite bitmap size:", len(bitmap), "bytes,", len(markers), "distinct glyphs")
 
     # generate fonts.c
-    os.chdir(os.path.join(os.path.dirname(tooldir), "src"))
+    os.chdir(os.path.join(os.path.dirname(tooldir), os.path.join("retrofont", "src")))
     namelen = max(len(f.name) for f in fonts) + 3
     dumplen = max(b-a for a,b in segments) * 6
     me = os.path.basename(sys.argv[0])

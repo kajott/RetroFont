@@ -5,41 +5,45 @@ project (retrofont)
 set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 11)
 
-set (SYSTEMS
-    src/sys_generic.c
-    src/sys_zx.c
-    src/sys_c64.c
-    src/sys_pc.c
-)
-add_executable (rftest
-    src/rftest.c
-    src/rfcore.c
-    src/fonts.c
-    src/systems.c
-    ${SYSTEMS}
-)
-add_library (retrofont_thirdparty STATIC
+
+###############################################################################
+## THIRD-PARTY LIBRARIES                                                    ##
+###############################################################################
+
+add_library (rf_thirdparty STATIC
     thirdparty/libtmt/tmt.c
 )
 
-target_include_directories (rftest PRIVATE
-    src
-)
-target_include_directories (retrofont_thirdparty PUBLIC
+target_include_directories (rf_thirdparty PUBLIC
     thirdparty/libtmt
 )
 
-target_link_libraries (rftest retrofont_thirdparty)
 
-if (NOT MSVC)
-    target_compile_options (rftest PRIVATE -Wall -Wextra -pedantic -Werror -fwrapv)
-else ()
-    target_compile_options (rftest PRIVATE /W4 /WX)
-endif ()
+###############################################################################
+## RETROFONT CORE LIBRARY                                                    ##
+###############################################################################
 
+set (SYSTEMS
+    retrofont/src/sys_generic.c
+    retrofont/src/sys_pc.c
+    retrofont/src/sys_c64.c
+    retrofont/src/sys_zx.c
+)
 file (GLOB FONTSPECS fonts.in/*.fontspec)
+
+add_library (retrofont STATIC
+    retrofont/src/rfcore.c
+    retrofont/src/fonts.c
+    retrofont/src/systems.c
+    ${SYSTEMS}
+)
+
+target_include_directories (retrofont PUBLIC
+    retrofont/include
+)
+
 add_custom_command (
-    OUTPUT ${CMAKE_SOURCE_DIR}/src/fonts.c
+    OUTPUT ${CMAKE_SOURCE_DIR}/retrofont/src/fonts.c
     COMMAND python3 font_import.py
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/util
     DEPENDS ${FONTSPECS}
@@ -47,9 +51,32 @@ add_custom_command (
 )
 
 add_custom_command (
-    OUTPUT ${CMAKE_SOURCE_DIR}/src/systems.c
+    OUTPUT ${CMAKE_SOURCE_DIR}/retrofont/src/systems.c
     COMMAND python3 update_systems.py
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/util
     DEPENDS ${SYSTEMS}
     MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/util/update_systems.py
 )
+
+if (NOT MSVC)
+    target_compile_options (retrofont PRIVATE -Wall -Wextra -pedantic -Werror -fwrapv)
+else ()
+    target_compile_options (retrofont PRIVATE /W4 /WX)
+endif ()
+
+
+###############################################################################
+## TEST APPLICATION                                                          ##
+###############################################################################
+
+add_executable (rftest
+    rftest/rftest.c
+)
+
+target_link_libraries (rftest retrofont rf_thirdparty)
+
+if (NOT MSVC)
+    target_compile_options (rftest PRIVATE -Wall -Wextra -pedantic -Werror -fwrapv)
+else ()
+    target_compile_options (rftest PRIVATE /W4 /WX)
+endif ()
