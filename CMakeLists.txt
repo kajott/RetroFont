@@ -104,17 +104,22 @@ add_custom_command (
 ###############################################################################
 
 add_executable (rftest
-    rftest/rftest.c
+    rftest/rftest.cpp
+    rftest/gl_util.cpp
+    rftest/string_util.cpp
 )
+
+target_include_directories (rftest PRIVATE rftest)
 
 target_link_libraries (rftest retrofont rf_thirdparty)
 
 # platform-dependent additional sources and options
 if (WIN32)
     # no console in Win32 Release builds
-    if (CMAKE_BUILD_TYPE STREQUAL "Release")
-        set_target_properties (rftest PROPERTIES WIN32_EXECUTABLE ON)
-    endif ()
+    # (disabled for now -- we need a WinMain() function first!)
+    #if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    #    set_target_properties (rftest PROPERTIES WIN32_EXECUTABLE ON)
+    #endif ()
 else ()
     # Linux builds *require* (p)threads, otherwise very weird things can happen
     set (THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -135,7 +140,8 @@ else ()
     target_compile_options (rftest PRIVATE /W4 /WX)
 endif ()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT WIN32)
+    #                                 ^^^^^^^^^^^^^ ASAN and nVidia's OpenGL driver don't mix well!
     if (NOT MSVC)
         message (STATUS "Debug build, enabling Address Sanitizer")
         target_compile_options (rftest PUBLIC "-fsanitize=address")
