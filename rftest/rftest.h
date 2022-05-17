@@ -23,6 +23,7 @@ class RFTestApp {
     // UI state
     bool m_active = true;
     int m_renderFrames = 2;
+    bool m_showDemo = false;
 
     // UI functions
     void drawUI();

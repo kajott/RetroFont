@@ -210,7 +210,7 @@ int RFTestApp::run(int argc, char *argv[]) {
             glfwPollEvents();
             --m_renderFrames;
         } else {
-            uint32_t blink = m_ctx ? m_ctx->system->blink_interval_msec : 0;
+            uint32_t blink = (m_ctx && m_ctx->system) ? m_ctx->system->blink_interval_msec : 0;
             if (blink) {
                 uint32_t now = uint32_t(glfwGetTime() * 1000.0);
                 uint32_t next = ((now / blink) + 1) * blink;
@@ -226,6 +226,11 @@ int RFTestApp::run(int argc, char *argv[]) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         drawUI();
+        #ifndef NDEBUG
+            if (m_showDemo) {
+                ImGui::ShowDemoWindow(&m_showDemo);
+            }
+        #endif
         ImGui::Render();
 
         // start display rendering
@@ -281,9 +286,16 @@ int RFTestApp::run(int argc, char *argv[]) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
-    (void)scancode;
+    (void)scancode, (void)mods;
     if ((action != GLFW_PRESS) || m_io->WantCaptureKeyboard) { return; }
-    (void)key, (void)mods;
+    switch (key) {
+        case GLFW_KEY_F9:
+            m_showDemo = !m_showDemo;
+            requestFrames(2);
+            break;
+        default:
+            break;
+    }
 }
 
 void RFTestApp::handleMouseButtonEvent(int button, int action, int mods) {
@@ -305,9 +317,45 @@ void RFTestApp::handleScrollEvent(double xoffset, double yoffset) {
 void RFTestApp::drawUI() {
     // main window begin
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(320.0f, 480.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(344.0f, 128.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
 
+        if (ImGui::BeginCombo("system", (m_ctx && m_ctx->system) ? m_ctx->system->name : "???", 0)) {
+            for (const RF_System* const* p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
+                if (ImGui::Selectable((*p_sys)->name, m_ctx && (m_ctx->system == *p_sys))) {
+                    // TODO: change system here
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        RF_Coord matchSize = {0, 0};
+        if (m_ctx && m_ctx->system) { matchSize = m_ctx->system->font_size; }
+        if (ImGui::BeginCombo("font", (m_ctx && m_ctx->font) ? m_ctx->font->name : "???", 0)) {
+            for (const RF_Font* font = RF_FontList;  font->font_id;  ++font) {
+                if ((matchSize.x && (matchSize.x != font->font_size.x))
+                ||  (matchSize.y && (matchSize.y != font->font_size.y))) {
+                    continue;
+                }
+                if (ImGui::Selectable(font->name, m_ctx && (m_ctx->font == font))) {
+                    // TODO: change font here
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("borders:"); ImGui::SameLine();
+        int borderMode = 0;
+        ImGui::RadioButton("full",    &borderMode, 0); ImGui::SameLine();
+        ImGui::RadioButton("reduced", &borderMode, 1); ImGui::SameLine();
+        ImGui::RadioButton("minimal", &borderMode, 2);
+
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("size:"); ImGui::SameLine();
+        int dynaSize = 0;
+        ImGui::RadioButton("fixed",   &dynaSize, 0); ImGui::SameLine();
+        ImGui::RadioButton("dynamic", &dynaSize, 1);
     }
     ImGui::End();
 }
