@@ -27,13 +27,36 @@ endif ()
 ## THIRD-PARTY LIBRARIES                                                    ##
 ###############################################################################
 
+# add the GLFW library with suitable options
+foreach (disable_ GLFW_BUILD_EXAMPLES GLFW_BUILD_TESTS GLFW_BUILD_DOCS GLFW_INSTALL)
+    option ("${disable_}" OFF)
+endforeach ()
+add_subdirectory (thirdparty/glfw)
+
+
 add_library (rf_thirdparty STATIC
-    thirdparty/libtmt/tmt.c
+    thirdparty/glad/src/glad.c
+    thirdparty/imgui/imgui.cpp
+    thirdparty/imgui/imgui_demo.cpp
+    thirdparty/imgui/imgui_widgets.cpp
+    thirdparty/imgui/imgui_tables.cpp
+    thirdparty/imgui/imgui_draw.cpp
+    thirdparty/imgui/backends/imgui_impl_glfw.cpp
+    thirdparty/imgui/backends/imgui_impl_opengl3.cpp
 )
 
 target_include_directories (rf_thirdparty PUBLIC
-    thirdparty/libtmt
+    thirdparty/glad/include
+    thirdparty/imgui
+    thirdparty/imgui/backends
 )
+
+target_link_libraries (rf_thirdparty glfw)
+if (WIN32)
+    target_link_libraries (rf_thirdparty opengl32)
+else ()
+    target_link_libraries (rf_thirdparty m dl GL)
+endif ()
 
 
 ###############################################################################
@@ -85,6 +108,19 @@ add_executable (rftest
 )
 
 target_link_libraries (rftest retrofont rf_thirdparty)
+
+# platform-dependent additional sources and options
+if (WIN32)
+    # no console in Win32 Release builds
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        set_target_properties (rftest PROPERTIES WIN32_EXECUTABLE ON)
+    endif ()
+else ()
+    # Linux builds *require* (p)threads, otherwise very weird things can happen
+    set (THREADS_PREFER_PTHREAD_FLAG TRUE)
+    find_package (Threads REQUIRED)
+    target_link_libraries (rftest Threads::Threads)
+endif ()
 
 
 ###############################################################################
