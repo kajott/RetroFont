@@ -65,8 +65,8 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
     if (!ctx || !ctx->system || (!ctx->system->font_size.x && !ctx->font)) { return false; }
     if (!new_width)  { new_width  = ctx->screen_size.x; }
     if (!new_height) { new_height = ctx->screen_size.y; }
-    if (new_width  <= 0) { new_width  = ctx->system->default_screen_size.x; }
-    if (new_height <= 0) { new_height = ctx->system->default_screen_size.y; }
+    if (!new_width  || (new_width  == RF_SIZE_DEFAULT)) { new_width  = ctx->system->default_screen_size.x; }
+    if (!new_height || (new_height == RF_SIZE_DEFAULT)) { new_height = ctx->system->default_screen_size.y; }
     c = new_screen = (RF_Cell*) malloc(sizeof(RF_Cell) * new_width * new_height);
     if (!new_screen) { return false; }
 
@@ -81,13 +81,13 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
 
     if (!ctx->screen) { ctx->screen_size.x = ctx->screen_size.y = 0; }
     for (uint16_t y = 0;  y < new_height;  ++y) {
-        const RF_Cell* r = ctx->screen ? &ctx->screen[ctx->screen_size.x * y] : &RF_EmptyCell;
+        const RF_Cell* r = ctx->screen ? &ctx->screen[ctx->screen_size.x * ((y < ctx->screen_size.y) ? y : (ctx->screen_size.y - 1))] : &RF_EmptyCell;
         for (uint16_t x = 0;  x < new_width;  ++x) {
             *c = *r;
             if ((x >= ctx->screen_size.x) || (y >= ctx->screen_size.y)) { c->codepoint = 32; }
             c->dirty = 1;
             ++c;
-            if ((x + 1) < ctx->screen_size.x) { ++r; }
+            if (((x + 1) < ctx->screen_size.x) && (y < ctx->screen_size.y)) { ++r; }
         }
     }
 

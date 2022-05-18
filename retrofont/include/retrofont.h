@@ -34,7 +34,7 @@ typedef struct s_RF_GlyphMapEntry RF_GlyphMapEntry;
 typedef struct s_RF_Context       RF_Context;
 
 // color-related constants and macros
-#define RF_COLOR_DEFAULT ((uint32_t)(-1))  //!< platform default FG/BG color
+#define RF_COLOR_DEFAULT ((uint32_t)(-1))  //!< system default FG/BG color
 #define RF_COLOR_BLACK   0x1000000ul  //!< standard black color
 #define RF_COLOR_BLUE    0x1000001ul  //!< standard blue color
 #define RF_COLOR_GREEN   0x1000002ul  //!< standard green color
@@ -53,6 +53,9 @@ typedef struct s_RF_Context       RF_Context;
 #define RF_COLOR_R(c) ((uint8_t)((c) >> 16))  //!< extract red   component from an RGB color
 #define RF_COLOR_G(c) ((uint8_t)((c) >>  8))  //!< extract green component from an RGB color
 #define RF_COLOR_B(c) ((uint8_t) (c))         //!< extract blue  component from an RGB color
+
+// misc other constants
+#define RF_SIZE_DEFAULT ((uint16_t)(-1))  //!< system default size
 
 //! map any RGB color to one of the standard 16 colors (RF_COLOR_DEFAULT is left untouched)
 //! \param bright_threshold  if the brightest component is brighter than this, the bright flag is set
@@ -208,8 +211,8 @@ bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id);
 bool RF_SetFont(RF_Context* ctx, uint32_t font_id);
 
 //! resize the screen (or initialize it if not called before)
-//! \param new_width    target width  (0 = keep old value; <0 = system default)
-//! \param new_height   target height (0 = keep old value; <0 = system default)
+//! \param new_width    target width  (0 = keep old value; RF_SIZE_DEFAULT = system default)
+//! \param new_height   target height (0 = keep old value; RF_SIZE_DEFAULT = system default)
 //! \param with_border  whether to render the border
 //! \returns true if successful, false if failed
 //! \note This *MUST* be called after RF_CreateContext/RF_SetSystem and RF_SetFont

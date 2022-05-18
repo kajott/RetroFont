@@ -281,7 +281,9 @@ void RFTestApp::drawUI() {
         if (ImGui::BeginCombo("system", (m_ctx && m_ctx->system) ? m_ctx->system->name : "???", 0)) {
             for (const RF_System* const* p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
                 if (ImGui::Selectable((*p_sys)->name, m_ctx && (m_ctx->system == *p_sys))) {
-                    // TODO: change system here
+                    if (RF_SetSystem(m_ctx, (*p_sys)->sys_id)) {
+                        RF_ResizeScreen(m_ctx, RF_SIZE_DEFAULT, RF_SIZE_DEFAULT, true);
+                    }
                 }
             }
             ImGui::EndCombo();
@@ -296,7 +298,9 @@ void RFTestApp::drawUI() {
                     continue;
                 }
                 if (ImGui::Selectable(font->name, m_ctx && (m_ctx->font == font))) {
-                    // TODO: change font here
+                    if (RF_SetFont(m_ctx, font->font_id)) {
+                        RF_ResizeScreen(m_ctx, 0,0, true);
+                    }
                 }
             }
             ImGui::EndCombo();
