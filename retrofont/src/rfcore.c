@@ -10,33 +10,32 @@
 RF_Context* RF_CreateContext(uint32_t sys_id) {
     RF_Context* ctx = (RF_Context*) calloc(1, sizeof(RF_Context));
     if (!ctx) { return NULL; }
-    ctx->system = RF_SystemList[0];
-//printf("searching for sys_id 0x%08X\n", sys_id);
+    if (!sys_id) { sys_id = RF_SystemList[0]->sys_id; }
+    if (!RF_SetSystem(ctx, sys_id)) { free((void*)ctx); return NULL; }
+    return ctx;
+}
+
+bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id) {
+    if (!ctx) { return false; }
     for (const RF_System* const* p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
-//printf("                  == 0x%08X? -> %s\n", (*p_sys)->sys_id, ((*p_sys)->sys_id == sys_id) ? "YES" : "no");
         if ((*p_sys)->sys_id == sys_id) {
             ctx->system = *p_sys;
-            break;
+            ctx->default_fg = ctx->default_bg = ctx->border_color = RF_COLOR_DEFAULT;
+            return RF_SetFont(ctx, 0);
         }
     }
-    if (!ctx->system || !RF_SetFont(ctx, 0)) { free((void*)ctx); return NULL; }
-    ctx->default_fg = ctx->default_bg = ctx->border_color = RF_COLOR_DEFAULT;
-    return ctx;
+    return false;
 }
 
 bool RF_SetFont(RF_Context* ctx, uint32_t font_id) {
     bool result = false;
     if (!ctx || !ctx->system) { return false; }
     if (!font_id) { font_id = ctx->system->default_font_id; }
-//printf("searching for font_id 0x%08X (%dx%d)\n", font_id, ctx->system->font_size.x, ctx->system->font_size.y);
     for (const RF_Font* font = RF_FontList;  font->font_id;  ++font) {
-//printf("                   == 0x%08X? (%dx%d) -> ", font->font_id, font->font_size.x, font->font_size.y);
         if ((ctx->system->font_size.x && (font->font_size.x != ctx->system->font_size.x))
         ||  (ctx->system->font_size.y && (font->font_size.y != ctx->system->font_size.y))) {
-//printf("size mismatch\n");
             continue;  // font size doesn't match with current system
         }
-//printf("%s\n", (font->font_id == font_id) ? "YES" : "no");
         if (font->font_id == font_id) {  // font found
             ctx->font = font;
             result = true;
@@ -61,8 +60,10 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
     uint8_t *new_bmp;
 
     if (!ctx || !ctx->system || (!ctx->system->font_size.x && !ctx->font)) { return false; }
-    if (!new_width)  { new_width  = ctx->system->default_screen_size.x; }
-    if (!new_height) { new_height = ctx->system->default_screen_size.y; }
+    if (!new_width)  { new_width  = ctx->screen_size.x; }
+    if (!new_height) { new_height = ctx->screen_size.y; }
+    if (new_width  <= 0) { new_width  = ctx->system->default_screen_size.x; }
+    if (new_height <= 0) { new_height = ctx->system->default_screen_size.y; }
     c = new_screen = (RF_Cell*) malloc(sizeof(RF_Cell) * new_width * new_height);
     if (!new_screen) { return false; }
 

@@ -30,5 +30,5 @@ const RF_SysClass genclass = {
     gen_render_cell
 };
 
-//                                 sys_id,            name,      class,    scrsz,   cellsz, fontsz, b_ul,  b_lr,  double, blink, default_font_id
-const RF_System RF_Sys_Generic = { RF_COLOR_DEFAULT, "Generic", &genclass, {80,24}, {0,0},  {0,0},  {0,0}, {0,0}, false,      0, RF_MAKE_ID('P','C','6','V') };
+//                                 sys_id,            name,      class,    scrsz,   cellsz, fontsz, b_ul,  b_lr, blink, default_font_id
+const RF_System RF_Sys_Generic = { RF_COLOR_DEFAULT, "Generic", &genclass, {80,24}, {0,0},  {0,0},  {0,0}, {0,0},    0, RF_MAKE_ID('P','C','6','V') };

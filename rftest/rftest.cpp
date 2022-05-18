@@ -345,14 +345,14 @@ void RFTestApp::drawUI() {
         }
 
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("borders:"); ImGui::SameLine();
+        ImGui::TextUnformatted("borders:"); ImGui::SameLine();
         int borderMode = 0;
         ImGui::RadioButton("full",    &borderMode, 0); ImGui::SameLine();
         ImGui::RadioButton("reduced", &borderMode, 1); ImGui::SameLine();
         ImGui::RadioButton("minimal", &borderMode, 2);
 
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("size:"); ImGui::SameLine();
+        ImGui::TextUnformatted("size:"); ImGui::SameLine();
         int dynaSize = 0;
         ImGui::RadioButton("fixed",   &dynaSize, 0); ImGui::SameLine();
         ImGui::RadioButton("dynamic", &dynaSize, 1);
