@@ -7,6 +7,10 @@
 
 #include "retrofont.h"
 
+const RF_Cell RF_EmptyCell = { 32, 1, 0,0,0,0,0,0, RF_COLOR_DEFAULT, RF_COLOR_DEFAULT };
+
+///////////////////////////////////////////////////////////////////////////////
+
 RF_Context* RF_CreateContext(uint32_t sys_id) {
     RF_Context* ctx = (RF_Context*) calloc(1, sizeof(RF_Context));
     if (!ctx) { return NULL; }
@@ -54,7 +58,6 @@ bool RF_SetFont(RF_Context* ctx, uint32_t font_id) {
 }
 
 bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, bool with_border) {
-    static const RF_Cell empty_cell = { 32, 1, 0,0,0,0,0,0, RF_COLOR_DEFAULT, RF_COLOR_DEFAULT };
     RF_Cell *new_screen, *c;
     RF_Coord bmpsize;
     uint8_t *new_bmp;
@@ -78,7 +81,7 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
 
     if (!ctx->screen) { ctx->screen_size.x = ctx->screen_size.y = 0; }
     for (uint16_t y = 0;  y < new_height;  ++y) {
-        const RF_Cell* r = ctx->screen ? &ctx->screen[ctx->screen_size.x * y] : &empty_cell;
+        const RF_Cell* r = ctx->screen ? &ctx->screen[ctx->screen_size.x * y] : &RF_EmptyCell;
         for (uint16_t x = 0;  x < new_width;  ++x) {
             *c = *r;
             if ((x >= ctx->screen_size.x) || (y >= ctx->screen_size.y)) { c->codepoint = 32; }
@@ -110,6 +113,18 @@ void RF_MoveCursor(RF_Context* ctx, uint16_t new_col, uint16_t new_row) {
     ctx->cursor_pos.y = new_row;
 }
 
+void RF_ClearScreen(RF_Context* ctx, const RF_Cell* cell) {
+    RF_Cell* c;
+    if (!ctx || !ctx->screen) { return; }
+    if (!cell) { cell = &RF_EmptyCell; }
+    c = ctx->screen;
+    for (size_t count = (size_t)ctx->screen_size.x * (size_t)ctx->screen_size.y;  count;  --count) {
+        *c = *cell;
+        c->dirty = 1;
+        ++c;
+    }
+}
+
 void RF_Invalidate(RF_Context* ctx, bool with_border) {
     RF_Cell *c;
     if (!ctx || !ctx->screen) { return; }
@@ -120,6 +135,15 @@ void RF_Invalidate(RF_Context* ctx, bool with_border) {
     }
     if (with_border) { ctx->border_color_changed = true; }
 }
+
+void RF_DestroyContext(RF_Context* ctx) {
+    if (!ctx) { return; }
+    free((void*)ctx->screen);  ctx->screen = NULL;
+    free((void*)ctx->bitmap);  ctx->bitmap = NULL;
+    free((void*)ctx);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 #define PUT_PIXEL(p, color) do { \
     *p++ = RF_COLOR_R(color); \
@@ -248,12 +272,57 @@ void RF_RenderCell(
     }
 }
 
-void RF_DestroyContext(RF_Context* ctx) {
-    if (!ctx) { return; }
-    free((void*)ctx->screen);  ctx->screen = NULL;
-    free((void*)ctx->bitmap);  ctx->bitmap = NULL;
-    free((void*)ctx);
+///////////////////////////////////////////////////////////////////////////////
+
+void RF_DemoScreen(RF_Context* ctx) {
+    if (!ctx || !ctx->screen) { return; }
+    static const uint32_t cp_offsets[] = {
+        0x0020, 0x0040, 0x0060,          // Basic Latin (a.k.a. standard ASCII)
+        0x00A0, 0x00C0, 0x00E0,          // Latin-1 Supplement
+        0x2580,                          // Block Elements
+        0x1FB70, 0x1FB90,                // (some) Symbols for Legacy Computing
+        0x2500, 0x2520, 0x2540, 0x2560,  // Box Drawing
+        0x25A0, 0x25C0, 0x25E0,          // Geometric Shapes
+        0x2190,                          // Arrows (most basic ones only)
+    };
+    uint16_t demo_row_count = (uint16_t)(sizeof(cp_offsets) / sizeof(*cp_offsets));
+    uint16_t attribute_start_row = (ctx->screen_size.y > demo_row_count) || (ctx->screen_size.x > 32) ? demo_row_count : 9;
+    RF_Cell *c = ctx->screen;
+    for (uint16_t y = 0;  y < ctx->screen_size.y;  ++y) {
+        for (uint16_t x = 0;  x < ctx->screen_size.x;  ++x) {
+            uint32_t row_mod = 3;
+            if (y >= attribute_start_row) {
+                uint16_t r = (uint16_t) rand();
+                c->fg = RF_COLOR_BLACK | (rand() & 15);
+                do { c->bg = RF_COLOR_BLACK | (rand() & 15); } while (c->bg == c->fg);
+                c->bold      = r >> 0;
+                c->dim       = r >> 1;
+                c->underline = r >> 2;
+                c->blink     = r >> 3;
+                c->reverse   = r >> 4;
+                c->invisible = (r & 0x3F00) ? 0 : 1;  // make this very rare
+            } else if (x >= 64) {
+                c->bold      = y >> 0;
+                c->dim       = x >> 0;
+                c->underline = y >> 1;
+                c->blink     = x >> 1;
+                c->reverse   = y >> 2;
+                c->invisible = x >> 2;
+            } else if (x >= 32) {
+                c->fg = RF_COLOR_BLACK | (x & 15);
+                c->bg = RF_COLOR_BLACK | (y & 15);
+                c->reverse = x >> 4;
+            } else {
+                row_mod = demo_row_count;
+            }
+            c->codepoint = (x & 31) + cp_offsets[y % row_mod];
+            c->dirty = 1;
+            ++c;
+        }
+    }
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 uint32_t RF_MapRGBToStandardColor(uint32_t color, uint8_t bright_threshold) {
     if (!RF_IS_RGB_COLOR(color)) { return color; }

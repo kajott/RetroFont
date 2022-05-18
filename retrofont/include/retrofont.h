@@ -191,6 +191,7 @@ struct s_RF_Context {
 extern const RF_System* const RF_SystemList[];    //!< system registry
 extern const RF_Font          RF_FontList[];      //!< font registry
 extern const uint8_t          RF_GlyphBitmaps[];  //!< glyph bitmaps
+extern const RF_Cell          RF_EmptyCell;       //!< cell with default contents
 
 //! create empty context with specified system ID
 //! \note before the context can be used, RF_ResizeScreen() must be called
@@ -223,6 +224,16 @@ void RF_MoveCursor(RF_Context* ctx, uint16_t new_col, uint16_t new_row);
 #define RF_SetBackgroundColor(ctx, c) do { (ctx)->default_bg = c;   RF_Invalidate(ctx, false); } while(0)
 //! set the border color
 #define RF_SetBorderColor(ctx, c)     do { (ctx)->border_color = c; (ctx)->border_color_changed = true; } while(0)
+
+//! clear the screen
+//! \param cell  cell contents to fill the screen with; NULL = use empty cell
+void RF_ClearScreen(RF_Context* ctx, const RF_Cell* cell);
+//! clear the screen, all attributes and all colors
+#define RF_ClearAll(ctx) do { RF_ClearScreen(ctx, NULL); if (ctx) { (ctx)->default_fg = (ctx)->default_bg = RF_COLOR_DEFAULT; } RF_SetBorderColor(ctx, RF_COLOR_DEFAULT); } while (0)
+
+//! create a "demo" screen with character set and attribute tests
+//! \note uses the C library's rand() function; make sure to srand() before!
+void RF_DemoScreen(RF_Context* ctx);
 
 //! invalidate the whole screen
 void RF_Invalidate(RF_Context* ctx, bool with_border);
