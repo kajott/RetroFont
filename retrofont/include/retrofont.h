@@ -178,6 +178,9 @@ struct s_RF_Context {
     uint8_t *bitmap;            //!< rendered bitmap, top-down, RGB888 format
     size_t stride;              //!< distance between rows (always bitmap_size.x * 3)
     RF_Coord bitmap_size;       //!< size of the bitmap, in pixels
+    RF_Coord main_ul;           //!< pixel coordinate of the upper-left corner of the main screen area
+    RF_Coord main_lr;           //!< pixel coordinate of the lower-right corner of the main screen area (non inclusive)
+    float pixel_aspect;         //!< system's pixel aspect ratio
     uint32_t border_rgb;        //!< border color (translated to RGB by RF_Render)
 //private:
     RF_Coord cursor_pos;        //!< \private cursor position

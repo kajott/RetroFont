@@ -25,6 +25,12 @@ class RFTestApp {
     int m_renderFrames = 2;
     bool m_showDemo = false;
 
+    // border mode
+    static constexpr int bmFull    = 0;
+    static constexpr int bmReduced = 1;
+    static constexpr int bmNone    = 2;
+    int m_borderMode = bmFull;
+
     // UI functions
     void drawUI();
 

@@ -25,7 +25,14 @@ bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id) {
         if ((*p_sys)->sys_id == sys_id) {
             ctx->system = *p_sys;
             ctx->default_fg = ctx->default_bg = ctx->border_color = RF_COLOR_DEFAULT;
-            return RF_SetFont(ctx, 0);
+            ctx->pixel_aspect = 1.0f;
+            if (!RF_SetFont(ctx, 0)) { return false; }
+            if ((*p_sys)->font_size.x && (*p_sys)->font_size.y) {
+                uint32_t sx = (*p_sys)->border_ul.x + (uint32_t)((*p_sys)->cell_size.x) * (uint32_t)((*p_sys)->default_screen_size.x) + (*p_sys)->border_lr.x;
+                uint32_t sy = (*p_sys)->border_ul.y + (uint32_t)((*p_sys)->cell_size.y) * (uint32_t)((*p_sys)->default_screen_size.y) + (*p_sys)->border_lr.y;
+                ctx->pixel_aspect = (4.0f * (float)sy) / (3.0f * (float)sx);
+            }
+            return true;
         }
     }
     return false;
@@ -99,6 +106,14 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
     ctx->stride = bmpsize.x * 3;
     ctx->bitmap_size = bmpsize;
     ctx->has_border = with_border && ((ctx->system->border_lr.x | ctx->system->border_lr.y | ctx->system->border_ul.x | ctx->system->border_ul.y) != 0);
+    if (ctx->has_border) {
+        ctx->main_ul = ctx->system->border_ul;
+        ctx->main_lr.x = bmpsize.x - ctx->system->border_lr.x;
+        ctx->main_lr.y = bmpsize.y - ctx->system->border_lr.y;
+    } else {
+        ctx->main_ul.x = ctx->main_ul.y = 0;
+        ctx->main_lr = bmpsize;
+    }
     ctx->border_color_changed = true;
     return true;
 }

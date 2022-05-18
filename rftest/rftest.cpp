@@ -9,6 +9,8 @@
 #include <cmath>
 #include <cassert>
 
+#include <algorithm>
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include "gl_header.h"
@@ -194,9 +196,9 @@ int RFTestApp::run(int argc, char *argv[]) {
         // start display rendering
         GLutil::clearError();
         if (m_ctx) {
-            glClearColor(RF_COLOR_R(m_ctx->border_color) / 255.0f,
-                         RF_COLOR_G(m_ctx->border_color) / 255.0f,
-                         RF_COLOR_B(m_ctx->border_color) / 255.0f,
+            glClearColor(RF_COLOR_R(m_ctx->border_rgb) / 255.0f,
+                         RF_COLOR_G(m_ctx->border_rgb) / 255.0f,
+                         RF_COLOR_B(m_ctx->border_rgb) / 255.0f,
                          1.0f);
         }
         glViewport(0, 0, int(m_io->DisplaySize.x), int(m_io->DisplaySize.y));
@@ -204,6 +206,39 @@ int RFTestApp::run(int argc, char *argv[]) {
 
         // draw the screen
         if (m_ctx) {
+            // geometry computations
+            int x0, y0, x1, y1;
+            if (m_borderMode == bmFull) {
+                x0 = y0 = 0;
+                x1 = m_ctx->bitmap_size.x;
+                y1 = m_ctx->bitmap_size.y;
+            } else {
+                int border = ((m_borderMode == bmNone) || !m_ctx->font) ? 0
+                           : std::min(m_ctx->font->font_size.x, m_ctx->font->font_size.y);
+                x0 = std::max(m_ctx->main_ul.x - border, 0);
+                y0 = std::max(m_ctx->main_ul.y - border, 0);
+                x1 = std::min(m_ctx->main_lr.x + border, int(m_ctx->bitmap_size.x));
+                y1 = std::min(m_ctx->main_lr.y + border, int(m_ctx->bitmap_size.y));
+            }
+            double pixelAspect = m_ctx->pixel_aspect
+                               * ((x1 - x0) * m_io->DisplaySize.y)
+                               / ((y1 - y0) * m_io->DisplaySize.x);
+            double sx, sy, ox, oy;
+            if (pixelAspect < 1.0) {
+                // Pillarbox
+                sy = 2.0 / (y1 - y0) * m_ctx->bitmap_size.y;
+                sx = sy * pixelAspect;
+                oy = -1.0 - sy * y0 / m_ctx->bitmap_size.y;
+                ox = -0.5 * (x0 + x1) * sx / m_ctx->bitmap_size.x;
+            } else {
+                // Letterbox
+                sx = 2.0 / (x1 - x0) * m_ctx->bitmap_size.x;
+                sy = sx / pixelAspect;
+                ox = -1.0 - sx * x0 / m_ctx->bitmap_size.x;
+                oy = -0.5 * (y0 + y1) * sy / m_ctx->bitmap_size.y;
+            }
+
+            // actual drawing
             glBindTexture(GL_TEXTURE_2D, m_tex);
             if (RF_Render(m_ctx, uint32_t(glfwGetTime() * 1000.0))) {
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8,
@@ -212,7 +247,7 @@ int RFTestApp::run(int argc, char *argv[]) {
                              (const void*) m_ctx->bitmap);
             }
             glUseProgram(m_prog);
-            glUniform4f(m_locArea, 2.0f, -2.0f, -1.0f, 1.0f);
+            glUniform4f(m_locArea, float(sx), -float(sy), float(ox), -float(oy));
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         }
 
@@ -308,10 +343,9 @@ void RFTestApp::drawUI() {
 
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted("borders:"); ImGui::SameLine();
-        int borderMode = 0;
-        ImGui::RadioButton("full",    &borderMode, 0); ImGui::SameLine();
-        ImGui::RadioButton("reduced", &borderMode, 1); ImGui::SameLine();
-        ImGui::RadioButton("minimal", &borderMode, 2);
+        ImGui::RadioButton("full",    &m_borderMode, bmFull);    ImGui::SameLine();
+        ImGui::RadioButton("reduced", &m_borderMode, bmReduced); ImGui::SameLine();
+        ImGui::RadioButton("none",    &m_borderMode, bmNone);
 
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted("size:"); ImGui::SameLine();
