@@ -230,8 +230,8 @@ int RFTestApp::run(int argc, char *argv[]) {
             if ((m_screenMode == smDynamic) || (m_renderMode == rmIntegral)) {
                 // ***** integer scaling *****
                 // get (integer) pixel aspect ratio
-                int isx = std::max(1, int(       m_ctx->pixel_aspect + 0.25f));
-                int isy = std::max(1, int(1.0f / m_ctx->pixel_aspect + 0.25f));
+                int isx = m_ctx->system ? m_ctx->system->coarse_aspect.x : 1;
+                int isy = m_ctx->system ? m_ctx->system->coarse_aspect.y : 1;
                 // determine zoom (specified upfront, or by zoom-zo-fit)
                 int zoom = (m_screenMode == smDynamic) ? m_zoom
                          : std::max(1, std::min(

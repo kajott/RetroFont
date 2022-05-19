@@ -149,6 +149,7 @@ struct s_RF_System {
                                     //!<       then accepts any font size on this axis
     RF_Coord border_ul;             //!< default upper-left border
     RF_Coord border_lr;             //!< default lower-right border
+    RF_Coord coarse_aspect;         //!< coarse pixel aspect ratio (typically 1x1, 1x2 or 2x1)
     uint32_t blink_interval_msec;   //!< blinking interval in milliseconds; 0 = no blinking
     uint32_t default_font_id;       //!< ID of the system's default font
 };
