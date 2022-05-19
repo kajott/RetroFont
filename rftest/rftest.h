@@ -52,6 +52,11 @@ class RFTestApp {
     // UI functions
     void drawUI();
 
+    // internal functions
+    int getBorderSize() const;
+    void updateSize(bool force=false, bool forceDefault=false);
+    void updateSize(int width, int height, bool force=false, bool forceDefault=false);
+
     // event handling
     void handleKeyEvent(int key, int scancode, int action, int mods);
     void handleMouseButtonEvent(int button, int action, int mods);

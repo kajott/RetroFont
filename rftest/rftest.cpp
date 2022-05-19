@@ -72,6 +72,8 @@ int RFTestApp::run(int argc, char *argv[]) {
         { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->handleCursorPosEvent(xpos, ypos); });
     glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xoffset, double yoffset)
         { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->handleScrollEvent(xoffset, yoffset); });
+    glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height)
+        { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->updateSize(width, height); });
 
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1);
@@ -90,6 +92,7 @@ int RFTestApp::run(int argc, char *argv[]) {
         return 1;
     }
     GLutil::enableDebugMessages();
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     ImGui::CreateContext();
     m_io = &ImGui::GetIO();
@@ -198,9 +201,9 @@ int RFTestApp::run(int argc, char *argv[]) {
         // start display rendering
         GLutil::clearError();
         if (m_ctx) {
-            glClearColor(RF_COLOR_R(m_ctx->border_rgb) / 1255.0f,
-                         RF_COLOR_G(m_ctx->border_rgb) / 1255.0f,
-                         RF_COLOR_B(m_ctx->border_rgb) / 1255.0f,
+            glClearColor(RF_COLOR_R(m_ctx->border_rgb) / 255.0f,
+                         RF_COLOR_G(m_ctx->border_rgb) / 255.0f,
+                         RF_COLOR_B(m_ctx->border_rgb) / 255.0f,
                          1.0f);
         }
         glViewport(0, 0, int(m_io->DisplaySize.x), int(m_io->DisplaySize.y));
@@ -215,12 +218,7 @@ int RFTestApp::run(int argc, char *argv[]) {
                 x1 = m_ctx->bitmap_size.x;
                 y1 = m_ctx->bitmap_size.y;
             } else {
-                int border;
-                switch (m_borderMode) {
-                    case bmReduced:    border = std::min(m_ctx->font->font_size.x, m_ctx->font->font_size.y); break;
-                    case bmMinimal:    border = 2; break;
-                    default/*bmNone*/: border = 0; break;
-                }
+                int border = getBorderSize();
                 x0 = std::max(m_ctx->main_ul.x - border, 0);
                 y0 = std::max(m_ctx->main_ul.y - border, 0);
                 x1 = std::min(m_ctx->main_lr.x + border, int(m_ctx->bitmap_size.x));
@@ -342,6 +340,46 @@ void RFTestApp::handleScrollEvent(double xoffset, double yoffset) {
     if (m_io->WantCaptureMouse) { return; }
 }
 
+int RFTestApp::getBorderSize() const {
+    switch (m_borderMode) {
+        case bmFull:       return (m_ctx && m_ctx->system) ? ((m_ctx->system->border_ul.x + m_ctx->system->border_ul.y + m_ctx->system->border_lr.x + m_ctx->system->border_lr.y + 2) >> 2) : 8;
+        case bmReduced:    return (m_ctx && m_ctx->font) ? std::min(m_ctx->font->font_size.x, m_ctx->font->font_size.y) : 4;
+        case bmMinimal:    return 2;
+        default/*bmNone*/: return 0;
+    }
+}
+
+void RFTestApp::updateSize(bool force, bool forceDefault) {
+    updateSize(int(m_io->DisplaySize.x), int(m_io->DisplaySize.y), force, forceDefault);
+}
+
+void RFTestApp::updateSize(int width, int height, bool force, bool forceDefault) {
+    if (!m_ctx || !m_ctx->system || !m_ctx->font) { return; }
+    if (m_screenMode == smDynamic) {
+        // divide by zoom
+        width  /= m_zoom * m_ctx->system->coarse_aspect.x;
+        height /= m_zoom * m_ctx->system->coarse_aspect.y;
+        // subtract borders
+        width  -= (m_borderMode == bmFull) ? (m_ctx->system->border_ul.x + m_ctx->system->border_lr.x) : getBorderSize();
+        height -= (m_borderMode == bmFull) ? (m_ctx->system->border_ul.y + m_ctx->system->border_lr.y) : getBorderSize();
+        // divide by cell size
+        width  /= m_ctx->system->cell_size.x + (m_ctx->system->font_size.x ? 0 : m_ctx->font->font_size.x);
+        height /= m_ctx->system->cell_size.y + (m_ctx->system->font_size.y ? 0 : m_ctx->font->font_size.y);
+        // clamp to at least one cell
+        width  = std::max(1, width);
+        height = std::max(1, height);
+    } else if (force) {
+        width = height = forceDefault ? RF_SIZE_DEFAULT : 0;
+    } else {
+        return;  // no change
+    }
+    // activate
+    RF_ResizeScreen(m_ctx, uint16_t(width), uint16_t(height), true);
+    #ifndef NDEBUG
+        printf("set screen size: %dx%d cells -> %dx%d pixels\n", m_ctx->screen_size.x, m_ctx->screen_size.y, m_ctx->bitmap_size.x, m_ctx->bitmap_size.y);
+    #endif
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void RFTestApp::drawUI() {
@@ -354,7 +392,7 @@ void RFTestApp::drawUI() {
             for (const RF_System* const* p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
                 if (ImGui::Selectable((*p_sys)->name, m_ctx && (m_ctx->system == *p_sys))) {
                     if (RF_SetSystem(m_ctx, (*p_sys)->sys_id)) {
-                        RF_ResizeScreen(m_ctx, RF_SIZE_DEFAULT, RF_SIZE_DEFAULT, true);
+                        updateSize(true, true);
                     }
                 }
             }
@@ -371,19 +409,21 @@ void RFTestApp::drawUI() {
                 }
                 if (ImGui::Selectable(font->name, m_ctx && (m_ctx->font == font))) {
                     if (RF_SetFont(m_ctx, font->font_id)) {
-                        RF_ResizeScreen(m_ctx, 0,0, true);
+                        updateSize(true, false);
                     }
                 }
             }
             ImGui::EndCombo();
         }
 
-        ImGui::SliderInt("borders", &m_borderMode, bmNone, bmFull, BorderModeStrings[m_borderMode]);
-        ImGui::SliderInt("screen size", &m_screenMode, smFixed, smDynamic, ScreenModeStrings[m_screenMode]);
+        if (ImGui::SliderInt("borders", &m_borderMode, bmNone, bmFull, BorderModeStrings[m_borderMode]))
+            { updateSize(); }
+        if (ImGui::SliderInt("screen size", &m_screenMode, smFixed, smDynamic, ScreenModeStrings[m_screenMode]))
+            { updateSize(); }
         if (m_screenMode == smFixed) {
             ImGui::SliderInt("scaling mode", &m_renderMode, rmIntegral, rmSmooth, RenderModeStrings[m_renderMode]);
         } else {
-            ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx");
+            if (ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx")) { updateSize(); }
         }
     }
     ImGui::End();
