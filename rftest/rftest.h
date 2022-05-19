@@ -19,6 +19,7 @@ class RFTestApp {
     GLutil::Program m_prog;
     GLint m_locArea;
     GLint m_locMode;
+    GLint m_locSize;
 
     // UI state
     bool m_active = true;
@@ -26,10 +27,27 @@ class RFTestApp {
     bool m_showDemo = false;
 
     // border mode
-    static constexpr int bmFull    = 0;
-    static constexpr int bmReduced = 1;
-    static constexpr int bmNone    = 2;
+    static constexpr int bmNone    = 0;
+    static constexpr int bmMinimal = 1;
+    static constexpr int bmReduced = 2;
+    static constexpr int bmFull    = 3;
+    static constexpr char* BorderModeStrings[] = { "no", "minimal", "reduced", "full" };
     int m_borderMode = bmFull;
+
+    // screen mode
+    static constexpr int smFixed   = 0;
+    static constexpr int smDynamic = 1;
+    static constexpr char* ScreenModeStrings[] = { "fixed", "dynamic" };
+    int m_screenMode = smFixed;
+
+    // render modes / zoom
+    static constexpr int rmIntegral   = 0;
+    static constexpr int rmUnfiltered = 1;
+    static constexpr int rmBlocky     = 2;
+    static constexpr int rmSmooth     = 3;
+    static constexpr char* RenderModeStrings[] = { "integer (w/o aspect ratio)", "nearest-neighbor", "antialiased", "smooth" };
+    int m_renderMode = rmBlocky;
+    int m_zoom = 1;
 
     // UI functions
     void drawUI();

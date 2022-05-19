@@ -100,8 +100,6 @@ int RFTestApp::run(int argc, char *argv[]) {
     glBindTexture(GL_TEXTURE_2D, m_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
     GLutil::checkError("texture setup");
 
@@ -123,13 +121,16 @@ int RFTestApp::run(int argc, char *argv[]) {
         GLutil::Shader fs(GL_FRAGMENT_SHADER,
              "#version 330 core"
         "\n" "uniform int uMode;"
+        "\n" "uniform vec2 uSize;"
         "\n" "uniform sampler2D uTex;"
         "\n" "in vec2 vPos;"
         "\n" "out vec4 oColor;"
         "\n" "void main() {"
         "\n" "  vec2 pos = vPos;"
         "\n" "  if (uMode != 0) {"
-        "\n" "    // TODO"
+        "\n" "    pos *= uSize;\n"
+        "\n" "    vec2 i = floor(pos + 0.5);\n"
+        "\n" "    pos = (i + clamp((pos - i) / fwidth(pos), -0.5, 0.5)) / uSize;\n"
         "\n" "  }"
         "\n" "  oColor = texture(uTex, pos);"
         "\n" "}"
@@ -145,6 +146,7 @@ int RFTestApp::run(int argc, char *argv[]) {
         }
         m_locArea = glGetUniformLocation(m_prog, "uArea");
         m_locMode = glGetUniformLocation(m_prog, "uMode");
+        m_locSize = glGetUniformLocation(m_prog, "uSize");
     }
 
     m_ctx = RF_CreateContext(want_sys_id);
@@ -196,9 +198,9 @@ int RFTestApp::run(int argc, char *argv[]) {
         // start display rendering
         GLutil::clearError();
         if (m_ctx) {
-            glClearColor(RF_COLOR_R(m_ctx->border_rgb) / 255.0f,
-                         RF_COLOR_G(m_ctx->border_rgb) / 255.0f,
-                         RF_COLOR_B(m_ctx->border_rgb) / 255.0f,
+            glClearColor(RF_COLOR_R(m_ctx->border_rgb) / 1255.0f,
+                         RF_COLOR_G(m_ctx->border_rgb) / 1255.0f,
+                         RF_COLOR_B(m_ctx->border_rgb) / 1255.0f,
                          1.0f);
         }
         glViewport(0, 0, int(m_io->DisplaySize.x), int(m_io->DisplaySize.y));
@@ -213,40 +215,75 @@ int RFTestApp::run(int argc, char *argv[]) {
                 x1 = m_ctx->bitmap_size.x;
                 y1 = m_ctx->bitmap_size.y;
             } else {
-                int border = ((m_borderMode == bmNone) || !m_ctx->font) ? 0
-                           : std::min(m_ctx->font->font_size.x, m_ctx->font->font_size.y);
+                int border;
+                switch (m_borderMode) {
+                    case bmReduced:    border = std::min(m_ctx->font->font_size.x, m_ctx->font->font_size.y); break;
+                    case bmMinimal:    border = 2; break;
+                    default/*bmNone*/: border = 0; break;
+                }
                 x0 = std::max(m_ctx->main_ul.x - border, 0);
                 y0 = std::max(m_ctx->main_ul.y - border, 0);
                 x1 = std::min(m_ctx->main_lr.x + border, int(m_ctx->bitmap_size.x));
                 y1 = std::min(m_ctx->main_lr.y + border, int(m_ctx->bitmap_size.y));
             }
-            double pixelAspect = m_ctx->pixel_aspect
-                               * ((x1 - x0) * m_io->DisplaySize.y)
-                               / ((y1 - y0) * m_io->DisplaySize.x);
             double sx, sy, ox, oy;
-            if (pixelAspect < 1.0) {
-                // Pillarbox
-                sy = 2.0 / (y1 - y0) * m_ctx->bitmap_size.y;
-                sx = sy * pixelAspect;
-                oy = -1.0 - sy * y0 / m_ctx->bitmap_size.y;
-                ox = -0.5 * (x0 + x1) * sx / m_ctx->bitmap_size.x;
+            if ((m_screenMode == smDynamic) || (m_renderMode == rmIntegral)) {
+                // ***** integer scaling *****
+                // get (integer) pixel aspect ratio
+                int isx = std::max(1, int(       m_ctx->pixel_aspect + 0.25f));
+                int isy = std::max(1, int(1.0f / m_ctx->pixel_aspect + 0.25f));
+                // determine zoom (specified upfront, or by zoom-zo-fit)
+                int zoom = (m_screenMode == smDynamic) ? m_zoom
+                         : std::max(1, std::min(
+                                    int(m_io->DisplaySize.x) / ((x1 - x0) * isx),
+                                    int(m_io->DisplaySize.y) / ((y1 - y0) * isy)));
+                // zoom * aspect = integer size
+                isx *= zoom;
+                isy *= zoom;
+                // integer size -> NDC size
+                sx = 2.0 * m_ctx->bitmap_size.x * isx / m_io->DisplaySize.x;
+                sy = 2.0 * m_ctx->bitmap_size.y * isy / m_io->DisplaySize.y;
+                // compute integer offset
+                // (required -- otherwise we might start exactly halfway
+                // inside a pixel, causing very nasty scaling artifacts
+                // due to critical rounding)
+                int iox = int(m_io->DisplaySize.x * 0.5) - isx * ((x0 + x1) >> 1);
+                int ioy = int(m_io->DisplaySize.y * 0.5) - isy * ((y0 + y1) >> 1);
+                // integer offset -> NDC offset
+                ox = 2.0 * iox / m_io->DisplaySize.x - 1.0;
+                oy = 2.0 * ioy / m_io->DisplaySize.y - 1.0;
             } else {
-                // Letterbox
-                sx = 2.0 / (x1 - x0) * m_ctx->bitmap_size.x;
-                sy = sx / pixelAspect;
-                ox = -1.0 - sx * x0 / m_ctx->bitmap_size.x;
-                oy = -0.5 * (y0 + y1) * sy / m_ctx->bitmap_size.y;
+                // aspect-correct scaling
+                double pixelAspect = m_ctx->pixel_aspect
+                                * ((x1 - x0) * m_io->DisplaySize.y)
+                                / ((y1 - y0) * m_io->DisplaySize.x);
+                if (pixelAspect < 1.0) {
+                    // pillarbox
+                    sy = 2.0 / (y1 - y0) * m_ctx->bitmap_size.y;
+                    sx = sy * pixelAspect;
+                } else {
+                    // letterbox
+                    sx = 2.0 / (x1 - x0) * m_ctx->bitmap_size.x;
+                    sy = sx / pixelAspect;
+                }
+                ox = -0.5 * sx * (x0 + x1) / m_ctx->bitmap_size.x;
+                oy = -0.5 * sy * (y0 + y1) / m_ctx->bitmap_size.y;
             }
 
             // actual drawing
+            glUseProgram(m_prog);
             glBindTexture(GL_TEXTURE_2D, m_tex);
             if (RF_Render(m_ctx, uint32_t(glfwGetTime() * 1000.0))) {
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8,
                              m_ctx->bitmap_size.x, m_ctx->bitmap_size.y,
                              0, GL_RGB, GL_UNSIGNED_BYTE,
                              (const void*) m_ctx->bitmap);
+                glUniform2f(m_locSize, float(m_ctx->bitmap_size.x), float(m_ctx->bitmap_size.y));
             }
-            glUseProgram(m_prog);
+            GLenum filter = (m_screenMode == smDynamic) || (m_renderMode <= rmUnfiltered) ? GL_NEAREST : GL_LINEAR;
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+            glUniform1i(m_locMode, ((m_screenMode == smFixed) && (m_renderMode == rmBlocky)) ? 1 : 0);
             glUniform4f(m_locArea, float(sx), -float(sy), float(ox), -float(oy));
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         }
@@ -310,7 +347,7 @@ void RFTestApp::handleScrollEvent(double xoffset, double yoffset) {
 void RFTestApp::drawUI() {
     // main window begin
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(344.0f, 128.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(340.0f, 146.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
 
         if (ImGui::BeginCombo("system", (m_ctx && m_ctx->system) ? m_ctx->system->name : "???", 0)) {
@@ -341,17 +378,13 @@ void RFTestApp::drawUI() {
             ImGui::EndCombo();
         }
 
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("borders:"); ImGui::SameLine();
-        ImGui::RadioButton("full",    &m_borderMode, bmFull);    ImGui::SameLine();
-        ImGui::RadioButton("reduced", &m_borderMode, bmReduced); ImGui::SameLine();
-        ImGui::RadioButton("none",    &m_borderMode, bmNone);
-
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("size:"); ImGui::SameLine();
-        int dynaSize = 0;
-        ImGui::RadioButton("fixed",   &dynaSize, 0); ImGui::SameLine();
-        ImGui::RadioButton("dynamic", &dynaSize, 1);
+        ImGui::SliderInt("borders", &m_borderMode, bmNone, bmFull, BorderModeStrings[m_borderMode]);
+        ImGui::SliderInt("screen size", &m_screenMode, smFixed, smDynamic, ScreenModeStrings[m_screenMode]);
+        if (m_screenMode == smFixed) {
+            ImGui::SliderInt("scaling mode", &m_renderMode, rmIntegral, rmSmooth, RenderModeStrings[m_renderMode]);
+        } else {
+            ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx");
+        }
     }
     ImGui::End();
 }
