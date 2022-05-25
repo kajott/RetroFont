@@ -15,7 +15,7 @@ message (STATUS "Compiler Type: ${CMAKE_CXX_COMPILER_ID}")
 
 # set C/C++ language standards for compilers that respect them
 set (CMAKE_C_STANDARD 99)
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 17)
 
 # use the static C library with MSVC builds
 if (MSVC)

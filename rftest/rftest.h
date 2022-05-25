@@ -1,11 +1,15 @@
 #pragma once
 
 #include <cstdint>
+
+#include <array>
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include "gl_util.h"
 #include "gl_header.h"
 #include "imgui.h"
+
 #include "retrofont.h"
 
 class RFTestApp {
@@ -31,13 +35,13 @@ class RFTestApp {
     static constexpr int bmMinimal = 1;
     static constexpr int bmReduced = 2;
     static constexpr int bmFull    = 3;
-    static constexpr char* BorderModeStrings[] = { "no", "minimal", "reduced", "full" };
+    inline static constexpr std::array<const char*, 4> BorderModeStrings = {{ "no", "minimal", "reduced", "full" }};
     int m_borderMode = bmFull;
 
     // screen mode
     static constexpr int smFixed   = 0;
     static constexpr int smDynamic = 1;
-    static constexpr char* ScreenModeStrings[] = { "fixed", "dynamic" };
+    inline static constexpr std::array<const char*, 2> ScreenModeStrings = {{ "fixed", "dynamic" }};
     int m_screenMode = smFixed;
 
     // render modes / zoom
@@ -45,7 +49,7 @@ class RFTestApp {
     static constexpr int rmUnfiltered = 1;
     static constexpr int rmBlocky     = 2;
     static constexpr int rmSmooth     = 3;
-    static constexpr char* RenderModeStrings[] = { "integer (w/o aspect ratio)", "nearest-neighbor", "antialiased", "smooth" };
+    inline static constexpr std::array<const char*, 4> RenderModeStrings = {{ "integer (w/o aspect ratio)", "nearest-neighbor", "antialiased", "smooth" }};
     int m_renderMode = rmBlocky;
     int m_zoom = 1;
 
