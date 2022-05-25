@@ -418,8 +418,10 @@ void RFTestApp::drawUI() {
 
         if (ImGui::SliderInt("borders", &m_borderMode, bmNone, bmFull, BorderModeStrings[m_borderMode]))
             { updateSize(); }
-        if (ImGui::SliderInt("screen size", &m_screenMode, smFixed, smDynamic, ScreenModeStrings[m_screenMode]))
-            { updateSize(); }
+        if (ImGui::SliderInt("screen size", &m_screenMode, smFixed, smDynamic, ScreenModeStrings[m_screenMode])) {
+            bool backToFixed = (m_screenMode == smFixed);
+            updateSize(backToFixed, backToFixed);
+        }
         if (m_screenMode == smFixed) {
             ImGui::SliderInt("scaling mode", &m_renderMode, rmIntegral, rmSmooth, RenderModeStrings[m_renderMode]);
         } else {
