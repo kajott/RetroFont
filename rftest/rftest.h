@@ -63,6 +63,7 @@ class RFTestApp {
 
     // event handling
     void handleKeyEvent(int key, int scancode, int action, int mods);
+    void handleCharEvent(unsigned int codepoint);
     void handleMouseButtonEvent(int button, int action, int mods);
     void handleCursorPosEvent(double xpos, double ypos);
     void handleScrollEvent(double xoffset, double yoffset);

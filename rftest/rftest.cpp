@@ -66,6 +66,8 @@ int RFTestApp::run(int argc, char *argv[]) {
     glfwSetWindowUserPointer(m_window, static_cast<void*>(this));
     glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
         { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->handleKeyEvent(key, scancode, action, mods); });
+    glfwSetCharCallback(m_window, [](GLFWwindow* window, unsigned int codepoint)
+        { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->handleCharEvent(codepoint); });
     glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods)
         { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->handleMouseButtonEvent(button, action, mods); });
     glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double xpos, double ypos)
@@ -315,8 +317,64 @@ int RFTestApp::run(int argc, char *argv[]) {
 
 void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
     (void)scancode, (void)mods;
-    if ((action != GLFW_PRESS) || m_io->WantCaptureKeyboard) { return; }
+    if (((action != GLFW_PRESS) && (action != GLFW_REPEAT)) || m_io->WantCaptureKeyboard) { return; }
     switch (key) {
+        case GLFW_KEY_LEFT:
+            if (m_ctx) {
+                RF_Coord c = m_ctx->cursor_pos;
+                if (c.x) { --c.x; } else {
+                    c.x = m_ctx->screen_size.x - 1;
+                    if (c.y) { --c.y; } else { c.y = m_ctx->screen_size.y - 1; }
+                }
+                RF_MoveCursor(m_ctx, c.x, c.y);
+            }
+            break;
+        case GLFW_KEY_RIGHT:
+            if (m_ctx) {
+                RF_Coord c = m_ctx->cursor_pos;
+                if ((c.x + 1) < m_ctx->screen_size.x) { ++c.x; } else {
+                    c.x = 0;
+                    if ((c.y + 1) < m_ctx->screen_size.y) { ++c.y; } else { c.y = 0; }
+                }
+                RF_MoveCursor(m_ctx, c.x, c.y);
+            }
+            break;
+        case GLFW_KEY_UP:
+            if (m_ctx) {
+                RF_Coord c = m_ctx->cursor_pos;
+                if (c.y) { --c.y; } else { c.y = m_ctx->screen_size.y - 1; }
+                RF_MoveCursor(m_ctx, c.x, c.y);
+            }
+            break;
+        case GLFW_KEY_DOWN:
+            if (m_ctx) {
+                RF_Coord c = m_ctx->cursor_pos;
+                if ((c.y + 1) < m_ctx->screen_size.y) { ++c.y; } else { c.y = 0; }
+                RF_MoveCursor(m_ctx, c.x, c.y);
+            }
+            break;
+        case GLFW_KEY_HOME:
+            if (m_ctx) {
+                RF_MoveCursor(m_ctx, 0, m_ctx->cursor_pos.y);
+            }
+            break;
+        case GLFW_KEY_END:
+            if (m_ctx && m_ctx->screen && (m_ctx->cursor_pos.y < m_ctx->screen_size.y)) {
+                uint16_t x = m_ctx->screen_size.x - 1;
+                const RF_Cell* pos = &m_ctx->screen[m_ctx->cursor_pos.y * m_ctx->screen_size.x + x];
+                while (x && ((pos->codepoint == 32) || (pos->codepoint == 0))) {
+                    --x;  --pos;
+                }
+                if ((x + 1) < m_ctx->screen_size.x) { ++x; }
+                RF_MoveCursor(m_ctx, x, m_ctx->cursor_pos.y);
+            }
+            break;
+        case GLFW_KEY_INSERT:
+            if (m_ctx) { m_ctx->insert = !m_ctx->insert; }
+            #ifndef NDEBUG
+                printf("insert mode is %s\n", !m_ctx ? "UNKNOWN" : m_ctx->insert ? "ON" : "OFF");
+            #endif
+            break;
         case GLFW_KEY_F9:
             m_showDemo = !m_showDemo;
             requestFrames(2);
@@ -324,6 +382,10 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
         default:
             break;
     }
+}
+
+void RFTestApp::handleCharEvent(unsigned int codepoint) {
+    RF_AddChar(m_ctx, codepoint);
 }
 
 void RFTestApp::handleMouseButtonEvent(int button, int action, int mods) {

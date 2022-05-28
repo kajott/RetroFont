@@ -183,7 +183,9 @@ struct s_RF_Context {
     RF_Coord main_lr;           //!< pixel coordinate of the lower-right corner of the main screen area (non inclusive)
     float pixel_aspect;         //!< system's pixel aspect ratio
     uint32_t border_rgb;        //!< border color (translated to RGB by RF_Render)
-//private:
+    RF_Cell attrib;             //!< attribute for next added character
+    bool insert;                //!< false: RF_PutChar overwrites, true: RF_PutChar inserts on current line
+//private: // (renderer)
     RF_Coord cursor_pos;        //!< \private cursor position
     uint32_t default_fg;        //!< \private default foreground color (default = system default)
     uint32_t default_bg;        //!< \private default background color (default = system default)
@@ -192,6 +194,7 @@ struct s_RF_Context {
     bool has_border;            //!< \private whether the border in included in the bitmap
     bool last_blink_phase;      //!< \private blink phase of the last RF_Render() call
     uint32_t glyph_offset_cache[RF_GLYPH_CACHE_SIZE];  //!< \private glyph cache (-1 = uncached)
+//private: // (parser)
 };
 
 // central registries
@@ -244,6 +247,9 @@ void RF_DemoScreen(RF_Context* ctx);
 
 //! invalidate the whole screen
 void RF_Invalidate(RF_Context* ctx, bool with_border);
+
+//! put a single character on-screen (with the currently selected attribute).
+void RF_AddChar(RF_Context* ctx, uint32_t codepoint);
 
 //! render the screen (or rather, the "dirty" parts of it)
 //! \returns true if anything changed, false otherwise

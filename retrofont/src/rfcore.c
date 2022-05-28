@@ -26,6 +26,7 @@ bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id) {
             ctx->system = *p_sys;
             ctx->default_fg = ctx->default_bg = ctx->border_color = RF_COLOR_DEFAULT;
             ctx->pixel_aspect = 1.0f;
+            ctx->attrib = RF_EmptyCell;
             if (!RF_SetFont(ctx, 0)) { return false; }
             if ((*p_sys)->font_size.x && (*p_sys)->font_size.y) {
                 uint32_t sx = (*p_sys)->border_ul.x + (uint32_t)((*p_sys)->cell_size.x) * (uint32_t)((*p_sys)->default_screen_size.x) + (*p_sys)->border_lr.x;
@@ -334,6 +335,36 @@ void RF_DemoScreen(RF_Context* ctx) {
             c->dirty = 1;
             ++c;
         }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void RF_AddChar(RF_Context* ctx, uint32_t codepoint) {
+    RF_Cell* pos;
+    if (!codepoint) { return; }
+    if (!ctx || !ctx->screen
+    || (ctx->cursor_pos.x >= ctx->screen_size.x)
+    || (ctx->cursor_pos.y >= ctx->screen_size.y))
+        { return; }
+    pos = &ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x + ctx->cursor_pos.x];
+    if (ctx->insert) {
+        for (uint16_t i = ctx->screen_size.x - 1 - ctx->cursor_pos.x;  i;  --i) {
+            pos[i] = pos[i-1];
+            pos[i].dirty = true;
+        }
+    }
+    *pos = ctx->attrib;
+    pos->codepoint = codepoint;
+    pos->dirty = 1;
+    if ((++(ctx->cursor_pos.x)) >= ctx->screen_size.x) {
+        ctx->cursor_pos.x = 0;
+        if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
+            ctx->cursor_pos.y = 0;
+        }
+    }
+    if ((ctx->cursor_pos.x < ctx->screen_size.x) && (ctx->cursor_pos.y < ctx->screen_size.y)) {
+        ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x + ctx->cursor_pos.x].dirty = 1;
     }
 }
 
