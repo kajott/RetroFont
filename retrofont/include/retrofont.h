@@ -54,6 +54,12 @@ typedef struct s_RF_Context       RF_Context;
 #define RF_COLOR_G(c) ((uint8_t)((c) >>  8))  //!< extract green component from an RGB color
 #define RF_COLOR_B(c) ((uint8_t) (c))         //!< extract blue  component from an RGB color
 
+// special codepoints (mapped roughly to their ASCII equivalents)
+#define RF_CP_BACKSPACE  8  //!< remove character left of cursor
+#define RF_CP_TAB        9  //!< advance cursor to next multiple of 8
+#define RF_CP_ENTER     10  //!< advance cursor to next line
+#define RF_CP_DELETE   127  //!< remove character under cursor
+
 // misc other constants
 #define RF_SIZE_DEFAULT ((uint16_t)(-1))  //!< system default size
 
@@ -249,7 +255,16 @@ void RF_DemoScreen(RF_Context* ctx);
 void RF_Invalidate(RF_Context* ctx, bool with_border);
 
 //! put a single character on-screen (with the currently selected attribute).
+//! RF_CP_* values are handled specially.
 void RF_AddChar(RF_Context* ctx, uint32_t codepoint);
+
+//! fill a region with blanks
+//! \param attrib  attribute to use (NULL = use defaults)
+void RF_ClearRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, const RF_Cell* attrib);
+
+//! scroll a region vertically (positive = downward, negative = upward)
+//! \param attrib  attribute to use (NULL = autodetect)
+void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, int16_t dy, const RF_Cell* attrib);
 
 //! render the screen (or rather, the "dirty" parts of it)
 //! \returns true if anything changed, false otherwise

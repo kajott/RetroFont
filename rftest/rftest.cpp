@@ -159,6 +159,7 @@ int RFTestApp::run(int argc, char *argv[]) {
         fprintf(stderr, "ERROR: no such system (sys_id=0x%08X)!\n", want_sys_id);
         return 1;
     }
+    m_ctx->insert = true;
     if (want_font_id) {
         if (!RF_SetFont(m_ctx, want_font_id)) {
             fprintf(stderr, "ERROR: no such font (font_id=0x%08X) or incompatible size!\n", want_font_id);
@@ -340,17 +341,13 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
             }
             break;
         case GLFW_KEY_UP:
-            if (m_ctx) {
-                RF_Coord c = m_ctx->cursor_pos;
-                if (c.y) { --c.y; } else { c.y = m_ctx->screen_size.y - 1; }
-                RF_MoveCursor(m_ctx, c.x, c.y);
+            if (m_ctx && m_ctx->cursor_pos.y) {
+                RF_MoveCursor(m_ctx, m_ctx->cursor_pos.x, m_ctx->cursor_pos.y - 1);
             }
             break;
         case GLFW_KEY_DOWN:
-            if (m_ctx) {
-                RF_Coord c = m_ctx->cursor_pos;
-                if ((c.y + 1) < m_ctx->screen_size.y) { ++c.y; } else { c.y = 0; }
-                RF_MoveCursor(m_ctx, c.x, c.y);
+            if (m_ctx && ((m_ctx->cursor_pos.y + 1) < m_ctx->screen_size.y)) {
+                RF_MoveCursor(m_ctx, m_ctx->cursor_pos.x, m_ctx->cursor_pos.y + 1);
             }
             break;
         case GLFW_KEY_HOME:
@@ -368,6 +365,19 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
                 if ((x + 1) < m_ctx->screen_size.x) { ++x; }
                 RF_MoveCursor(m_ctx, x, m_ctx->cursor_pos.y);
             }
+            break;
+        case GLFW_KEY_ENTER:
+        case GLFW_KEY_KP_ENTER:
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_ENTER); }
+            break;
+        case GLFW_KEY_TAB:
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_TAB); }
+            break;
+        case GLFW_KEY_BACKSPACE:
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_BACKSPACE); }
+            break;
+        case GLFW_KEY_DELETE:
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_DELETE); }
             break;
         case GLFW_KEY_INSERT:
             if (m_ctx) { m_ctx->insert = !m_ctx->insert; }

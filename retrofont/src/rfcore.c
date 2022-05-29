@@ -348,23 +348,171 @@ void RF_AddChar(RF_Context* ctx, uint32_t codepoint) {
     || (ctx->cursor_pos.y >= ctx->screen_size.y))
         { return; }
     pos = &ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x + ctx->cursor_pos.x];
-    if (ctx->insert) {
-        for (uint16_t i = ctx->screen_size.x - 1 - ctx->cursor_pos.x;  i;  --i) {
-            pos[i] = pos[i-1];
-            pos[i].dirty = true;
+    if (codepoint == RF_CP_TAB) {
+        if (ctx->insert) {
+            for (uint16_t i = 8 - (ctx->cursor_pos.x & 7);  i;  --i) {
+                RF_AddChar(ctx, 32);
+                if (!ctx->cursor_pos.x) { break; }
+            }
+        } else {
+            RF_Coord c = ctx->cursor_pos;
+            c.x = (c.x + 8) & (~7);
+            if (c.x >= ctx->screen_size.x) {
+                c.x = 0;
+                if ((c.y + 1) < ctx->screen_size.y) { ++c.y; }
+            }
+            RF_MoveCursor(ctx, c.x, c.y);
+        }
+    } else if (codepoint == RF_CP_ENTER) {
+        if (ctx->insert) {
+            // scroll down first
+            if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
+                ctx->cursor_pos.y = ctx->screen_size.y - 1;
+                RF_ScrollRegion(ctx, 0, 0, 0, 0, -1, &ctx->attrib);
+            } else {
+                RF_ScrollRegion(ctx, 0, ctx->cursor_pos.y, ctx->screen_size.x, ctx->screen_size.y, 1, &ctx->attrib);
+            }
+            // copy remainder of current line onto next one
+            pos = &ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x];
+            for (uint16_t i = ctx->screen_size.x - ctx->cursor_pos.x;  i;  --i) {
+                *pos = pos[(int)ctx->cursor_pos.x - (int)ctx->screen_size.x];
+                pos->dirty = 1;
+                ++pos;
+            }
+            // clear what remains
+            RF_ClearRegion(ctx, ctx->cursor_pos.x, ctx->cursor_pos.y - 1, ctx->screen_size.x, ctx->cursor_pos.y, &ctx->attrib);
+            RF_ClearRegion(ctx, ctx->screen_size.x - ctx->cursor_pos.x, ctx->cursor_pos.y, ctx->screen_size.x, ctx->cursor_pos.y + 1, &ctx->attrib);
+            ctx->cursor_pos.x = 0;
+        } else {
+            // clear the remainder of the current line
+            RF_ClearRegion(ctx, ctx->cursor_pos.x, ctx->cursor_pos.y, ctx->screen_size.x, ctx->cursor_pos.y + 1, &ctx->attrib);
+            ctx->cursor_pos.x = 0;
+            if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
+                ctx->cursor_pos.y = ctx->screen_size.y - 1;
+            }
+        }
+    } else if (codepoint == RF_CP_BACKSPACE) {
+        if (ctx->cursor_pos.x) {
+            if (ctx->insert) {
+                --pos;
+                for (uint16_t i = ctx->cursor_pos.x;  i < ctx->screen_size.x;  ++i) {
+                    *pos = pos[1];
+                    pos->dirty = 1;
+                    ++pos;
+                }
+            } else {
+                pos->dirty = 1;
+                --pos;
+            }
+            --ctx->cursor_pos.x;
+            pos->codepoint = 32;
+        }
+    } else if (codepoint == RF_CP_DELETE) {
+        for (uint16_t i = ctx->cursor_pos.x + 1;  i < ctx->screen_size.x;  ++i) {
+            *pos = pos[1];
+            pos->dirty = 1;
+            ++pos;
+        }
+        pos->codepoint = 32;
+    } else {
+        if (ctx->insert) {
+            for (uint16_t i = ctx->screen_size.x - 1 - ctx->cursor_pos.x;  i;  --i) {
+                pos[i] = pos[i-1];
+                pos[i].dirty = true;
+            }
+        }
+        *pos = ctx->attrib;
+        pos->codepoint = codepoint;
+        pos->dirty = 1;
+        if ((++(ctx->cursor_pos.x)) >= ctx->screen_size.x) {
+            ctx->cursor_pos.x = 0;
+            if (ctx->insert) {
+                if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
+                    ctx->cursor_pos.y = ctx->screen_size.y - 1;
+                    RF_ScrollRegion(ctx, 0, 0, 0, 0, -1, &ctx->attrib);
+                } else {
+                    RF_ScrollRegion(ctx, 0, ctx->cursor_pos.y, ctx->screen_size.x, ctx->screen_size.y, 1, &ctx->attrib);
+                }
+            } else {
+                if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
+                    ctx->cursor_pos.y = 0;
+                }
+            }
         }
     }
-    *pos = ctx->attrib;
-    pos->codepoint = codepoint;
-    pos->dirty = 1;
-    if ((++(ctx->cursor_pos.x)) >= ctx->screen_size.x) {
-        ctx->cursor_pos.x = 0;
-        if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
-            ctx->cursor_pos.y = 0;
-        }
-    }
+    // regardless of what just happened, mark the new cursor position as dirty
     if ((ctx->cursor_pos.x < ctx->screen_size.x) && (ctx->cursor_pos.y < ctx->screen_size.y)) {
         ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x + ctx->cursor_pos.x].dirty = 1;
+    }
+}
+
+void RF_ClearRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, const RF_Cell* attrib) {
+    RF_Cell* c;
+    if (!x0 && !x1 && !y0 && !y1) { x1 = y1 = (uint16_t)(-1); }
+    if (!ctx || !ctx->screen
+    || (x0 >= ctx->screen_size.x) || (x1 <= x0)
+    || (y0 >= ctx->screen_size.y) || (y1 <= y0))
+        { return; }
+    if (x1 > ctx->screen_size.x) { x1 = ctx->screen_size.x; }
+    if (y1 > ctx->screen_size.y) { y1 = ctx->screen_size.y; }
+    if (!attrib) { attrib = &RF_EmptyCell; }
+    c = &ctx->screen[x0 + y0 * ctx->screen_size.x];
+    x1 -= x0;
+    for (uint16_t y = y0;  y < y1;  ++y) {
+        for (uint16_t x = x1;  x;  --x) {
+            *c = *attrib;
+            c->codepoint = 32;
+            c->dirty = 1;
+            ++c;
+        }
+        c += ctx->screen_size.x - x1 + x0;
+    }
+}
+
+void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, int16_t dy, const RF_Cell* attrib) {
+    uint16_t height, amount, stride, dx;
+    RF_Cell *dest;
+    const RF_Cell *src;
+    if (!x0 && !x1 && !y0 && !y1) { x1 = y1 = (uint16_t)(-1); }
+    if (!ctx || !ctx->screen || !dy
+    || (x0 >= ctx->screen_size.x) || (x1 <= x0)
+    || (y0 >= ctx->screen_size.y) || (y1 <= y0))
+        { return; }
+    if (x1 > ctx->screen_size.x) { x1 = ctx->screen_size.x; }
+    if (y1 > ctx->screen_size.y) { y1 = ctx->screen_size.y; }
+    height = y1 - y0;
+    amount = (uint16_t)((dy < 0) ? -dy : dy);
+    if (amount > height) { amount = height; }
+    stride = ctx->screen_size.x - x1 + x0;
+    dx = x1 - x0;
+    if (dy > 0) {
+        // scroll down
+        dest = &ctx->screen[(x1 - 1) + (y1 - 1) * ctx->screen_size.x];
+        src = &dest[-(int)(amount * ctx->screen_size.x)];
+        for (uint16_t y = height - amount;  y;  --y) {
+            for (uint16_t x = dx;  x;  --x) {
+                *dest = *src--;
+                dest->dirty = 1;
+                dest--;
+            }
+            dest -= stride;
+            src -= stride;
+        }
+        RF_ClearRegion(ctx, x0, y0, x1, y0 + amount, attrib ? attrib : &ctx->screen[x0 + y0 * ctx->screen_size.x]);
+    } else {
+        // scroll up
+        dest = &ctx->screen[x0 + y0 * ctx->screen_size.x];
+        src = &dest[amount * ctx->screen_size.x];
+        for (uint16_t y = height - amount;  y;  --y) {
+            for (uint16_t x = dx;  x;  --x) {
+                *dest = *src++;
+                dest->dirty = 1;
+                dest++;
+            }
+            dest += stride;
+            src += stride;
+        }
+        RF_ClearRegion(ctx, x0, y1 - amount, x1, y1, attrib ? attrib : &ctx->screen[(x1 - 1) + (y1 - amount) * ctx->screen_size.x]);
     }
 }
 
