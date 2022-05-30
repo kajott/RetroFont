@@ -29,6 +29,7 @@ class RFTestApp {
     bool m_active = true;
     int m_renderFrames = 2;
     bool m_showDemo = false;
+    bool m_keepContents = false;
 
     // border mode
     static constexpr int bmNone    = 0;
@@ -60,6 +61,7 @@ class RFTestApp {
     int getBorderSize() const;
     void updateSize(bool force=false, bool forceDefault=false);
     void updateSize(int width, int height, bool force=false, bool forceDefault=false);
+    void loadDefaultScreen();
 
     // event handling
     void handleKeyEvent(int key, int scancode, int action, int mods);

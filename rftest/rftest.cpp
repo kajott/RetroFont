@@ -167,9 +167,7 @@ int RFTestApp::run(int argc, char *argv[]) {
         }
     }
     RF_ResizeScreen(m_ctx, 0, 0, true);
-    srand(0x13375EED);
-    RF_DemoScreen(m_ctx);
-    RF_Invalidate(m_ctx, true);
+    loadDefaultScreen();
 
     // main loop
     while (m_active && !glfwWindowShouldClose(m_window)) {
@@ -452,12 +450,18 @@ void RFTestApp::updateSize(int width, int height, bool force, bool forceDefault)
     #endif
 }
 
+void RFTestApp::loadDefaultScreen() {
+    srand(0x13375EED);
+    RF_DemoScreen(m_ctx);
+    RF_MoveCursor(m_ctx, 0, 0);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void RFTestApp::drawUI() {
     // main window begin
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(340.0f, 146.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(340.0f, 170.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
 
         if (ImGui::BeginCombo("system", (m_ctx && m_ctx->system) ? m_ctx->system->name : "???", 0)) {
@@ -465,6 +469,9 @@ void RFTestApp::drawUI() {
                 if (ImGui::Selectable((*p_sys)->name, m_ctx && (m_ctx->system == *p_sys))) {
                     if (RF_SetSystem(m_ctx, (*p_sys)->sys_id)) {
                         updateSize(true, true);
+                        if (!m_keepContents) {
+                            loadDefaultScreen();
+                        }
                     }
                 }
             }
@@ -499,6 +506,8 @@ void RFTestApp::drawUI() {
         } else {
             if (ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx")) { updateSize(); }
         }
+
+        ImGui::Checkbox("preserve screen contents on system switch", &m_keepContents);
     }
     ImGui::End();
 }

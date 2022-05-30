@@ -33,6 +33,7 @@ bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id) {
                 uint32_t sy = (*p_sys)->border_ul.y + (uint32_t)((*p_sys)->cell_size.y) * (uint32_t)((*p_sys)->default_screen_size.y) + (*p_sys)->border_lr.y;
                 ctx->pixel_aspect = (4.0f * (float)sy) / (3.0f * (float)sx);
             }
+            ctx->border_color_changed = true;
             return true;
         }
     }
