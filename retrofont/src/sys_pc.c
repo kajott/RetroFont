@@ -39,11 +39,11 @@ void pc_render_cell (const RF_RenderCommand* cmd) {
     if (!cmd || !cmd->cell) { return; }
 
     // resolve to standard color
-    fg = pc_map_color(cmd->cell->fg, cmd->default_fg, RF_COLOR_WHITE);
-    bg = pc_map_color(cmd->cell->bg, cmd->default_bg, RF_COLOR_BLACK);
+    fg = pc_map_color(cmd->cell->fg, cmd->ctx->default_fg, RF_COLOR_WHITE);
+    bg = pc_map_color(cmd->cell->bg, cmd->ctx->default_bg, RF_COLOR_BLACK);
 
     // map MDA color: any FG color becomes white, only white BG is white
-    if (IS_MDA(cmd->sys_id)) {
+    if (IS_MDA(cmd->ctx->system->sys_id)) {
         if ((fg & RF_COLOR_WHITE) != RF_COLOR_BLACK)
             { fg = RF_COLOR_WHITE | (fg & RF_COLOR_BRIGHT); }
         if ((bg & RF_COLOR_WHITE) != RF_COLOR_WHITE)
@@ -55,18 +55,18 @@ void pc_render_cell (const RF_RenderCommand* cmd) {
     bg = pc_rgb_color(bg);
 
     // set cursor
-    is_gfx = (((cmd->sys_id >> 16) & 0xFF) == 'g');
+    is_gfx = (((cmd->ctx->system->sys_id >> 16) & 0xFF) == 'g');
     if (cmd->is_cursor && !cmd->blink_phase && !is_gfx) {
-        ce = cmd->cell_size.y;
+        ce = cmd->ctx->cell_size.y;
         if (ce > 8) { --ce; }
-        cs = ce - 2;
+        cs = cmd->ctx->insert ? (ce - 2) : (cmd->ctx->cell_size.y >> 1);
     }
 
     // render the main cell
     RF_RenderCell(cmd, fg,bg, 0,0, cs,ce,
         is_gfx && cmd->is_cursor,
-        IS_MDA(cmd->sys_id) && cmd->cell->blink && cmd->blink_phase,
-        IS_MDA(cmd->sys_id) || is_gfx,
+        IS_MDA(cmd->ctx->system->sys_id) && cmd->cell->blink && cmd->blink_phase,
+        IS_MDA(cmd->ctx->system->sys_id) || is_gfx,
         false);
 
     // replicate the 9th column if required
@@ -77,13 +77,13 @@ void pc_render_cell (const RF_RenderCommand* cmd) {
     // to be specific), but none of those extends to the right (of course,
     // because otherwise it would've been broken on real MDA/EGA/VGA too),
     // so it's fine to treat the whole block as eligible
-    if ((cmd->cell_size.x == 9) && ((cmd->cell->codepoint & (~0x7F)) == 0x2500)) {
+    if ((cmd->ctx->cell_size.x == 9) && ((cmd->cell->codepoint & (~0x7F)) == 0x2500)) {
         uint8_t *p = &cmd->pixel[7 * 3];
-        for (uint16_t i = cmd->cell_size.y;  i;  --i) {
+        for (uint16_t i = cmd->ctx->cell_size.y;  i;  --i) {
             p[3] = p[0];
             p[4] = p[1];
             p[5] = p[2];
-            p += cmd->stride;
+            p += cmd->ctx->stride;
         }
     }
 }

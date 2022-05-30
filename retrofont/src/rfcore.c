@@ -193,14 +193,8 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
         ctx->border_rgb = color;
         ctx->border_color_changed = false;
     }
+    cmd.ctx = ctx;
     cmd.cell = ctx->screen;
-    cmd.stride = ctx->stride;
-    cmd.sys_id = ctx->system->sys_id;
-    cmd.cell_size = ctx->cell_size;
-    cmd.font_size = ctx->font->font_size;
-    cmd.underline_row = ctx->font->underline_row;
-    cmd.default_fg = ctx->default_fg;
-    cmd.default_bg = ctx->default_bg;
     cmd.blink_phase = ctx->system->blink_interval_msec ? (((time_msec / ctx->system->blink_interval_msec) & 1) != 0) : false;
     for (uint16_t y = 0;  y < ctx->screen_size.y;  ++y) {
         cmd.pixel = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * ctx->cell_size.y) * ctx->stride
@@ -262,23 +256,23 @@ void RF_RenderCell(
     if (cmd->cell->reverse) { extra_reverse = !extra_reverse; }
     if (extra_reverse) { uint32_t t = fg;  fg = bg;  bg = t; }
     if (cmd->cell->invisible || force_invisible) { fg = bg; }
-    if (line_start >= line_end) { line_start = cmd->cell_size.y; line_end = 0; }
-    if (allow_underline && cmd->underline_row && cmd->cell->underline) {
-        if (line_start >  cmd->underline_row)      { line_start = cmd->underline_row; }
-        if (line_end   < (cmd->underline_row + 1)) { line_end   = cmd->underline_row + 1; }
+    if (line_start >= line_end) { line_start = cmd->ctx->cell_size.y; line_end = 0; }
+    if (allow_underline && cmd->ctx->font->underline_row && cmd->cell->underline) {
+        if (line_start >  cmd->ctx->font->underline_row)      { line_start = cmd->ctx->font->underline_row; }
+        if (line_end   < (cmd->ctx->font->underline_row + 1)) { line_end   = cmd->ctx->font->underline_row + 1; }
     }
     g = cmd->glyph_data;
-    for (uint16_t y = 0;  y < cmd->cell_size.y;  ++y) {
-        bool core_row = (y >= offset_y) && (y < (offset_y + cmd->font_size.y));
+    for (uint16_t y = 0;  y < cmd->ctx->cell_size.y;  ++y) {
+        bool core_row = (y >= offset_y) && (y < (offset_y + cmd->ctx->font->font_size.y));
         bool line_row = (y >= line_start) && (y < line_end);
         bool prev = false;
-        p = &cmd->pixel[cmd->stride * y];
+        p = &cmd->pixel[cmd->ctx->stride * y];
         bits = 0;
         for (uint16_t x = offset_x;  x;  --x) {
             PUT_PIXEL(p, line_row ? fg : bg);
         }
-        for (uint16_t x = 0;  x < (cmd->cell_size.x - offset_x);  ++x) {
-            if (core_row && (x < cmd->font_size.x) && !(x & 7)) { bits = *g++; }
+        for (uint16_t x = 0;  x < (cmd->ctx->cell_size.x - offset_x);  ++x) {
+            if (core_row && (x < cmd->ctx->font->font_size.x) && !(x & 7)) { bits = *g++; }
             color = (line_row || (bits & 1) || prev) ? fg : bg;
             PUT_PIXEL(p, color);
             if (cmd->cell->bold && allow_bold) { prev = (bits & 1); }

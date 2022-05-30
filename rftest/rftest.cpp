@@ -382,7 +382,11 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
             if (m_ctx) { RF_AddChar(m_ctx, RF_CP_DELETE); }
             break;
         case GLFW_KEY_INSERT:
-            if (m_ctx) { m_ctx->insert = !m_ctx->insert; }
+            if (m_ctx) {
+                m_ctx->insert = !m_ctx->insert;
+                // force-update cursor after changing insert mode
+                RF_MoveCursor(m_ctx, m_ctx->cursor_pos.x, m_ctx->cursor_pos.y);
+            }
             #ifndef NDEBUG
                 printf("insert mode is %s\n", !m_ctx ? "UNKNOWN" : m_ctx->insert ? "ON" : "OFF");
             #endif

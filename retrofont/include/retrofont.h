@@ -95,16 +95,12 @@ struct s_RF_Cell {
 
 //! command structure used in the render_cell system class method
 struct s_RF_RenderCommand {
+    const RF_Context *ctx;      //!< context to draw from
+                                //!< \note this pointer, and the 'system' and 'font'
+                                //!        pointers are guaranteed to be valid
     RF_Cell *cell;              //!< cell to draw
     const uint8_t *glyph_data;  //!< glyph data to use for drawing
     uint8_t *pixel;             //!< pointer to upper-left corner of the cell in the target bitmap
-    size_t stride;              //!< line stride in the target bitmap
-    uint32_t sys_id;            //!< system ID
-    RF_Coord cell_size;         //!< size of the cell
-    RF_Coord font_size;         //!< size of the font (may be less than cell_size)
-    uint32_t default_fg;        //!< currently selected default foreground color
-    uint32_t default_bg;        //!< currently selected default background color
-    uint16_t underline_row;     //!< scanline where underlining shall be done (if permitted); 0 = no underline
     bool is_cursor;             //!< whether this cell is at the current cursor location
     bool blink_phase;           //!< blink phase (toggles between true and false periodically)
 };

@@ -17,8 +17,8 @@ uint32_t gen_map_border_color (uint32_t sys_id, uint32_t color) {
 void gen_render_cell (const RF_RenderCommand* cmd) {
     uint32_t fg, bg;
     if (!cmd || !cmd->cell) { return; }
-    fg = gen_map_color(cmd->cell->fg, cmd->default_fg, 0xEEDC82);
-    bg = gen_map_color(cmd->cell->bg, cmd->default_bg, 0x000000);
+    fg = gen_map_color(cmd->cell->fg, cmd->ctx->default_fg, 0xEEDC82);
+    bg = gen_map_color(cmd->cell->bg, cmd->ctx->default_bg, 0x000000);
     if (cmd->cell->dim) {
         fg = ((fg & 0xFEFEFE) + (bg & 0xFEFEFE)) >> 1;
     }

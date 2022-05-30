@@ -34,9 +34,9 @@ void c64_render_cell(const RF_RenderCommand* cmd) {
     if (!cmd || !cmd->cell) { return; }
 
     fg = cmd->cell->fg;
-    if (fg == RF_COLOR_DEFAULT) { fg = cmd->default_fg; }
-    fg = c64_map_color(cmd->sys_id, fg, true);
-    bg = c64_map_color(cmd->sys_id, cmd->default_bg, false);
+    if (fg == RF_COLOR_DEFAULT) { fg = cmd->ctx->default_fg; }
+    fg = c64_map_color(cmd->ctx->system->sys_id, fg, true);
+    bg = c64_map_color(cmd->ctx->system->sys_id, cmd->ctx->default_bg, false);
 
     RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false, false);
 }

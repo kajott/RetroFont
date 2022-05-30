@@ -36,9 +36,9 @@ void zx_render_cell (const RF_RenderCommand* cmd) {
     uint8_t rev;
     if (!cmd || !cmd->cell) { return; }
 
-    if (IS_SPECTRUM(cmd->sys_id)) {
-        fg = zx_std_color(cmd->cell->fg, cmd->default_fg, true);
-        bg = zx_std_color(cmd->cell->bg, cmd->default_bg, false);
+    if (IS_SPECTRUM(cmd->ctx->system->sys_id)) {
+        fg = zx_std_color(cmd->cell->fg, cmd->ctx->default_fg, true);
+        bg = zx_std_color(cmd->cell->bg, cmd->ctx->default_bg, false);
         // resolve the BRIGHT attribute -- can't have different BRIGHTness for FG and BG!
         #define IS_BRIGHT(c) (((c) != RF_COLOR_BLACK) && (((c) & RF_COLOR_BRIGHT) != 0))
         bool fg_bright = IS_BRIGHT(fg);
