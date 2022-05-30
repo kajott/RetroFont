@@ -89,13 +89,11 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
 
     if (!ctx->screen) { ctx->screen_size.x = ctx->screen_size.y = 0; }
     for (uint16_t y = 0;  y < new_height;  ++y) {
-        const RF_Cell* r = ctx->screen ? &ctx->screen[ctx->screen_size.x * ((y < ctx->screen_size.y) ? y : (ctx->screen_size.y - 1))] : &RF_EmptyCell;
+        const RF_Cell* r = (ctx->screen && (y < ctx->screen_size.y)) ? &ctx->screen[ctx->screen_size.x * y] : NULL;
         for (uint16_t x = 0;  x < new_width;  ++x) {
-            *c = *r;
-            if ((x >= ctx->screen_size.x) || (y >= ctx->screen_size.y)) { c->codepoint = 32; }
+            *c = (r && (x < ctx->screen_size.x)) ? (*r++) : RF_EmptyCell;
             c->dirty = 1;
             ++c;
-            if (((x + 1) < ctx->screen_size.x) && (y < ctx->screen_size.y)) { ++r; }
         }
     }
 
