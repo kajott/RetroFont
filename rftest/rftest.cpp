@@ -268,6 +268,10 @@ int RFTestApp::run(int argc, char *argv[]) {
                 ox = -0.5 * sx * (x0 + x1) / m_ctx->bitmap_size.x;
                 oy = -0.5 * sy * (y0 + y1) / m_ctx->bitmap_size.y;
             }
+            m_area[0] =  float(sx);
+            m_area[1] = -float(sy);
+            m_area[2] =  float(ox);
+            m_area[3] = -float(oy);
 
             // actual drawing
             glUseProgram(m_prog);
@@ -283,7 +287,7 @@ int RFTestApp::run(int argc, char *argv[]) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
             glUniform1i(m_locMode, ((m_screenMode == smFixed) && (m_renderMode == rmBlocky)) ? 1 : 0);
-            glUniform4f(m_locArea, float(sx), -float(sy), float(ox), -float(oy));
+            glUniform4fv(m_locArea, 1, m_area);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         }
 
@@ -397,8 +401,26 @@ void RFTestApp::handleCharEvent(unsigned int codepoint) {
 }
 
 void RFTestApp::handleMouseButtonEvent(int button, int action, int mods) {
-    (void)mods, (void)action, (void)button;
+    (void)mods;
     if (m_io->WantCaptureMouse) { return; }
+    if ((action == GLFW_PRESS) && (button == GLFW_MOUSE_BUTTON_1) && m_ctx) {
+        double fx = 0.0, fy = 0.0;
+        // transform pixel coordinates to NDC
+        glfwGetCursorPos(m_window, &fx, &fy);
+        fx = 2.0 * fx / m_io->DisplaySize.x - 1.0;
+        fy = 1.0 - 2.0 * fy / m_io->DisplaySize.y;
+        // transform to texture (pixel) coordinates
+        int x = int((fx - m_area[2]) / m_area[0] * m_ctx->bitmap_size.x);
+        int y = int((fy - m_area[3]) / m_area[1] * m_ctx->bitmap_size.y);
+        // transform to cell coordinates
+        x = (x - m_ctx->main_ul.x) / m_ctx->cell_size.x;
+        y = (y - m_ctx->main_ul.y) / m_ctx->cell_size.y;
+        // set cursor, if in bounds
+        if ((x > 0) && (x < int(m_ctx->screen_size.x))
+        &&  (y > 0) && (y < int(m_ctx->screen_size.y))) {
+            RF_MoveCursor(m_ctx, uint16_t(x), uint16_t(y));
+        }
+    }
 }
 
 void RFTestApp::handleCursorPosEvent(double xpos, double ypos) {

@@ -187,6 +187,7 @@ struct s_RF_Context {
     RF_Coord bitmap_size;       //!< size of the bitmap, in pixels
     RF_Coord main_ul;           //!< pixel coordinate of the upper-left corner of the main screen area
     RF_Coord main_lr;           //!< pixel coordinate of the lower-right corner of the main screen area (non inclusive)
+    RF_Coord cell_size;         //!< effective cell size
     float pixel_aspect;         //!< system's pixel aspect ratio
     uint32_t border_rgb;        //!< border color (translated to RGB by RF_Render)
     RF_Cell attrib;             //!< attribute for next added character

@@ -79,8 +79,10 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
     c = new_screen = (RF_Cell*) malloc(sizeof(RF_Cell) * new_width * new_height);
     if (!new_screen) { return false; }
 
-    bmpsize.x = new_width  * (ctx->system->cell_size.x + (ctx->system->font_size.x ? 0 : ctx->font->font_size.x));
-    bmpsize.y = new_height * (ctx->system->cell_size.y + (ctx->system->font_size.y ? 0 : ctx->font->font_size.y));
+    uint16_t csx = ctx->system->cell_size.x + (ctx->system->font_size.x ? 0 : ctx->font->font_size.x);
+    uint16_t csy = ctx->system->cell_size.y + (ctx->system->font_size.y ? 0 : ctx->font->font_size.y);
+    bmpsize.x = new_width  * csx;
+    bmpsize.y = new_height * csy;
     if (with_border) {
         bmpsize.x += ctx->system->border_ul.x + ctx->system->border_lr.x;
         bmpsize.y += ctx->system->border_ul.y + ctx->system->border_lr.y;
@@ -114,6 +116,8 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
         ctx->main_ul.x = ctx->main_ul.y = 0;
         ctx->main_lr = bmpsize;
     }
+    ctx->cell_size.x = csx;
+    ctx->cell_size.y = csy;
     ctx->border_color_changed = true;
     return true;
 }
@@ -173,17 +177,14 @@ static uint8_t* fill_border(uint8_t* p, uint32_t color, size_t count) {
 
 bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     bool result = false;
-    uint16_t csx, csy;
     RF_RenderCommand cmd;
     if (!ctx || !ctx->system || !ctx->font || !ctx->screen || !ctx->bitmap) { return false; }
-    csx = ctx->system->cell_size.x + (ctx->system->font_size.x ? 0 : ctx->font->font_size.x);
-    csy = ctx->system->cell_size.y + (ctx->system->font_size.y ? 0 : ctx->font->font_size.y);
     if (ctx->border_color_changed) {
         uint32_t color = ctx->system->cls->map_border_color(ctx->system->sys_id, ctx->border_color);
         if (ctx->has_border) {
             uint8_t* p = fill_border(ctx->bitmap, color, ctx->bitmap_size.x * ctx->system->border_ul.y + ctx->system->border_ul.x);
-            for (uint16_t y = ctx->screen_size.y * csy;  y;  --y) {
-                p += ctx->screen_size.x * csx * 3;
+            for (uint16_t y = ctx->screen_size.y * ctx->cell_size.y;  y;  --y) {
+                p += ctx->screen_size.x * ctx->cell_size.x * 3;
                 if (y > 1) { p = fill_border(p, color, ctx->system->border_lr.x + ctx->system->border_ul.x); }
             }
             fill_border(p, color, ctx->system->border_lr.x + ctx->bitmap_size.x * ctx->system->border_lr.y);
@@ -195,15 +196,14 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     cmd.cell = ctx->screen;
     cmd.stride = ctx->stride;
     cmd.sys_id = ctx->system->sys_id;
-    cmd.cell_size.x = csx;
-    cmd.cell_size.y = csy;
+    cmd.cell_size = ctx->cell_size;
     cmd.font_size = ctx->font->font_size;
     cmd.underline_row = ctx->font->underline_row;
     cmd.default_fg = ctx->default_fg;
     cmd.default_bg = ctx->default_bg;
     cmd.blink_phase = ctx->system->blink_interval_msec ? (((time_msec / ctx->system->blink_interval_msec) & 1) != 0) : false;
     for (uint16_t y = 0;  y < ctx->screen_size.y;  ++y) {
-        cmd.pixel = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * csy) * ctx->stride
+        cmd.pixel = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * ctx->cell_size.y) * ctx->stride
                                 + (ctx->has_border ? ctx->system->border_ul.x : 0) * 3];
         for (uint16_t x = 0;  x < ctx->screen_size.x;  ++x) {
             cmd.is_cursor = (y == ctx->cursor_pos.y) && (x == ctx->cursor_pos.x);
@@ -238,7 +238,7 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
                 result = true;
             }
             ++cmd.cell;
-            cmd.pixel += csx * 3;
+            cmd.pixel += ctx->cell_size.x * 3;
         }
     }
     ctx->last_blink_phase = cmd.blink_phase;

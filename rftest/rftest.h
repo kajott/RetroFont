@@ -19,8 +19,11 @@ class RFTestApp {
 
     // RetroFont stuff
     RF_Context* m_ctx = nullptr;
+
+    // rendering stuff
     GLuint m_tex = 0;
     GLutil::Program m_prog;
+    GLfloat m_area[4];
     GLint m_locArea;
     GLint m_locMode;
     GLint m_locSize;
