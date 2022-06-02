@@ -66,6 +66,7 @@ endif ()
 set (SYSTEMS
     retrofont/src/sys_generic.c
     retrofont/src/sys_pc.c
+    retrofont/src/sys_st.c
     retrofont/src/sys_c64.c
     retrofont/src/sys_zx.c
 )

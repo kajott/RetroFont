@@ -289,7 +289,7 @@ void RF_DemoScreen(RF_Context* ctx) {
         0x0020, 0x0040, 0x0060,          // Basic Latin (a.k.a. standard ASCII)
         0x00A0, 0x00C0, 0x00E0,          // Latin-1 Supplement
         0x2580,                          // Block Elements
-        0x1FB70, 0x1FB90,                // (some) Symbols for Legacy Computing
+        0x1FB70, 0x1FB90, 0x1FBB0,       // (some) Symbols for Legacy Computing
         0x2500, 0x2520, 0x2540, 0x2560,  // Box Drawing
         0x25A0, 0x25C0, 0x25E0,          // Geometric Shapes
         0x2190,                          // Arrows (most basic ones only)
@@ -325,6 +325,9 @@ void RF_DemoScreen(RF_Context* ctx) {
                 row_mod = demo_row_count;
             }
             c->codepoint = (x & 31) + cp_offsets[y % row_mod];
+            if ((c->codepoint >= 0x1FBC6) && (c->codepoint <= 0x1FBCF)) {
+                c->codepoint += 0x1FBF0 - 0x1FBC6;  // make ST's LED digits visible
+            }
             c->dirty = 1;
             ++c;
         }
