@@ -504,14 +504,9 @@ void RFTestApp::drawUI() {
             ImGui::EndCombo();
         }
 
-        RF_Coord matchSize = {0, 0};
-        if (m_ctx && m_ctx->system) { matchSize = m_ctx->system->font_size; }
         if (ImGui::BeginCombo("font", (m_ctx && m_ctx->font) ? m_ctx->font->name : "???", 0)) {
             for (const RF_Font* font = RF_FontList;  font->font_id;  ++font) {
-                if ((matchSize.x && (matchSize.x != font->font_size.x))
-                ||  (matchSize.y && (matchSize.y != font->font_size.y))) {
-                    continue;
-                }
+                if (!RF_CanUseFont(m_ctx, font)) { continue; }
                 if (ImGui::Selectable(font->name, m_ctx && (m_ctx->font == font))) {
                     if (RF_SetFont(m_ctx, font->font_id)) {
                         updateSize(true, (m_screenMode == smFixed));

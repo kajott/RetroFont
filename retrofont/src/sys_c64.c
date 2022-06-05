@@ -43,7 +43,8 @@ void c64_render_cell(const RF_RenderCommand* cmd) {
 
 const RF_SysClass c64class = {
     c64_map_border_color,
-    c64_render_cell
+    c64_render_cell,
+    NULL,  // check_font
 };
 
 //                                  sys_id,                      name,                   class,      scrsz,   cellsz,  fontsz,  b_ul,    b_lr,  aspect, blink, default_font_id

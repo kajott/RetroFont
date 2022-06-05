@@ -26,7 +26,7 @@ uint32_t amiga_map_border_color(uint32_t sys_id, uint32_t color) {
     return amiga_map_color(sys_id, color, RF_COLOR_DEFAULT, false);
 }
 
-void amiga_render_cell (const RF_RenderCommand* cmd) {
+void amiga_render_cell(const RF_RenderCommand* cmd) {
     uint32_t fg, bg;
     if (!cmd || !cmd->cell) { return; }
     fg = amiga_map_color(cmd->ctx->system->sys_id, cmd->cell->fg, cmd->ctx->default_fg, true);
@@ -34,9 +34,16 @@ void amiga_render_cell (const RF_RenderCommand* cmd) {
     RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor, false, true, true);
 }
 
+bool amiga_check_font(uint32_t sys_id, const RF_Font* font) {
+    // reject tall fonts in non-interlaced mode, 'cause that'd look ridiculous
+    return ((sys_id >> 24) == 'i')
+        || ((font->font_size.y * 2) < (font->font_size.x * 3));
+}
+
 const RF_SysClass amigaclass = {
     amiga_map_border_color,
-    amiga_render_cell
+    amiga_render_cell,
+    amiga_check_font,
 };
 
 //                                          sys_id,                       name,                                              class,       scrsz,                                  cellsz, fontsz,  b_ul,    b_lr,   aspect, blink, default_font_id

@@ -127,10 +127,17 @@ void RF_RenderCell(
 struct s_RF_SysClass {
     //! map a border color to RGB
     uint32_t (*map_border_color) (uint32_t sys_id, uint32_t color);
+
     //! render a single character cell.
     //! This method typically resolves the foreground and background colors
     //! to RGB in a system-specific way and then calls RF_RenderCell().
     void (*render_cell) (const RF_RenderCommand* cmd);
+
+    //! check whether a font is applicable for that system.
+    //! This method can be used to further filter eligible fonts, in addition
+    //! to the built-in RF_System::font_size filter.
+    //! \note This can be NULL; in that case, every font will be accepted.
+    bool (*check_font) (uint32_t sys_id, const RF_Font* font);
 };
 
 //! single entry of a codepoint-to-glyph map
@@ -231,6 +238,11 @@ bool RF_SetFont(RF_Context* ctx, uint32_t font_id);
 //! \returns true if successful, false if failed
 //! \note This *MUST* be called after RF_CreateContext/RF_SetSystem and RF_SetFont
 bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, bool with_border);
+
+//! check whether a specific system can use a specific font
+bool RF_SystemCanUseFont(const RF_System* sys, const RF_Font* font);
+//! check whether the current system can use a specific font
+#define RF_CanUseFont(ctx, font) ((ctx) ? RF_SystemCanUseFont((ctx)->system, font) : false)
 
 //! move the cursor to a new position
 void RF_MoveCursor(RF_Context* ctx, uint16_t new_col, uint16_t new_row);

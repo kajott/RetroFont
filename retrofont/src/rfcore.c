@@ -44,14 +44,21 @@ bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id) {
     return false;
 }
 
+bool RF_SystemCanUseFont(const RF_System* sys, const RF_Font* font) {
+    if (!sys || !font) { return false; }
+    if (sys->font_size.x && (sys->font_size.x != font->font_size.x)) { return false; }
+    if (sys->font_size.y && (sys->font_size.y != font->font_size.y)) { return false; }
+    if (!sys->cls || !sys->cls->check_font) { return true; }
+    return sys->cls->check_font(sys->sys_id, font);
+}
+
 bool RF_SetFont(RF_Context* ctx, uint32_t font_id) {
     bool result = false;
     if (!ctx || !ctx->system) { return false; }
     if (!font_id) { font_id = ctx->system->default_font_id; }
     for (const RF_Font* font = RF_FontList;  font->font_id;  ++font) {
-        if ((ctx->system->font_size.x && (font->font_size.x != ctx->system->font_size.x))
-        ||  (ctx->system->font_size.y && (font->font_size.y != ctx->system->font_size.y))) {
-            continue;  // font size doesn't match with current system
+        if (!RF_SystemCanUseFont(ctx->system, font)) {
+            continue;  // font doesn't fit with current system
         }
         if (font->font_id == font_id) {  // font found
             ctx->font = font;
