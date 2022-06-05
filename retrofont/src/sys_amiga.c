@@ -15,7 +15,8 @@ uint32_t amiga_map_color(uint32_t sys_id, uint32_t color, uint32_t default1, boo
     }
     color = RF_MapRGBToStandardColor(color, 200);
     switch (color) {
-        case RF_COLOR_BLUE: return 0x0055AA;
+        case RF_COLOR_BLUE:                    return 0x0055AA;
+        case RF_COLOR_YELLOW:                  return 0xFF8000;
         case RF_COLOR_BLACK | RF_COLOR_BRIGHT: return 0x555555;
         default: return RF_MapStandardColorToRGB(color, 0x00,0xAA, 0x00,0xFF);
     }
