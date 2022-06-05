@@ -1,0 +1,43 @@
+defmap "latin1amiga"
+    map 0 ' '..'?'
+    map 1 '@'..'_'
+    map 2 '`'..'~'
+    # 2.31 is font-dependent
+    map 3 U+FFFD
+    map 4 U+00A0..U+00BF
+    map 5 U+00C0..U+00DF
+    map 6 U+00E0..U+00FF
+
+source "amiga_8x8_ks10.pbm" 8x8
+font "T810" "Commodora Amiga Topaz-8 (Kickstart 1.0)"
+    usemap "latin1amiga"
+    map 2.31 U+2592  # medium shade
+
+source "amiga_8x8_ks12.pbm" 8x8
+font "T812" "Commodora Amiga Topaz-8 (Kickstart 1.2)"
+    usemap "latin1amiga"
+    map 2.31 U+2592  # medium shade
+
+source "amiga_8x8_ks20.pbm" 8x8
+font "T820" "Commodora Amiga Topaz-8 (Kickstart 2.0)"
+    usemap "latin1amiga"
+    map 2.31 U+1FB99  # upper right to lower left fill
+
+
+source "amiga_10x9_ks10.pbm" 10x9
+font "T910" "Commodora Amiga Topaz-9 (Kickstart 1.0)"
+    usemap "latin1amiga"
+    underline 7
+    map 2.31 U+1FB99  # upper right to lower left fill
+
+source "amiga_10x9_ks12.pbm" 10x9
+font "T912" "Commodora Amiga Topaz-9 (Kickstart 1.2)"
+    usemap "latin1amiga"
+    underline 7
+    map 2.31 U+1FB99  # upper right to lower left fill
+
+source "amiga_10x9_ks20.pbm" 10x9
+font "T920" "Commodora Amiga Topaz-9 (Kickstart 2.0)"
+    usemap "latin1amiga"
+    underline 7
+    map 2.31 U+1FB99  # upper right to lower left fill

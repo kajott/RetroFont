@@ -28,7 +28,11 @@ bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id) {
             ctx->pixel_aspect = 1.0f;
             ctx->attrib = RF_EmptyCell;
             if (!RF_SetFont(ctx, 0)) { return false; }
-            if ((*p_sys)->font_size.x && (*p_sys)->font_size.y) {
+            if (((*p_sys)->default_screen_size.x & (*p_sys)->default_screen_size.y) & RF_SIZE_PIXELS) {
+                uint32_t sx = (*p_sys)->border_ul.x + ((*p_sys)->default_screen_size.x & RF_SIZE_MASK) + (*p_sys)->border_lr.x;
+                uint32_t sy = (*p_sys)->border_ul.y + ((*p_sys)->default_screen_size.y & RF_SIZE_MASK) + (*p_sys)->border_lr.y;
+                ctx->pixel_aspect = (4.0f * (float)sy) / (3.0f * (float)sx);
+            } else if ((*p_sys)->font_size.x && (*p_sys)->font_size.y) {
                 uint32_t sx = (*p_sys)->border_ul.x + (uint32_t)((*p_sys)->cell_size.x) * (uint32_t)((*p_sys)->default_screen_size.x) + (*p_sys)->border_lr.x;
                 uint32_t sy = (*p_sys)->border_ul.y + (uint32_t)((*p_sys)->cell_size.y) * (uint32_t)((*p_sys)->default_screen_size.y) + (*p_sys)->border_lr.y;
                 ctx->pixel_aspect = (4.0f * (float)sy) / (3.0f * (float)sx);
@@ -74,16 +78,34 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
     if (!ctx || !ctx->system || (!ctx->system->font_size.x && !ctx->font)) { return false; }
     if (!new_width)  { new_width  = ctx->screen_size.x; }
     if (!new_height) { new_height = ctx->screen_size.y; }
-    if (!new_width  || (new_width  == RF_SIZE_DEFAULT)) { new_width  = ctx->system->default_screen_size.x; }
-    if (!new_height || (new_height == RF_SIZE_DEFAULT)) { new_height = ctx->system->default_screen_size.y; }
+    uint16_t dsx = ctx->system->default_screen_size.x & RF_SIZE_MASK;
+    uint16_t dsy = ctx->system->default_screen_size.y & RF_SIZE_MASK;
+    if (!new_width  || (new_width  == RF_SIZE_DEFAULT)) {
+        new_width  = (ctx->system->default_screen_size.x & RF_SIZE_PIXELS)
+                   ? (dsx / ctx->font->font_size.x)
+                   : ctx->system->default_screen_size.x;
+    }
+    if (!new_height || (new_height == RF_SIZE_DEFAULT)) {
+        new_height = (ctx->system->default_screen_size.y & RF_SIZE_PIXELS)
+                   ? (dsy / ctx->font->font_size.y)
+                   : ctx->system->default_screen_size.y;
+    }
     c = new_screen = (RF_Cell*) malloc(sizeof(RF_Cell) * new_width * new_height);
     if (!new_screen) { return false; }
 
     uint16_t csx = ctx->system->cell_size.x + (ctx->system->font_size.x ? 0 : ctx->font->font_size.x);
     uint16_t csy = ctx->system->cell_size.y + (ctx->system->font_size.y ? 0 : ctx->font->font_size.y);
-    bmpsize.x = new_width  * csx;
-    bmpsize.y = new_height * csy;
+    uint16_t mainx = new_width  * csx;
+    uint16_t mainy = new_height * csy;
+    bmpsize.x = mainx;
+    bmpsize.y = mainy;
     if (with_border) {
+        if ((ctx->system->default_screen_size.x & RF_SIZE_PIXELS)
+        && (mainx < dsx) && (mainx > (dsx - ctx->font->font_size.x)))
+            { bmpsize.x = dsx; }
+        if ((ctx->system->default_screen_size.y & RF_SIZE_PIXELS)
+        && (mainx < dsy) && (mainx > (dsy - ctx->font->font_size.y)))
+            { bmpsize.y = dsy; }
         bmpsize.x += ctx->system->border_ul.x + ctx->system->border_lr.x;
         bmpsize.y += ctx->system->border_ul.y + ctx->system->border_lr.y;
     }
@@ -110,8 +132,8 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
     ctx->has_border = with_border && ((ctx->system->border_lr.x | ctx->system->border_lr.y | ctx->system->border_ul.x | ctx->system->border_ul.y) != 0);
     if (ctx->has_border) {
         ctx->main_ul = ctx->system->border_ul;
-        ctx->main_lr.x = bmpsize.x - ctx->system->border_lr.x;
-        ctx->main_lr.y = bmpsize.y - ctx->system->border_lr.y;
+        ctx->main_lr.x = ctx->system->border_ul.x + mainx;
+        ctx->main_lr.y = ctx->system->border_ul.y + mainy;
     } else {
         ctx->main_ul.x = ctx->main_ul.y = 0;
         ctx->main_lr = bmpsize;

@@ -87,10 +87,10 @@ class SourceImage:
         for gy in range(h // self.font_size.y):
             rows = img[gy * self.font_size.y : (gy+1) * self.font_size.y]
             for gx in range(w // self.font_size.x):
-                cell = [row[gx * self.font_size.x : (gx+1) * self.font_size.x] for row in rows]
+                cell = [row[gx * self.font_size.x : (gx+1) * self.font_size.x] + 8 * [0] for row in rows]
                 bmp = bytearray()
                 for row in cell:
-                    bmp.extend(sum((row[base+bit] << bit) for bit in range(8)) for base in range(0, len(row), 8))
+                    bmp.extend(sum((row[base+bit] << bit) for bit in range(8)) for base in range(0, len(row) - 8, 8))
                 self.glyphs[(gy,gx)] = bytes(bmp)
 
 ################################################################################

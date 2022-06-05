@@ -487,7 +487,7 @@ void RFTestApp::loadDefaultScreen() {
 void RFTestApp::drawUI() {
     // main window begin
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(340.0f, 170.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(480.0f, 170.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
 
         if (ImGui::BeginCombo("system", (m_ctx && m_ctx->system) ? m_ctx->system->name : "???", 0)) {
@@ -514,7 +514,7 @@ void RFTestApp::drawUI() {
                 }
                 if (ImGui::Selectable(font->name, m_ctx && (m_ctx->font == font))) {
                     if (RF_SetFont(m_ctx, font->font_id)) {
-                        updateSize(true, false);
+                        updateSize(true, (m_screenMode == smFixed));
                     }
                 }
             }

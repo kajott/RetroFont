@@ -61,7 +61,9 @@ typedef struct s_RF_Context       RF_Context;
 #define RF_CP_DELETE   127  //!< remove character under cursor
 
 // misc other constants
-#define RF_SIZE_DEFAULT ((uint16_t)(-1))  //!< system default size
+#define RF_SIZE_DEFAULT ((uint16_t)(-1))       //!< system default size for RF_ResizeScreen()
+#define RF_SIZE_PIXELS  0x8000u                //!< system's default_screen_size is in pixels
+#define RF_SIZE_MASK    (RF_SIZE_PIXELS - 1u)  //!< mask to remove RF_SIZE_PIXELS flag
 
 //! map any RGB color to one of the standard 16 colors (RF_COLOR_DEFAULT is left untouched)
 //! \param bright_threshold  if the brightest component is brighter than this, the bright flag is set
@@ -142,7 +144,9 @@ struct s_RF_System {
     uint32_t sys_id;                //!< system ID
     const char* name;               //!< user-facing system name
     const RF_SysClass *cls;         //!< pointer to method table
-    RF_Coord default_screen_size;   //!< platform's default screen size (in character cells)
+    RF_Coord default_screen_size;   //!< platform's default screen size (in character cells,
+                                    //!< OR in pixels if RF_SIZE_PIXELS is added)
+                                    //!< \note if RF_SIZE_PIXELS is used, *both* axes must use it
     RF_Coord cell_size;             //!< platform's character cell size (in pixels)
                                     //!< \note if font_size is zero, this is the number of
                                     //!<       *extra* pixels to add to each cell
