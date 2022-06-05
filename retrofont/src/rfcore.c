@@ -322,7 +322,9 @@ void RF_DemoScreen(RF_Context* ctx) {
     for (uint16_t y = 0;  y < ctx->screen_size.y;  ++y) {
         for (uint16_t x = 0;  x < ctx->screen_size.x;  ++x) {
             uint32_t row_mod = 3;
-            if (y >= attribute_start_row) {
+            *c = RF_EmptyCell;
+            c->codepoint = 0;
+            if (y >= (attribute_start_row + 3)) {
                 uint16_t r = (uint16_t) rand();
                 c->fg = RF_COLOR_BLACK | (rand() & 15);
                 do { c->bg = RF_COLOR_BLACK | (rand() & 15); } while (c->bg == c->fg);
@@ -332,6 +334,21 @@ void RF_DemoScreen(RF_Context* ctx) {
                 c->blink     = r >> 3;
                 c->reverse   = r >> 4;
                 c->invisible = (r & 0x3F00) ? 0 : 1;  // make this very rare
+            } else if (y >= attribute_start_row) {
+                uint32_t full_phase = ((((uint32_t)(2 * x + 1)) << 10) + ctx->screen_size.x) / (ctx->screen_size.x * 2);
+                uint8_t p = (uint8_t) full_phase, cA, cB;
+                switch (full_phase >> 8) {
+                    case 0:  cA = p;         cB = 0;         break;
+                    case 1:  cA =     0xFF;  cB = p;         break;
+                    case 2:  cA = p ^ 0xFF;  cB =     0xFF;  break;
+                    default: cA = 0;         cB = p ^ 0xFF;  break;
+                }
+                switch (y - attribute_start_row) {
+                    case 0:  c->fg = RF_COLOR_RGB(cA, cB, cB); break;
+                    case 1:  c->fg = RF_COLOR_RGB(cB, cA, cB); break;
+                    default: c->fg = RF_COLOR_RGB(cB, cB, cA); break;
+                }
+                c->codepoint = 64;
             } else if (x >= 64) {
                 c->bold      = y >> 0;
                 c->dim       = x >> 0;
@@ -346,9 +363,11 @@ void RF_DemoScreen(RF_Context* ctx) {
             } else {
                 row_mod = demo_row_count;
             }
-            c->codepoint = (x & 31) + cp_offsets[y % row_mod];
-            if ((c->codepoint >= 0x1FBC6) && (c->codepoint <= 0x1FBCF)) {
-                c->codepoint += 0x1FBF0 - 0x1FBC6;  // make ST's LED digits visible
+            if (!c->codepoint) {
+                c->codepoint = (x & 31) + cp_offsets[y % row_mod];
+                if ((c->codepoint >= 0x1FBC6) && (c->codepoint <= 0x1FBCF)) {
+                    c->codepoint += 0x1FBF0 - 0x1FBC6;  // make ST's LED digits visible
+                }
             }
             c->dirty = 1;
             ++c;
@@ -543,6 +562,7 @@ uint32_t RF_MapRGBToStandardColor(uint32_t color, uint8_t bright_threshold) {
     uint8_t b = RF_COLOR_B(color);
     uint8_t max = (r > g) ? r : g;
     if (b > max) { max = b; }
+    if (max < 72) { max = 72; }  // make very dark colors register as black
     color = RF_COLOR_BLACK;
     if (max > bright_threshold) { color |= RF_COLOR_BRIGHT; }
     max >>= 1;
