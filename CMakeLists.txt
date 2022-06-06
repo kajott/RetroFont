@@ -70,6 +70,7 @@ set (SYSTEMS
     retrofont/src/sys_st.c
     retrofont/src/sys_c64.c
     retrofont/src/sys_zx.c
+    retrofont/src/sys_robotron.c
 )
 file (GLOB FONTSPECS fonts.in/*.fontspec)
 

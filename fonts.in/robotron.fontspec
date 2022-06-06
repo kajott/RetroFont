@@ -1,0 +1,74 @@
+defmap "kc85base"
+    # base ASCII with some modifications
+    map 0 ' '..'?'
+    map 1 '@'..'Z' U+2588 '|' U+00AC "^_"
+    map 3 U+00A9 'a'..'z' "äöüß" U+25A1
+    # graphics characters common to all KC85 fonts
+    #   2.00         # blank symbol
+    #   2.01         # return symbol
+    map 2.02 U+21A4  # LEFTWARDS ARROW FROM BAR
+    #   2.03         # letter 'B' in box
+    #   2.04         # <differs>
+    #   2.05         # vertical stripes
+    #   2.06         # horizontal stripes
+    #   2.07         # folder-like icon (but not quite U+1FFB9 LEFT HALF FOLDER)
+    map 2.08 U+2190  # LEFTWARDS ARROW
+    map 2.09 U+2192  # RIGHTWARDS ARROW
+    map 2.10 U+2193  # DOWNWARDS ARROW
+    map 2.11 U+2191  # UPWARDS ARROW
+    #   2.12         # up-then-diagonal-left arrow from bar
+    map 2.13 U+21B5  # DOWNWARDS ARROW WITH CORNER LEFTWARDS
+    #   2.14         # <differs>
+    #   2.15         # unidenfiable road-like thing
+    #   2.16         # up-then-diagonal-left arrow
+    map 2.17 U+2912  # UPWARDS ARROW TO BAR
+    map 2.18 U+2913  # DOWNWARDS ARROW TO BAR
+    #   2.19         # letter 'S' in box
+    #   2.20         # <differs>
+    #   2.21         # <differs>
+    #   2.22         # circuit diagram?
+    #   2.23         # <differs>
+    map 2.24 U+21E5  # RIGHTWARDS ARROW TO BAR
+    map 2.25 U+21E3  # LEFTWARDS ARROW TO BAR
+    map 2.26 U+21D2  # RIGHTWARDS DOUBLE ARROW
+    #   2.27         # <differs>
+    #   2.28         # letter 'L' in box
+    #   2.29         # letter 'R' in box
+    #   2.30         # letter 'C' in box
+    map 2.31 U+21D0  # LEFTWARDS DOUBLE ARROW
+
+defmap "kc85special"
+    map 2.04 U+2593  # DARK SHADE
+    map 2.14 U+2592  # MEDIUM SHADE
+    map 2.20 U+25C9  # FISHEYE
+    map 2.21 U+1FB98 # UPPER LEFT TO LOWER RIGHT FILL
+    map 2.23 U+1FB99 # UPPER RIGHT TO LOWER LEFT FILL
+    map 2.27 U+1FB95 # CHECKER BOARD FILL
+
+defmap "kc85special33"
+    map 2.04 U+25EA  # SQUARE WITH LOWER RIGHT DIAGONAL HALF BLACK
+    map 2.14 U+25C6  # BLACK DIAMOND
+    map 2.20 U+266B  # BEAMED EIGHTH NOTES
+    #   2.21         # inverse black circle
+    map 2.23 U+2584  # LOWER HALF BLOCK
+    map 2.27 U+273A  # SIXTEEN POINTER ASTERISK (starburst)
+
+source "robotron_kc_caos31.pbm" 8x8
+font "KC31" "robotron HC900, KC85/2 (CAOS <= 3.1)"
+    usemap "kc85base"
+    usemap "kc85special"
+
+source "robotron_kc_caos33.pbm" 8x8
+font "KC33" "robotron KC85/3 (CAOS 3.3)"
+    usemap "kc85base"
+    usemap "kc85special33"
+
+source "robotron_kc_caos41.pbm" 8x8
+font "KC41" "robotron KC85/4 (CAOS 4.1/4.2)"
+    usemap "kc85base"
+    usemap "kc85special"
+
+source "robotron_kc_caos43.pbm" 8x8
+font "KC43" "robotron KC85/5 (CAOS 4.3/4.4)"
+    usemap "kc85base"
+    usemap "kc85special"
