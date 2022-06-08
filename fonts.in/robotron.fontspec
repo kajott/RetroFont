@@ -51,7 +51,7 @@ defmap "kc85special33"
     map 2.20 U+266B  # BEAMED EIGHTH NOTES
     #   2.21         # inverse black circle
     map 2.23 U+2584  # LOWER HALF BLOCK
-    map 2.27 U+273A  # SIXTEEN POINTER ASTERISK (starburst)
+    map 2.27 U+2733  # EIGHT SPOKED ASTERISK
 
 source "robotron_kc_caos31.pbm" 8x8
 font "KC31" "robotron HC900, KC85/2 (CAOS <= 3.1)"
@@ -72,3 +72,105 @@ source "robotron_kc_caos43.pbm" 8x8
 font "KC43" "robotron KC85/5 (CAOS 4.3/4.4)"
     usemap "kc85base"
     usemap "kc85special"
+
+################################################################################
+
+source "robotron_z9001.pbm" 8x8
+font "KC87" "robotron Z 9001, KC85/1, KC87"
+    map 0 ' '..'?'
+    map 1 '@'..'_'
+    map 2 '`'..'~' U+2588
+    # see: http://www.sax.de/~zander/z9001/module/basic/z9_kcba.pdf page 5
+    #   3.00         # left half circle, left-aligned
+    #   3.01         # right half circle, right-aligned
+    #   3.02         # upper half circle, top-aligned
+    #   3.03         # lower half circle, bottom-aligned
+    #   3.04         # upper-left quarter circle, upper-left aligned
+    #   3.05         # upper-right quarter circle, upper-right aligned
+    #   3.06         # lower-right quarter circle, lower-right aligned
+    #   3.07         # lower-left quarter circle, lower-left aligned
+    map 3.08 U+1FB7C # LEFT AND LOWER ONE EIGHTH BLOCK
+    map 3.09 U+1FB7E # RIGHT AND UPPER ONE EIGHTH BLOCK
+    map 3.10 U+25C7  # WHITE DIAMOND
+    #   3.11         # inverse black diamond
+    map 3.12 U+25CB  # WHITE CIRCLE
+    #   3.13         # inverse black circle
+    map 3.14 U+25E4  # BLACK UPPER LEFT TRIANGLE
+    map 3.15 U+25E3  # BLACK LOWER LEFT TRIANGLE
+    map 3.16 U+2571  # BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT
+    map 3.17 U+2572  # BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT
+    #   3.18         # horizontal 22-degree diagonal, from lower left
+    #   3.19         # horizontal 22-degree diagonal, from upper right
+    #   3.20         # two horizontal 22-degree diagonals, from center left ('<')
+    #   3.21         # horizontal 22-degree diagonal, from lower right
+    #   3.22         # horizontal 22-degree diagonal, from upper left
+    #   3.23         # two horizontal 22-degree diagonals, from center right ('>')
+    #   3.24         # vertical 22-degree diagonal, from lower left
+    #   3.25         # vertical 22-degree diagonal, from upper right
+    #   3.26         # two vertical 22-degree diagonals, from lower center ('V')
+    #   3.27         # vertical 22-degree diagonal, from upper left
+    #   3.28         # vertical 22-degree diagonal, from lower right
+    #   3.29         # two vertical 22-degree diagonals, from upper center ('^')
+    map 3.30 U+2594  # UPPER ONE EIGHTH BLOCK
+    map 3.31 U+258F  # LEFT ONE EIGHTH BLOCK
+    map 4.00 U+2501  # BOX DRAWINGS HEAVY HORIZONTAL
+    map 4.01 U+2503  # BOX DRAWINGS HEAVY VERTICAL
+    map 4.02 U+253B  # BOX DRAWINGS HEAVY UP AND HORIZONTAL
+    map 4.03 U+2523  # BOX DRAWINGS HEAVY VERTICAL AND RIGHT
+    map 4.04 U+2533  # BOX DRAWINGS HEAVY DOWN AND HORIZONTAL
+    map 4.05 U+252B  # BOX DRAWINGS HEAVY VERTICAL AND LEFT
+    map 4.06 U+254B  # BOX DRAWINGS HEAVY VERTICAL AND HORIZONTAL
+    map 4.07 U+2517  # BOX DRAWINGS HEAVY UP AND RIGHT
+    map 4.08 U+250F  # BOX DRAWINGS HEAVY DOWN AND RIGHT
+    map 4.09 U+2513  # BOX DRAWINGS HEAVY DOWN AND LEFT
+    map 4.10 U+251B  # BOX DRAWINGS HEAVY UP AND LEFT
+    #   4.11         # lower-left quadrant of large circle
+    #   4.12         # lower-right quadrant of large circle
+    #   4.13         # upper-right quadrant of large circle
+    #   4.14         # upper-left quadrant of large circle
+    map 4.15 U+2573  # BOX DRAWINGS LIGHT DIAGONAL CROSS
+    map 4.16 U+2598  # QUADRANT UPPER LEFT
+    map 4.17 U+259D  # QUADRANT UPPER RIGHT
+    map 4.18 U+2597  # QUADRANT LOWER RIGHT
+    map 4.19 U+2596  # QUADRANT LOWER LEFT
+    map 4.20 U+258C  # LEFT HALF BLOCK
+    map 4.21 U+2590  # RIGHT HALF BLOCK
+    map 4.22 U+2580  # UPPER HALF BLOCK
+    map 4.23 U+2584  # LOWER HALF BLOCK
+    map 4.24 U+259A  # QUADRANT UPPER LEFT AND LOWER RIGHT
+    map 4.25 U+259E  # QUADRANT UPPER RIGHT AND LOWER LEFT
+    map 4.26 U+259F  # QUADRANT UPPER RIGHT AND LOWER LEFT AND LOWER RIGHT
+    map 4.27 U+2599  # QUADRANT UPPER LEFT AND LOWER LEFT AND LOWER RIGHT
+    map 4.28 U+259B  # QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER LEFT
+    map 4.29 U+259C  # QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER RIGHT
+    map 4.30 U+25E2  # BLACK LOWER RIGHT TRIANGLE
+    map 4.31 U+25E5  # BLACK UPPER RIGHT TRIANGLE
+    map 5.00 U+2595  # RIGHT ONE EIGHTH BLOCK
+    map 5.01 U+1FB7D # LEFT AND UPPER ONE EIGHTH BLOCK
+    #   5.02         # left and upper one eighth block with dot in the middle
+    #   5.03         # inverse U+25AA black small square
+    #   5.04         # game figure?
+    #   5.05         # four horizontal stripes
+    #   5.06         # four vertical stripes
+    map 5.07 U+2592  # MEDIUM SHADE
+    map 5.08 U+1FB7F # RIGHT AND LOWER ONE EIGHTH BLOCK
+    map 5.09 U+2666  # BLACK DIAMOND SUIT
+    map 5.10 U+2663  # BLACK CLUB SUIT
+    map 5.11 U+2665  # BLACK HEART SUIT
+    map 5.12 U+2660  # BLACK SPADE SUIT
+    #   5.13         # aerial view of vehicle driving horizontally
+    #   5.14         # aerial view of vehicle driving vertically
+    map 5.15 U+25CF  # BLACK CIRCLE
+    #   5.16 - 5.31  # 2x2-pixel block in each of the 4x4 possible locations within the cell, in raster-scan order
+    #   6.00 - 6.05  # 2-pixel bottom line, various lengths
+    #   6.05 - 6.11  # 2-pixel left line, various lengths
+    #   6.11 - 6.17  # 2-pixel top line, various lengths
+    #   6.17 - 6.23  # 2-pixel right line, various lengths
+    map 6.24 U+2581  # LOWER ONE EIGHTH BLOCK
+    map 6.25 U+2582  # LOWER ONE QUARTER BLOCK
+    map 6.26 U+2583  # LOWER THREE EIGHTHS BLOCK
+    map 6.27 U+2584  # LOWER ONE HALF BLOCK
+    map 6.28 U+2585  # LOWER FIVE EIGHTHS BLOCK
+    map 6.29 U+2586  # LOWER THREE QUARTERS BLOCK
+    map 6.30 U+2587  # LOWER SEVEN EIGHTHS BLOCK
+    map 6.31 U+2588  # FULL BLOCK
