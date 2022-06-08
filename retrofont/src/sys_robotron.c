@@ -46,7 +46,6 @@ const RF_SysClass kc85class = {
     NULL,  // check_font
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////
 
 uint32_t kc87_map_color(uint32_t color, uint32_t default1, uint32_t default2) {
@@ -77,6 +76,25 @@ const RF_SysClass kc87class = {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//                               sys_id,                       name,                            class,      scrsz,  cellsz, fontsz,  b_ul,    b_lr,   aspect, blink, default_font_id
-const RF_System RF_Sys_KC85  = { RF_MAKE_ID('K','C','8','5'), "robotron HC900, KC85/2, /3, /4", &kc85class, {40,32}, {8,8},  {8,8}, {24,16}, {24,16}, {1,1},    320, RF_MAKE_ID('K','C','4','1') };
-const RF_System RF_Sys_KC87  = { RF_MAKE_ID('K','C','8','7'), "robotron Z 9001, KC85/1, KC87",  &kc87class, {40,24}, {8,8},  {8,8}, {32,44}, {32,44}, {1,1},    320, RF_MAKE_ID('K','C','8','7') };
+uint32_t z1013_map_border_color(uint32_t sys_id, uint32_t color) {
+    (void)sys_id, (void)color;
+    return 0;
+}
+
+void z1013_render_cell(const RF_RenderCommand* cmd) {
+    if (!cmd || !cmd->cell) { return; }
+    RF_RenderCell(cmd, 0xFFFFFF, cmd->is_cursor ? 0xFFFFFF : 0x000000, 0,0, 0,0, false, false, false, false);
+}
+
+const RF_SysClass z1013class = {
+    z1013_map_border_color,
+    z1013_render_cell,
+    NULL,  // check_font
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+//                               sys_id,                       name,                            class,       scrsz,  cellsz, fontsz,  b_ul,    b_lr,   aspect, blink, default_font_id
+const RF_System RF_Sys_KC85  = { RF_MAKE_ID('K','C','8','5'), "robotron HC900, KC85/2, /3, /4", &kc85class,  {40,32}, {8,8},  {8,8}, {24,16}, {24,16}, {1,1},    320, RF_MAKE_ID('K','C','4','1') };
+const RF_System RF_Sys_KC87  = { RF_MAKE_ID('K','C','8','7'), "robotron Z 9001, KC85/1, KC87",  &kc87class,  {40,24}, {8,8},  {8,8}, {32,44}, {32,44}, {1,1},    320, RF_MAKE_ID('K','C','8','7') };
+const RF_System RF_Sys_Z1013 = { RF_MAKE_ID('1','0','1','3'), "robotron Z 1013",                &z1013class, {32,32}, {8,8},  {8,8}, {80,16}, {80,16}, {1,1},    320, RF_MAKE_ID('1','0','1','3') };

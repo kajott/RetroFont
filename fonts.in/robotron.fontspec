@@ -75,8 +75,7 @@ font "KC43" "robotron KC85/5 (CAOS 4.3/4.4)"
 
 ################################################################################
 
-source "robotron_z9001.pbm" 8x8
-font "KC87" "robotron Z 9001, KC85/1, KC87"
+defmap "robotronz"
     map 0 ' '..'?'
     map 1 '@'..'_'
     map 2 '`'..'~' U+2588
@@ -169,8 +168,41 @@ font "KC87" "robotron Z 9001, KC85/1, KC87"
     map 6.24 U+2581  # LOWER ONE EIGHTH BLOCK
     map 6.25 U+2582  # LOWER ONE QUARTER BLOCK
     map 6.26 U+2583  # LOWER THREE EIGHTHS BLOCK
-    map 6.27 U+2584  # LOWER ONE HALF BLOCK
+    #   6.27 U+2584  # LOWER ONE HALF BLOCK
     map 6.28 U+2585  # LOWER FIVE EIGHTHS BLOCK
     map 6.29 U+2586  # LOWER THREE QUARTERS BLOCK
     map 6.30 U+2587  # LOWER SEVEN EIGHTHS BLOCK
-    map 6.31 U+2588  # FULL BLOCK
+    #   6.31 U+2588  # FULL BLOCK
+
+source "robotron_z9001.pbm" 8x8
+font "KC87" "robotron Z 9001, KC85/1, KC87"
+    usemap "robotronz"
+
+source "robotron_z1013.pbm" 8x8
+font "1013" "robotron Z 1013"
+    usemap "robotronz"
+    # additional chess symbols, originally in the ASCII 14..31 range
+    map 15.14 U+2659 # WHITE CHESS PAWN
+    map 15.15 U+2656 # WHITE CHESS ROOK
+    map 15.16 U+2658 # WHITE CHESS KNIGHT
+    #   15.17        # base plate of white pawn, rook and knight
+    map 15.18 U+2657 # WHITE CHESS BISHOP
+    #   15.19        # base plate of white bishop
+    map 15.20 U+2655 # WHITE CHESS QUEEN
+    map 15.21 U+2654 # WHITE CHESS KING
+    #   15.22        # base plate of white queen and king
+    map 15.23 U+265F # BLACK CHESS PAWN
+    map 15.24 U+265C # BLACK CHESS ROOK
+    map 15.25 U+265E # BLACK CHESS KNIGHT
+    #   15.26        # base plate of white pawn, rook and knight
+    map 15.27 U+265D # BLACK CHESS BISHOP
+    #   15.28        # base plate of white bishop
+    map 15.29 U+265B # BLACK CHESS QUEEN
+    map 15.30 U+265A # BLACK CHESS KING
+    #   15.31        # base plate of white pawn, rook and knight
+
+source "robotron_mugler.pbm" 8x8
+font "PC_M" "Mugler PC/M"
+    map 1 ' '..'?'
+    map 2 '@'..'_'
+    map 3 U+2588 'a'..'~'
