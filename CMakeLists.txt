@@ -72,7 +72,15 @@ set (SYSTEMS
     retrofont/src/sys_zx.c
     retrofont/src/sys_robotron.c
 )
-file (GLOB FONTSPECS fonts.in/*.fontspec)
+
+set (FONTSPECS
+    fonts.in/pc.fontspec
+    fonts.in/amiga.fontspec
+    fonts.in/st.fontspec
+    fonts.in/c64.fontspec
+    fonts.in/zx.fontspec
+    fonts.in/robotron.fontspec
+)
 
 add_library (retrofont STATIC
     retrofont/src/rfcore.c
@@ -87,8 +95,8 @@ target_include_directories (retrofont PUBLIC
 
 add_custom_command (
     OUTPUT ${CMAKE_SOURCE_DIR}/retrofont/src/fonts.c
-    COMMAND python3 font_import.py
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/util
+    COMMAND python3 util/font_import.py ${FONTSPECS}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     DEPENDS ${FONTSPECS}
     MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/util/font_import.py
 )
