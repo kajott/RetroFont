@@ -32,6 +32,7 @@ typedef struct s_RF_System        RF_System;
 typedef struct s_RF_Font          RF_Font;
 typedef struct s_RF_GlyphMapEntry RF_GlyphMapEntry;
 typedef struct s_RF_Context       RF_Context;
+typedef enum   e_RF_MarkupType    RF_MarkupType;
 
 // color-related constants and macros
 #define RF_COLOR_DEFAULT ((uint32_t)(-1))  //!< system default FG/BG color
@@ -59,6 +60,13 @@ typedef struct s_RF_Context       RF_Context;
 #define RF_CP_TAB        9  //!< advance cursor to next multiple of 8
 #define RF_CP_ENTER     10  //!< advance cursor to next line
 #define RF_CP_DELETE   127  //!< remove character under cursor
+
+// text markup types
+enum e_RF_MarkupType {
+    RF_MT_NONE     = 0x99,  //!< no markup (plain text)
+    RF_MT_INTERNAL = 0x60,  //!< RetroFont's internal markup system [TODO]
+    RF_MT_ANSI     = 0x1B,  //!< VT-100 / ANSI compatible Escape codes [TODO]
+};
 
 // misc other constants
 #define RF_SIZE_DEFAULT ((uint16_t)(-1))       //!< system default size for RF_ResizeScreen()
@@ -199,6 +207,7 @@ struct s_RF_Context {
     uint32_t border_rgb;        //!< border color (translated to RGB by RF_Render)
     RF_Cell attrib;             //!< attribute for next added character
     bool insert;                //!< false: RF_PutChar overwrites, true: RF_PutChar inserts on current line
+
 //private: // (renderer)
     RF_Coord cursor_pos;        //!< \private cursor position
     uint32_t default_fg;        //!< \private default foreground color (default = system default)
@@ -208,7 +217,11 @@ struct s_RF_Context {
     bool has_border;            //!< \private whether the border in included in the bitmap
     bool last_blink_phase;      //!< \private blink phase of the last RF_Render() call
     uint32_t glyph_offset_cache[RF_GLYPH_CACHE_SIZE];  //!< \private glyph cache (-1 = uncached)
+
 //private: // (parser)
+    uint8_t in_escape;          //!< \private currently inside an escape sequence
+    uint8_t utf8_cb_count;      //!< \private UTF-8 continuation byte count
+    uint32_t utf8_cp_buf;       //!< \private UTF-8 codepoint buffer
 };
 
 // central registries
@@ -270,6 +283,9 @@ void RF_Invalidate(RF_Context* ctx, bool with_border);
 //! put a single character on-screen (with the currently selected attribute).
 //! RF_CP_* values are handled specially.
 void RF_AddChar(RF_Context* ctx, uint32_t codepoint);
+
+//! Add a string of UTF-8 text, optionally with markup.
+void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt);
 
 //! fill a region with blanks
 //! \param attrib  attribute to use (NULL = use defaults)

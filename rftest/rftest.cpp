@@ -485,7 +485,9 @@ void RFTestApp::loadDefaultScreen() {
         RF_ClearAll(m_ctx);
     }
     RF_MoveCursor(m_ctx, 0, 0);
-    if (m_defaultScreen == dsDemo) {
+    if (m_defaultScreen == dsDefault) {
+        RF_AddText(m_ctx, "H\xc3\xa4ll\xc3\xb3 W\xc3\xbcrld\xc3\xa8!\n", RF_MT_NONE);
+    } else if (m_defaultScreen == dsDemo) {
         srand(0x13375EED);
         RF_DemoScreen(m_ctx);
     }

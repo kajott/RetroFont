@@ -562,6 +562,67 @@ void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uin
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt) {
+    if (!ctx || !ctx->screen || !ctx->system || !str || !str[0]) { return; }
+    for (;;) {
+        uint8_t c = (uint8_t) *str++;
+        if (!c) { return; }  // end of string
+
+        if (ctx->in_escape) {
+            // TODO: handle escape properly
+            (void)mt;
+            ctx->in_escape = 0;  // for now, just switch back to non-escape after first char
+            continue;
+        }
+
+        // process UTF-8 continuation byte
+        if (ctx->utf8_cb_count) {
+            if ((c & 0xC0) == 0x80) {
+                ctx->utf8_cp_buf = (ctx->utf8_cp_buf << 6) | (c & 0x3F);
+                ctx->utf8_cb_count--;
+                if (!ctx->utf8_cb_count) {
+                    // end of UTF-8 sequence
+                    RF_AddChar(ctx, ctx->utf8_cp_buf);
+                }
+                continue;
+            } else {
+                // invalid continuation byte -> emit error glyph and try parsing as normal byte
+                RF_AddChar(ctx, 0xFFFD);
+                ctx->utf8_cb_count = 0;
+            }
+        }
+
+        // handle normal byte
+        if (c == (uint8_t)mt) {
+            // TODO: handle begin of escape sequence
+            ctx->in_escape = 1;
+        } else if (c < 0x80) {
+            // normal 7-bit ASCII character
+            RF_AddChar(ctx, c);
+        } else if (c < 0xC0) {
+            // unexpected UTF-8 continuation byte
+            RF_AddChar(ctx, 0xFFFD);
+        } else if (c < 0xE0) {
+            // leading bytes for 2-byte UTF-8 sequence
+            ctx->utf8_cb_count = 1;
+            ctx->utf8_cp_buf = c & 0x1F;
+        } else if (c < 0xF0) {
+            // leading bytes for 3-byte UTF-8 sequence
+            ctx->utf8_cb_count = 2;
+            ctx->utf8_cp_buf = c & 0x0F;
+        } else if (c < 0xF8) {
+            // leading bytes for 4-byte UTF-8 sequence
+            ctx->utf8_cb_count = 3;
+            ctx->utf8_cp_buf = c & 0x07;
+        } else {
+            // invalid UTF-8 byte
+            RF_AddChar(ctx, 0xFFFD);
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 uint32_t RF_MapRGBToStandardColor(uint32_t color, uint8_t bright_threshold) {
     if (!RF_IS_RGB_COLOR(color)) { return color; }
     uint8_t r = RF_COLOR_R(color);
