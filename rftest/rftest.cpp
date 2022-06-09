@@ -370,16 +370,16 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
             break;
         case GLFW_KEY_ENTER:
         case GLFW_KEY_KP_ENTER:
-            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_ENTER); }
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_ENTER);     m_screenContentsChanged = true; }
             break;
         case GLFW_KEY_TAB:
-            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_TAB); }
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_TAB);       m_screenContentsChanged = true; }
             break;
         case GLFW_KEY_BACKSPACE:
-            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_BACKSPACE); }
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_BACKSPACE); m_screenContentsChanged = true; }
             break;
         case GLFW_KEY_DELETE:
-            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_DELETE); }
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_DELETE);    m_screenContentsChanged = true; }
             break;
         case GLFW_KEY_INSERT:
             if (m_ctx) {
@@ -402,6 +402,7 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
 
 void RFTestApp::handleCharEvent(unsigned int codepoint) {
     RF_AddChar(m_ctx, codepoint);
+    m_screenContentsChanged = true;
 }
 
 void RFTestApp::handleMouseButtonEvent(int button, int action, int mods) {
@@ -477,9 +478,18 @@ void RFTestApp::updateSize(int width, int height, bool force, bool forceDefault)
 }
 
 void RFTestApp::loadDefaultScreen() {
-    srand(0x13375EED);
-    RF_DemoScreen(m_ctx);
+    if (m_defaultScreen == dsKeep) {
+        return;  // do nothing; don't even touch m_screenContentsChanged!
+    }
+    if ((m_defaultScreen == dsEmpty) || (m_defaultScreen == dsDefault)) {
+        RF_ClearAll(m_ctx);
+    }
     RF_MoveCursor(m_ctx, 0, 0);
+    if (m_defaultScreen == dsDemo) {
+        srand(0x13375EED);
+        RF_DemoScreen(m_ctx);
+    }
+    m_screenContentsChanged = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -487,17 +497,33 @@ void RFTestApp::loadDefaultScreen() {
 void RFTestApp::drawUI() {
     // main window begin
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(480.0f, 170.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(556.0f, 170.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
+
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("on system switch:");
+        ImGui::SameLine();
+        ImGui::PushItemWidth(236.0f);
+        if (ImGui::BeginCombo("##defscreen", DefaultScreenStrings[m_defaultScreen])) {
+            for (int i = 0;  i < int(DefaultScreenStrings.size());  ++i) {
+                bool sel = (i == m_defaultScreen);
+                if (ImGui::Selectable(DefaultScreenStrings[i], &sel)) {
+                    m_defaultScreen = i;
+                    if (!m_screenContentsChanged) {
+                        loadDefaultScreen();
+                    }
+                }
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::PopItemWidth();
 
         if (ImGui::BeginCombo("system", (m_ctx && m_ctx->system) ? m_ctx->system->name : "???", 0)) {
             for (const RF_System* const* p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
                 if (ImGui::Selectable((*p_sys)->name, m_ctx && (m_ctx->system == *p_sys))) {
                     if (RF_SetSystem(m_ctx, (*p_sys)->sys_id)) {
                         updateSize(true, true);
-                        if (!m_keepContents) {
-                            loadDefaultScreen();
-                        }
+                        loadDefaultScreen();
                     }
                 }
             }
@@ -527,8 +553,6 @@ void RFTestApp::drawUI() {
         } else {
             if (ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx")) { updateSize(); }
         }
-
-        ImGui::Checkbox("preserve screen contents on system switch", &m_keepContents);
     }
     ImGui::End();
 }

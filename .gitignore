@@ -3,6 +3,7 @@ retrofont/src/systems.c
 
 fonts.in/*.cpi
 
+build/
 _build*
 
 vswhere.exe

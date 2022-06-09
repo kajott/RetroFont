@@ -32,7 +32,7 @@ class RFTestApp {
     bool m_active = true;
     int m_renderFrames = 2;
     bool m_showDemo = false;
-    bool m_keepContents = false;
+    bool m_screenContentsChanged = false;
 
     // border mode
     static constexpr int bmNone    = 0;
@@ -56,6 +56,14 @@ class RFTestApp {
     inline static constexpr std::array<const char*, 4> RenderModeStrings = {{ "integer (w/o aspect ratio)", "nearest-neighbor", "antialiased", "smooth" }};
     int m_renderMode = rmBlocky;
     int m_zoom = 1;
+
+    // default screen
+    static constexpr int dsEmpty   = 0;
+    static constexpr int dsKeep    = 1;
+    static constexpr int dsDefault = 2;
+    static constexpr int dsDemo    = 3;
+    inline static constexpr std::array<const char*, 4> DefaultScreenStrings = {{ "clear screen", "keep previous contents", "load system default screen", "load attribute test screen" }};
+    int m_defaultScreen = dsDefault;
 
     // UI functions
     void drawUI();
