@@ -421,8 +421,8 @@ void RFTestApp::handleMouseButtonEvent(int button, int action, int mods) {
         x = (x - m_ctx->main_ul.x) / m_ctx->cell_size.x;
         y = (y - m_ctx->main_ul.y) / m_ctx->cell_size.y;
         // set cursor, if in bounds
-        if ((x > 0) && (x < int(m_ctx->screen_size.x))
-        &&  (y > 0) && (y < int(m_ctx->screen_size.y))) {
+        if ((x >= 0) && (x < int(m_ctx->screen_size.x))
+        &&  (y >= 0) && (y < int(m_ctx->screen_size.y))) {
             RF_MoveCursor(m_ctx, uint16_t(x), uint16_t(y));
         }
     }
