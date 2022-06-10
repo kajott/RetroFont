@@ -32,7 +32,6 @@ typedef struct s_RF_System        RF_System;
 typedef struct s_RF_Font          RF_Font;
 typedef struct s_RF_GlyphMapEntry RF_GlyphMapEntry;
 typedef struct s_RF_Context       RF_Context;
-typedef enum   e_RF_MarkupType    RF_MarkupType;
 
 // color-related constants and macros
 #define RF_COLOR_DEFAULT ((uint32_t)(-1))  //!< system default FG/BG color
@@ -62,11 +61,11 @@ typedef enum   e_RF_MarkupType    RF_MarkupType;
 #define RF_CP_DELETE   127  //!< remove character under cursor
 
 // text markup types
-enum e_RF_MarkupType {
+typedef enum e_RF_MarkupType {
     RF_MT_NONE     = 0x99,  //!< no markup (plain text)
     RF_MT_INTERNAL = 0x60,  //!< RetroFont's internal markup system [TODO]
     RF_MT_ANSI     = 0x1B,  //!< VT-100 / ANSI compatible Escape codes [TODO]
-};
+} RF_MarkupType;
 
 // misc other constants
 #define RF_SIZE_DEFAULT ((uint16_t)(-1))       //!< system default size for RF_ResizeScreen()
@@ -159,6 +158,7 @@ struct s_RF_System {
     uint32_t sys_id;                //!< system ID
     const char* name;               //!< user-facing system name
     const RF_SysClass *cls;         //!< pointer to method table
+    const char* default_screen;     //!< default screen contents (in RF_MT_INTERNAL format)
     RF_Coord default_screen_size;   //!< platform's default screen size (in character cells,
                                     //!< OR in pixels if RF_SIZE_PIXELS is added)
                                     //!< \note if RF_SIZE_PIXELS is used, *both* axes must use it

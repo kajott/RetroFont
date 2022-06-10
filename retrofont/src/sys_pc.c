@@ -94,18 +94,18 @@ const RF_SysClass pcclass = {
     NULL,  // check_font
 };
 
-//                                 sys_id,                      name,                      class,    scrsz,    cellsz,  fontsz,  b_ul,  b_lr, aspect, blink, default_font_id
-const RF_System RF_Sys_MDA     = { RF_MAKE_ID('M','D','A','8'), "PC (MDA)",                &pcclass, {80,25}, { 9,14}, { 8,14}, {8,7}, {8, 7}, {1,1},   228, RF_MAKE_ID('P','C','4','M') };
-const RF_System RF_Sys_CGA40   = { RF_MAKE_ID('C','G','A','4'), "PC (CGA 40x25 text)",     &pcclass, {40,25}, { 8, 8}, { 8, 8}, {4,4}, {4, 4}, {1,1},   266, RF_MAKE_ID('P','C','8','C') };
-const RF_System RF_Sys_CGA80   = { RF_MAKE_ID('C','G','A','8'), "PC (CGA 80x25 text)",     &pcclass, {80,25}, { 8, 8}, { 8, 8}, {8,4}, {8, 4}, {1,2},   266, RF_MAKE_ID('P','C','8','C') };
-const RF_System RF_Sys_EGA25   = { RF_MAKE_ID('E','G','A','2'), "PC (EGA 80x25 text)",     &pcclass, {80,25}, { 9,14}, { 8,14}, {8,7}, {8, 7}, {1,1},   266, RF_MAKE_ID('P','C','4','V') };
-const RF_System RF_Sys_EGA43   = { RF_MAKE_ID('E','G','A','4'), "PC (EGA 80x43 text)",     &pcclass, {80,43}, { 9, 8}, { 8, 8}, {8,7}, {8, 9}, {1,1},   266, RF_MAKE_ID('P','C','8','V') };
-const RF_System RF_Sys_EGA25_G = { RF_MAKE_ID('E','G','g','2'), "PC (EGA 80x25 graphics)", &pcclass, {80,25}, { 8,14}, { 8,14}, {8,7}, {8, 7}, {1,1},   266, RF_MAKE_ID('P','C','4','V') };
-const RF_System RF_Sys_EGA43_G = { RF_MAKE_ID('E','G','g','4'), "PC (EGA 80x43 graphics)", &pcclass, {80,43}, { 8, 8}, { 8, 8}, {8,7}, {8, 9}, {1,1},   266, RF_MAKE_ID('P','C','8','V') };
-const RF_System RF_Sys_VGA_low = { RF_MAKE_ID('V','G','A','4'), "PC (VGA 40x25 text)",     &pcclass, {40,25}, { 9,16}, { 8,16}, {4,8}, {4, 8}, {2,1},   228, RF_MAKE_ID('P','C','6','V') };
-const RF_System RF_Sys_VGA25   = { RF_MAKE_ID('V','G','A','8'), "PC (VGA 80x25 text)",     &pcclass, {80,25}, { 9,16}, { 8,16}, {8,8}, {8, 8}, {1,1},   228, RF_MAKE_ID('P','C','6','V') };
-const RF_System RF_Sys_VGA28   = { RF_MAKE_ID('V','G','A','2'), "PC (VGA 80x28 text)",     &pcclass, {80,28}, { 9,14}, { 8,14}, {8,8}, {8,14}, {1,1},   228, RF_MAKE_ID('P','C','4','V') };
-const RF_System RF_Sys_VGA50   = { RF_MAKE_ID('V','G','A','5'), "PC (VGA 80x50 text)",     &pcclass, {80,50}, { 9, 8}, { 8, 8}, {8,8}, {8, 8}, {1,1},   228, RF_MAKE_ID('P','C','8','V') };
-const RF_System RF_Sys_VGA25_G = { RF_MAKE_ID('V','G','g','3'), "PC (VGA 80x30 graphics)", &pcclass, {80,30}, { 8,16}, { 8,16}, {8,8}, {8, 8}, {1,1},   266, RF_MAKE_ID('P','C','6','V') };
-const RF_System RF_Sys_VGA28_G = { RF_MAKE_ID('V','G','g','4'), "PC (VGA 80x34 graphics)", &pcclass, {80,34}, { 8,14}, { 8,14}, {8,8}, {8,18}, {1,1},   266, RF_MAKE_ID('P','C','4','V') };
-const RF_System RF_Sys_VGA50_G = { RF_MAKE_ID('V','G','g','6'), "PC (VGA 80x60 graphics)", &pcclass, {80,60}, { 8, 8}, { 8, 8}, {8,8}, {8, 8}, {1,1},   266, RF_MAKE_ID('P','C','8','V') };
+//                                 sys_id,                      name,                      class,    scrn,  scrsz,    cellsz,  fontsz,  b_ul,  b_lr, aspect, blink, default_font_id
+const RF_System RF_Sys_MDA     = { RF_MAKE_ID('M','D','A','8'), "PC (MDA)",                &pcclass, NULL, {80,25}, { 9,14}, { 8,14}, {8,7}, {8, 7}, {1,1},   228, RF_MAKE_ID('P','C','4','M') };
+const RF_System RF_Sys_CGA40   = { RF_MAKE_ID('C','G','A','4'), "PC (CGA 40x25 text)",     &pcclass, NULL, {40,25}, { 8, 8}, { 8, 8}, {4,4}, {4, 4}, {1,1},   266, RF_MAKE_ID('P','C','8','C') };
+const RF_System RF_Sys_CGA80   = { RF_MAKE_ID('C','G','A','8'), "PC (CGA 80x25 text)",     &pcclass, NULL, {80,25}, { 8, 8}, { 8, 8}, {8,4}, {8, 4}, {1,2},   266, RF_MAKE_ID('P','C','8','C') };
+const RF_System RF_Sys_EGA25   = { RF_MAKE_ID('E','G','A','2'), "PC (EGA 80x25 text)",     &pcclass, NULL, {80,25}, { 9,14}, { 8,14}, {8,7}, {8, 7}, {1,1},   266, RF_MAKE_ID('P','C','4','V') };
+const RF_System RF_Sys_EGA43   = { RF_MAKE_ID('E','G','A','4'), "PC (EGA 80x43 text)",     &pcclass, NULL, {80,43}, { 9, 8}, { 8, 8}, {8,7}, {8, 9}, {1,1},   266, RF_MAKE_ID('P','C','8','V') };
+const RF_System RF_Sys_EGA25_G = { RF_MAKE_ID('E','G','g','2'), "PC (EGA 80x25 graphics)", &pcclass, NULL, {80,25}, { 8,14}, { 8,14}, {8,7}, {8, 7}, {1,1},   266, RF_MAKE_ID('P','C','4','V') };
+const RF_System RF_Sys_EGA43_G = { RF_MAKE_ID('E','G','g','4'), "PC (EGA 80x43 graphics)", &pcclass, NULL, {80,43}, { 8, 8}, { 8, 8}, {8,7}, {8, 9}, {1,1},   266, RF_MAKE_ID('P','C','8','V') };
+const RF_System RF_Sys_VGA_low = { RF_MAKE_ID('V','G','A','4'), "PC (VGA 40x25 text)",     &pcclass, NULL, {40,25}, { 9,16}, { 8,16}, {4,8}, {4, 8}, {2,1},   228, RF_MAKE_ID('P','C','6','V') };
+const RF_System RF_Sys_VGA25   = { RF_MAKE_ID('V','G','A','8'), "PC (VGA 80x25 text)",     &pcclass, NULL, {80,25}, { 9,16}, { 8,16}, {8,8}, {8, 8}, {1,1},   228, RF_MAKE_ID('P','C','6','V') };
+const RF_System RF_Sys_VGA28   = { RF_MAKE_ID('V','G','A','2'), "PC (VGA 80x28 text)",     &pcclass, NULL, {80,28}, { 9,14}, { 8,14}, {8,8}, {8,14}, {1,1},   228, RF_MAKE_ID('P','C','4','V') };
+const RF_System RF_Sys_VGA50   = { RF_MAKE_ID('V','G','A','5'), "PC (VGA 80x50 text)",     &pcclass, NULL, {80,50}, { 9, 8}, { 8, 8}, {8,8}, {8, 8}, {1,1},   228, RF_MAKE_ID('P','C','8','V') };
+const RF_System RF_Sys_VGA25_G = { RF_MAKE_ID('V','G','g','3'), "PC (VGA 80x30 graphics)", &pcclass, NULL, {80,30}, { 8,16}, { 8,16}, {8,8}, {8, 8}, {1,1},   266, RF_MAKE_ID('P','C','6','V') };
+const RF_System RF_Sys_VGA28_G = { RF_MAKE_ID('V','G','g','4'), "PC (VGA 80x34 graphics)", &pcclass, NULL, {80,34}, { 8,14}, { 8,14}, {8,8}, {8,18}, {1,1},   266, RF_MAKE_ID('P','C','4','V') };
+const RF_System RF_Sys_VGA50_G = { RF_MAKE_ID('V','G','g','6'), "PC (VGA 80x60 graphics)", &pcclass, NULL, {80,60}, { 8, 8}, { 8, 8}, {8,8}, {8, 8}, {1,1},   266, RF_MAKE_ID('P','C','8','V') };

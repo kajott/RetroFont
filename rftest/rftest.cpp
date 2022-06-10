@@ -23,6 +23,9 @@
 #include "retrofont.h"
 #include "rftest.h"
 
+static const char* DefaultDefaultScreen =
+    "Welcome to `fcR`fae`f9t`fer`fbo`fdF`f#80ff00o`f#ff3700n`f#11aafft`0!\n\n"
+;
 
 int RFTestApp::run(int argc, char *argv[]) {
     uint32_t want_sys_id = 0;
@@ -487,11 +490,9 @@ void RFTestApp::loadDefaultScreen() {
     RF_MoveCursor(m_ctx, 0, 0);
     if (m_defaultScreen == dsDefault) {
         RF_AddText(m_ctx,
-            "Welcome to `fcR`fae`f9t`fer`fbo`fdF`f#abcdefo`f#ff3700n`f#decba9t`0!\n\n"
-            "`+bBold`0, `+dDim`0, `+uUnderline`0, `+rReverse`0, `+fBlinking`0, `+iInvisible`0.\n"
-            "`C01`c12"
-            "H\xc3\xa4ll\xc3\xb3 W\xc3\xbcrld\xc3\xa8!\n"
-        , RF_MT_INTERNAL);
+            (m_ctx && m_ctx->system && m_ctx->system->default_screen)
+                                     ? m_ctx->system->default_screen
+                                     : DefaultDefaultScreen, RF_MT_INTERNAL);
     } else if (m_defaultScreen == dsDemo) {
         srand(0x13375EED);
         RF_DemoScreen(m_ctx);
