@@ -47,6 +47,8 @@ const RF_SysClass c64class = {
     NULL,  // check_font
 };
 
-//                                  sys_id,                      name,                   class,     scrn,  scrsz,   cellsz,  fontsz,  b_ul,    b_lr,  aspect, blink, default_font_id
-const RF_System RF_Sys_C64_PAL  = { RF_MAKE_ID('C','6','4','P'), "Commodore C64 (PAL)",  &c64class, NULL, {40,25}, { 8, 8}, { 8, 8}, {42,42}, {42,42}, {1,1},     0, RF_MAKE_ID('C','6','4','s') };
-const RF_System RF_Sys_C64_NTSC = { RF_MAKE_ID('C','6','4','N'), "Commodore C64 (NTSC)", &c64class, NULL, {40,25}, { 8, 8}, { 8, 8}, {46,17}, {46,17}, {1,1},     0, RF_MAKE_ID('C','6','4','s') };
+#define C64DEFAULT "\n`c31**** COMMODORE 64 BASIC V2 ****\n\n 64K RAM SYSTEM`X2338911 BASIC BYTES FREE\n\nREADY.\n"
+
+//                                  sys_id,                      name,                   class,     scrn,        scrsz,   cellsz,  fontsz,  b_ul,    b_lr,  aspect, blink, default_font_id
+const RF_System RF_Sys_C64_PAL  = { RF_MAKE_ID('C','6','4','P'), "Commodore C64 (PAL)",  &c64class, C64DEFAULT, {40,25}, { 8, 8}, { 8, 8}, {42,42}, {42,42}, {1,1},     0, RF_MAKE_ID('C','6','4','s') };
+const RF_System RF_Sys_C64_NTSC = { RF_MAKE_ID('C','6','4','N'), "Commodore C64 (NTSC)", &c64class, C64DEFAULT, {40,25}, { 8, 8}, { 8, 8}, {46,17}, {46,17}, {1,1},     0, RF_MAKE_ID('C','6','4','s') };

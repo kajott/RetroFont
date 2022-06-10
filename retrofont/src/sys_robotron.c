@@ -46,6 +46,28 @@ const RF_SysClass kc85class = {
     NULL,  // check_font
 };
 
+#define KC85DEFAULT \
+    "\n* KC-CAOS 4.2 *" \
+    "\n%BASIC" \
+    "\n%REBASIC" \
+    "\n%SWITCH" \
+    "\n%JUMP" \
+    "\n%MENU" \
+    "\n%SAVE" \
+    "\n%VERIFY" \
+    "\n%LOAD" \
+    "\n%COLOR" \
+    "\n%DISPLAY" \
+    "\n%MODIFY" \
+    "\n%WINDOW" \
+    "\n%KEY" \
+    "\n%KEYLIST" \
+    "\n%MODUL" \
+    "\n%SYSTEM" \
+    "\n%V24OUT" \
+    "\n%V24DUP" \
+    "\n%"
+
 ////////////////////////////////////////////////////////////////////////////////
 
 uint32_t kc87_map_color(uint32_t color, uint32_t default1, uint32_t default2) {
@@ -74,6 +96,8 @@ const RF_SysClass kc87class = {
     NULL,  // check_font
 };
 
+#define KC87DEFAULT "`f4robotron  Z 9001\n`0\n`F2OS\n>"
+
 ////////////////////////////////////////////////////////////////////////////////
 
 uint32_t z1013_map_border_color(uint32_t sys_id, uint32_t color) {
@@ -92,9 +116,11 @@ const RF_SysClass z1013class = {
     NULL,  // check_font
 };
 
+#define DEFAULT1013 "robotron Z 1013/A.2\n # "
+
 ////////////////////////////////////////////////////////////////////////////////
 
-//                               sys_id,                       name,                            class,       scrn,  scrsz,  cellsz, fontsz,  b_ul,    b_lr,   aspect, blink, default_font_id
-const RF_System RF_Sys_KC85  = { RF_MAKE_ID('K','C','8','5'), "robotron HC900, KC85/2, /3, /4", &kc85class,  NULL, {40,32}, {8,8},  {8,8}, {24,16}, {24,16}, {1,1},    320, RF_MAKE_ID('K','C','4','1') };
-const RF_System RF_Sys_KC87  = { RF_MAKE_ID('K','C','8','7'), "robotron Z 9001, KC85/1, KC87",  &kc87class,  NULL, {40,24}, {8,8},  {8,8}, {32,44}, {32,44}, {1,1},    320, RF_MAKE_ID('K','C','8','7') };
-const RF_System RF_Sys_Z1013 = { RF_MAKE_ID('1','0','1','3'), "robotron Z 1013",                &z1013class, NULL, {32,32}, {8,8},  {8,8}, {80,16}, {80,16}, {1,1},      0, RF_MAKE_ID('1','0','1','3') };
+//                               sys_id,                       name,                            class,       scrn,         scrsz,  cellsz, fontsz,  b_ul,    b_lr,   aspect, blink, default_font_id
+const RF_System RF_Sys_KC85  = { RF_MAKE_ID('K','C','8','5'), "robotron HC900, KC85/2, /3, /4", &kc85class,  KC85DEFAULT, {40,32}, {8,8},  {8,8}, {24,16}, {24,16}, {1,1},    320, RF_MAKE_ID('K','C','4','1') };
+const RF_System RF_Sys_KC87  = { RF_MAKE_ID('K','C','8','7'), "robotron Z 9001, KC85/1, KC87",  &kc87class,  KC87DEFAULT, {40,24}, {8,8},  {8,8}, {32,44}, {32,44}, {1,1},    320, RF_MAKE_ID('K','C','8','7') };
+const RF_System RF_Sys_Z1013 = { RF_MAKE_ID('1','0','1','3'), "robotron Z 1013",                &z1013class, DEFAULT1013, {32,32}, {8,8},  {8,8}, {80,16}, {80,16}, {1,1},      0, RF_MAKE_ID('1','0','1','3') };

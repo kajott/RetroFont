@@ -71,6 +71,33 @@ static void cmd_attrib(RF_Context* ctx) {
     }
 }
 
+static void cmd_clreol(RF_Context* ctx) {
+    RF_Cell* c;
+    uint16_t i;
+    if ((ctx->cursor_pos.x >= ctx->screen_size.x) || (ctx->cursor_pos.y >= ctx->screen_size.y)) { return; }
+    ctx->attrib.codepoint = 32;
+    ctx->attrib.dirty = 1;
+    c = &ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x + ctx->cursor_pos.y];
+    for (i = ctx->screen_size.x - ctx->cursor_pos.x;  i;  --i) {
+        *c++ = ctx->attrib;
+    }
+}
+
+static void cmd_clrscr(RF_Context* ctx) {
+    RF_Cell* c;
+    uint32_t i;
+    ctx->attrib.codepoint = 32;
+    ctx->attrib.dirty = 1;
+    c = ctx->screen;
+    for (i = (uint32_t)ctx->screen_size.x * (uint32_t) ctx->screen_size.y;  i;  --i) {
+        *c++ = ctx->attrib;
+    }
+}
+
+static void cmd_unicode(RF_Context* ctx) {
+    RF_AddChar(ctx, ctx->num_buf);
+}
+
 const RF_InternalMarkupCommand RF_InternalMarkupCommands[] = {
     { 'x', false, 2, 10, cmd_setxpos },
     { 'X', false, 2, 10, cmd_setxneg },
@@ -86,6 +113,10 @@ const RF_InternalMarkupCommand RF_InternalMarkupCommands[] = {
     { '-', false, 1,  0, cmd_attrib },
     { '+', false, 1,  0, cmd_attrib },
     { '0', false, 0,  0, cmd_reset },
+    { 'z', false, 0,  0, cmd_clreol },
+    { 'Z', false, 0,  0, cmd_clrscr },
+    { 'u', false, 4, 16, cmd_unicode },
+    { 'U', false, 6, 16, cmd_unicode },
     { 0 }
 };
 

@@ -46,7 +46,9 @@ const RF_SysClass stclass = {
     NULL,  // check_font
 };
 
-//                                   sys_id,                       name,                 class,   scrn,  scrsz,  cellsz, fontsz,  b_ul,    b_lr,  aspect, blink, default_font_id
-const RF_System RF_Sys_ST_LowRes = { RF_MAKE_ID('S','T','E','L'), "Atari ST LowRes",    &stclass, NULL, {40,25}, {8,8},  {8,8},  {32,30}, {32,40}, {1,1},     0, RF_MAKE_ID('S','T','0','8') };
-const RF_System RF_Sys_ST_MedRes = { RF_MAKE_ID('S','T','E','M'), "Atari ST MediumRes", &stclass, NULL, {80,25}, {8,8},  {8,8},  {64,30}, {64,40}, {1,2},     0, RF_MAKE_ID('S','T','0','8') };
-const RF_System RF_Sys_ST_HiRes  = { RF_MAKE_ID('S','T','E','H'), "Atari ST HighRes",   &stclass, NULL, {80,25}, {8,16}, {8,16}, {64,64}, {64,80}, {1,1},     0, RF_MAKE_ID('S','T','1','6') };
+#define STDEFAULT "`y12Memory Test:\nST RAM       `+r  1024 KB`0\nMemory Test Complete.\n\n"
+
+//                                   sys_id,                       name,                 class,   scrn,       scrsz,  cellsz, fontsz,  b_ul,    b_lr,  aspect, blink, default_font_id
+const RF_System RF_Sys_ST_LowRes = { RF_MAKE_ID('S','T','E','L'), "Atari ST LowRes",    &stclass, STDEFAULT, {40,25}, {8,8},  {8,8},  {32,30}, {32,40}, {1,1},     0, RF_MAKE_ID('S','T','0','8') };
+const RF_System RF_Sys_ST_MedRes = { RF_MAKE_ID('S','T','E','M'), "Atari ST MediumRes", &stclass, STDEFAULT, {80,25}, {8,8},  {8,8},  {64,30}, {64,40}, {1,2},     0, RF_MAKE_ID('S','T','0','8') };
+const RF_System RF_Sys_ST_HiRes  = { RF_MAKE_ID('S','T','E','H'), "Atari ST HighRes",   &stclass, STDEFAULT, {80,25}, {8,16}, {8,16}, {64,64}, {64,80}, {1,1},     0, RF_MAKE_ID('S','T','1','6') };
