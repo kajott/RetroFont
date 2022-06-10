@@ -562,27 +562,36 @@ void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uin
 
 ///////////////////////////////////////////////////////////////////////////////
 
+extern bool RF_ParseInternalMarkup(RF_Context* ctx, uint8_t c);
+
 void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt) {
     if (!ctx || !ctx->screen || !ctx->system || !str || !str[0]) { return; }
     for (;;) {
         uint8_t c = (uint8_t) *str++;
         if (!c) { return; }  // end of string
 
-        if (ctx->in_escape) {
-            // TODO: handle escape properly
-            (void)mt;
-            ctx->in_escape = 0;  // for now, just switch back to non-escape after first char
+        if (ctx->esc_count) {
+            bool res;
+            switch (mt) {
+                case RF_MT_INTERNAL: res = RF_ParseInternalMarkup(ctx, c); break;
+                default: res = true;  // unknown markup type -> exit markup mode
+            }
+            if (res) {
+                ctx->esc_count = 0;  // parser returned false -> end of sequence
+            } else if (ctx->esc_count < 255) {
+                ctx->esc_count++;  // otherwise, count escape byte
+            }
             continue;
         }
 
         // process UTF-8 continuation byte
         if (ctx->utf8_cb_count) {
             if ((c & 0xC0) == 0x80) {
-                ctx->utf8_cp_buf = (ctx->utf8_cp_buf << 6) | (c & 0x3F);
+                ctx->num_buf = (ctx->num_buf << 6) | (c & 0x3F);
                 ctx->utf8_cb_count--;
                 if (!ctx->utf8_cb_count) {
                     // end of UTF-8 sequence
-                    RF_AddChar(ctx, ctx->utf8_cp_buf);
+                    RF_AddChar(ctx, ctx->num_buf);
                 }
                 continue;
             } else {
@@ -594,8 +603,8 @@ void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt) {
 
         // handle normal byte
         if (c == (uint8_t)mt) {
-            // TODO: handle begin of escape sequence
-            ctx->in_escape = 1;
+            // begin of escape sequence
+            ctx->esc_count = 1;
         } else if (c < 0x80) {
             // normal 7-bit ASCII character
             RF_AddChar(ctx, c);
@@ -605,15 +614,15 @@ void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt) {
         } else if (c < 0xE0) {
             // leading bytes for 2-byte UTF-8 sequence
             ctx->utf8_cb_count = 1;
-            ctx->utf8_cp_buf = c & 0x1F;
+            ctx->num_buf = c & 0x1F;
         } else if (c < 0xF0) {
             // leading bytes for 3-byte UTF-8 sequence
             ctx->utf8_cb_count = 2;
-            ctx->utf8_cp_buf = c & 0x0F;
+            ctx->num_buf = c & 0x0F;
         } else if (c < 0xF8) {
             // leading bytes for 4-byte UTF-8 sequence
             ctx->utf8_cb_count = 3;
-            ctx->utf8_cp_buf = c & 0x07;
+            ctx->num_buf = c & 0x07;
         } else {
             // invalid UTF-8 byte
             RF_AddChar(ctx, 0xFFFD);

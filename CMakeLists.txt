@@ -84,6 +84,7 @@ set (FONTSPECS
 
 add_library (retrofont STATIC
     retrofont/src/rfcore.c
+    retrofont/src/rfparse_int.c
     retrofont/src/fonts.c
     retrofont/src/systems.c
     ${SYSTEMS}

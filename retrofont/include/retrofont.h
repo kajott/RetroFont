@@ -218,10 +218,12 @@ struct s_RF_Context {
     bool last_blink_phase;      //!< \private blink phase of the last RF_Render() call
     uint32_t glyph_offset_cache[RF_GLYPH_CACHE_SIZE];  //!< \private glyph cache (-1 = uncached)
 
-//private: // (parser)
-    uint8_t in_escape;          //!< \private currently inside an escape sequence
+//private: // (markup parser)
     uint8_t utf8_cb_count;      //!< \private UTF-8 continuation byte count
-    uint32_t utf8_cp_buf;       //!< \private UTF-8 codepoint buffer
+    uint8_t esc_count;          //!< \private number of byte inside an escape sequence (0 = no escape)
+    uint8_t esc_remain;         //!< \private number of characters of numbers to follow
+    uint32_t num_buf;           //!< \private number buffer (e.g. current UTF-8 codepoint)
+    const void* esc_class;      //!< \private pointer to internal escape type descriptor
 };
 
 // central registries
