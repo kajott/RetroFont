@@ -12,6 +12,7 @@ class coord:
     def __init__(self, x, y): self.x, self.y = x, y
     def __str__(self):        return f"{self.x},{self.y}"
     def __repr__(self):       return f"coord({self.x},{self.y})"
+    def to_tuple(self):       return (self.x, self.y)
 
 def ParseCodepointRange(line):
     m = re.match(r'("(?P<str>[^"]+)"|-|' + r"(U\+(?P<au>[0-9a-f]+)|'(?P<ac>.)')(\.{2,3}(U\+(?P<bu>[0-9a-f]+)|'(?P<bc>.)'))?)($|(?=#)|\s+)", line, flags=re.I)
@@ -103,6 +104,7 @@ class Font:
         self.font_size = self.img.font_size
         self.glyphs = {}
         self.underline = 0
+        self.fallback_priority = 0
 
 ################################################################################
 
@@ -256,6 +258,14 @@ if __name__ == "__main__":
                     fonts[-1].underline = int(m.group(1))
                     continue
 
+                m = re.match(r'fallback_priority\s+(-?\d+)', line, flags=re.I)
+                if m:
+                    if not(fonts):
+                        err("'map' command invalid without an active font")
+                        continue
+                    fonts[-1].fallback_priority = int(m.group(1))
+                    continue
+
                 err(f"unrecognized line `{line}`")
             allfonts += fonts
     fonts = allfonts
@@ -275,6 +285,19 @@ if __name__ == "__main__":
     segments = sorted(markers) + [len(bitmap)]
     segments = list(zip(segments, segments[1:]))
     if verbose: print("- composite bitmap size:", len(bitmap), "bytes,", len(markers), "distinct glyphs")
+
+    # compose list of fallback glyphs
+    fallback = {}
+    for f in sorted(fonts, key=lambda f: -f.fallback_priority):
+        fs = f.font_size.to_tuple()
+        try:
+            fb = fallback[fs]
+        except KeyError:
+            fb = {}
+            fallback[fs] = fb
+        for cp, offset in f.glyphs.items():
+            if not(cp in fb):
+                fb[cp] = (f.font_id, offset)
 
     # generate fonts.c
     namelen = max(len(f.name) for f in fonts) + 3
@@ -299,6 +322,15 @@ if __name__ == "__main__":
                 out.write(f'    {{ {cp_s:>8},{f.glyphs[cp]:6d} }},  // {charname(cp)}\n')
             out.write('};\n\n')
 
+        for fs in sorted(fallback):
+            out.write(f'const RF_GlyphMapEntry fallback_{fs[0]}x{fs[1]}[] = {{\n')
+            fb = fallback[fs]
+            for cp in sorted(fb):
+                source, offset = fb[cp]
+                cp_s = f"0x{cp:04X}"
+                out.write(f'    {{ {cp_s:>8},{offset:6d} }},  // [{source}] {charname(cp)}\n')
+            out.write('};\n\n')
+
         out.write('const RF_Font RF_FontList[] = {\n')
         for f in fonts:
             name = f'"{f.name}",'.ljust(namelen)
@@ -306,6 +338,14 @@ if __name__ == "__main__":
             out.write(f'    {{ RF_MAKE_ID({id_s}), {name} {{{f.font_size.x:2d},{f.font_size.y:2d}}}, glyphmap_{f.font_id}, {len(f.glyphs):4d},{f.glyphs.get(0xFFFD,0):6d}, {f.underline:2d} }},\n')
         name = "NULL,".ljust(namelen)
         out.write(f'    {{ 0,                           {name} {{ 0, 0}}, NULL,             0,     0,  0 }}\n')
+        out.write('};\n\n')
+
+        out.write('const RF_FallbackGlyphs RF_FallbackGlyphsList[] = {\n')
+        for fs in sorted(fallback):
+            x,y = fs
+            name = f"{x}x{y},"
+            out.write(f'    {{ {{ {x:2d}, {y:2d} }}, fallback_{name:<6s} {len(fallback[fs]):4d} }},\n')
+        out.write('    { {  0,  0 }, NULL,              0 }\n')
         out.write('};\n')
 
     sys.exit(g_errors)

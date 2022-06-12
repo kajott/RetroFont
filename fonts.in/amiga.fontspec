@@ -17,6 +17,7 @@ source "amiga_8x8_ks12.pbm" 8x8
 font "T812" "Commodora Amiga Topaz-8 (Kickstart 1.2)"
     usemap "latin1amiga"
     map 2.31 U+2592  # medium shade
+    fallback_priority 200  # Topaz-8 makes a very nice general fallback font
 
 source "amiga_8x8_ks20.pbm" 8x8
 font "T820" "Commodora Amiga Topaz-8 (Kickstart 2.0)"

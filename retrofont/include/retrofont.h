@@ -24,14 +24,15 @@ extern "C" {
 #define RF_MAKE_ID(a,b,c,d) (((d) << 24) | ((c) << 16) | ((b) << 8) | (a))
 
 // forward definitions of structures
-typedef struct s_RF_Coord         RF_Coord;
-typedef struct s_RF_Cell          RF_Cell;
-typedef struct s_RF_RenderCommand RF_RenderCommand;
-typedef struct s_RF_SysClass      RF_SysClass;
-typedef struct s_RF_System        RF_System;
-typedef struct s_RF_Font          RF_Font;
-typedef struct s_RF_GlyphMapEntry RF_GlyphMapEntry;
-typedef struct s_RF_Context       RF_Context;
+typedef struct s_RF_Coord          RF_Coord;
+typedef struct s_RF_Cell           RF_Cell;
+typedef struct s_RF_RenderCommand  RF_RenderCommand;
+typedef struct s_RF_SysClass       RF_SysClass;
+typedef struct s_RF_System         RF_System;
+typedef struct s_RF_Font           RF_Font;
+typedef struct s_RF_GlyphMapEntry  RF_GlyphMapEntry;
+typedef struct s_RF_FallbackGlyphs RF_FallbackGlyphs;
+typedef struct s_RF_Context        RF_Context;
 
 // color-related constants and macros
 #define RF_COLOR_DEFAULT ((uint32_t)(-1))  //!< system default FG/BG color
@@ -59,6 +60,12 @@ typedef struct s_RF_Context       RF_Context;
 #define RF_CP_TAB        9  //!< advance cursor to next multiple of 8
 #define RF_CP_ENTER     10  //!< advance cursor to next line
 #define RF_CP_DELETE   127  //!< remove character under cursor
+
+// glyph fallback modes
+typedef enum e_RF_FallbackMode {
+    RF_FB_NONE = 0,  //!< allow no fallback
+    RF_FB_GLYPHS,    //!< allow fallback to other font's glyphs
+} RF_FallbackMode;
 
 // text markup types
 typedef enum e_RF_MarkupType {
@@ -155,7 +162,7 @@ struct s_RF_GlyphMapEntry {
 
 //! system registry item
 struct s_RF_System {
-    uint32_t sys_id;                //!< system ID
+    uint32_t sys_id;                //!< internal system ID
     const char* name;               //!< user-facing system name
     const RF_SysClass *cls;         //!< pointer to method table
     const char* default_screen;     //!< default screen contents (in RF_MT_INTERNAL format)
@@ -177,14 +184,22 @@ struct s_RF_System {
 
 //! font registry item
 struct s_RF_Font {
-    uint32_t font_id;
-    const char* name;
-    RF_Coord font_size;
+    uint32_t font_id;                   //!< internal font ID (0 = end of list)
+    const char* name;                   //!< human-readable font name
+    RF_Coord font_size;                 //!< font size in pixels
     const RF_GlyphMapEntry *glyph_map;  //!< codepoint-to-gylph map
                                         //!< \note MUST be sorted by codepoint!
     uint32_t glyph_count;               //!< number of codepoints in the glyph map
     uint32_t fallback_offset;           //!< bitmap offset of the fallback glyph
     uint16_t underline_row;             //!< row where underlining shall be done; 0 = no underline support
+};
+
+//! fallback registry item
+struct s_RF_FallbackGlyphs {
+    RF_Coord font_size;                 //!< font size in pixels (zero width = end of list)
+    const RF_GlyphMapEntry *glyph_map;  //!< codepoint-to-gylph map
+                                        //!< \note MUST be sorted by codepoint!
+    uint32_t glyph_count;               //!< number of codepoints in the glyph map
 };
 
 //! RetroFont instance.
@@ -197,6 +212,7 @@ struct s_RF_Context {
     RF_Coord screen_size;       //!< size of the screen (in character cells)
     const RF_System *system;    //!< currently selected system
     const RF_Font *font;        //!< currently selected font
+    RF_FallbackMode fallback;   //!< what to do with invalid glyphs
     uint8_t *bitmap;            //!< rendered bitmap, top-down, RGB888 format
     size_t stride;              //!< distance between rows (always bitmap_size.x * 3)
     RF_Coord bitmap_size;       //!< size of the bitmap, in pixels
@@ -217,6 +233,7 @@ struct s_RF_Context {
     bool has_border;            //!< \private whether the border in included in the bitmap
     bool last_blink_phase;      //!< \private blink phase of the last RF_Render() call
     uint32_t glyph_offset_cache[RF_GLYPH_CACHE_SIZE];  //!< \private glyph cache (-1 = uncached)
+    const RF_FallbackGlyphs* fb_glyphs;                //!< \private fallback glyph list (NULL = no fallback)
 
 //private: // (markup parser)
     uint8_t utf8_cb_count;      //!< \private UTF-8 continuation byte count
@@ -227,10 +244,11 @@ struct s_RF_Context {
 };
 
 // central registries
-extern const RF_System* const RF_SystemList[];    //!< system registry
-extern const RF_Font          RF_FontList[];      //!< font registry
-extern const uint8_t          RF_GlyphBitmaps[];  //!< glyph bitmaps
-extern const RF_Cell          RF_EmptyCell;       //!< cell with default contents
+extern const RF_System* const  RF_SystemList[];          //!< system registry
+extern const RF_Font           RF_FontList[];            //!< font registry
+extern const RF_FallbackGlyphs RF_FallbackGlyphsList[];  //!< fallback glyph map registry
+extern const uint8_t           RF_GlyphBitmaps[];        //!< glyph bitmaps
+extern const RF_Cell           RF_EmptyCell;             //!< cell with default contents
 
 //! create empty context with specified system ID
 //! \note before the context can be used, RF_ResizeScreen() must be called
@@ -245,6 +263,9 @@ bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id);
 //! \param font_id  ID for the font to set; 0 = system default
 //! \returns true if the font has been set, false if the font is unknown or invalid
 bool RF_SetFont(RF_Context* ctx, uint32_t font_id);
+
+//! set the fallback mode
+void RF_SetFallbackMode(RF_Context* ctx, RF_FallbackMode mode);
 
 //! resize the screen (or initialize it if not called before)
 //! \param new_width    target width  (0 = keep old value; RF_SIZE_DEFAULT = system default)

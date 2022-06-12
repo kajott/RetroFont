@@ -71,10 +71,26 @@ bool RF_SetFont(RF_Context* ctx, uint32_t font_id) {
         }
     }
     if (result) {
-        RF_Invalidate(ctx, false);
-        memset((void*)ctx->glyph_offset_cache, 0xFF, sizeof(ctx->glyph_offset_cache));
+        RF_SetFallbackMode(ctx, ctx->fallback);
     }
     return result;
+}
+
+void RF_SetFallbackMode(RF_Context* ctx, RF_FallbackMode mode) {
+    if (!ctx) { return; }
+    RF_Invalidate(ctx, false);
+    ctx->fallback = mode;
+    memset((void*)ctx->glyph_offset_cache, 0xFF, sizeof(ctx->glyph_offset_cache));
+    ctx->fb_glyphs = NULL;
+    if (ctx->font && (mode == RF_FB_GLYPHS)) {
+        for (const RF_FallbackGlyphs* fb = RF_FallbackGlyphsList;  fb->font_size.x && fb->font_size.y && fb->glyph_map;  ++fb) {
+            if ((ctx->font->font_size.x == fb->font_size.x)
+            &&  (ctx->font->font_size.y == fb->font_size.y)) {
+                ctx->fb_glyphs = fb;
+                break;
+            }
+        }
+    }
 }
 
 bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, bool with_border) {
@@ -204,6 +220,20 @@ static uint8_t* fill_border(uint8_t* p, uint32_t color, size_t count) {
     return p;
 }
 
+#define INVALID_GLYPH ((uint32_t)(-1))
+
+static uint32_t lookup_glyph(const RF_GlyphMapEntry *map, uint32_t count, uint32_t codepoint) {
+    // binary search for a glyph
+    uint32_t a = 0, b = count - 1;
+    while (b > a) {
+//printf("U+%04X (#%d) <= U+%04X <= U+%04X (#%d)\n", ctx->font->glyph_map[a].codepoint, a, cmd.cell->codepoint, ctx->font->glyph_map[b].codepoint, b);
+        uint32_t c = (a + b + 1) >> 1;
+        if (codepoint < map[c].codepoint)
+            { b = c - 1; } else { a = c; }
+    }
+    return (map[a].codepoint == codepoint) ? map[a].bitmap_offset : INVALID_GLYPH;
+}
+
 bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     bool result = false;
     RF_RenderCommand cmd;
@@ -232,22 +262,23 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
             cmd.is_cursor = (y == ctx->cursor_pos.y) && (x == ctx->cursor_pos.x);
             if (cmd.cell->dirty || ((cmd.blink_phase != ctx->last_blink_phase) && (cmd.cell->blink || cmd.is_cursor))) {
                 // try to retrieve the offset from the cache
-                #define CACHE_INVALID ((uint32_t)(-1))
                 uint32_t cache_index = cmd.cell->codepoint - RF_GLYPH_CACHE_MIN;
-                uint32_t offset = (cache_index < RF_GLYPH_CACHE_SIZE) ? ctx->glyph_offset_cache[cache_index] : CACHE_INVALID;
-                if (offset == CACHE_INVALID) {
-                    // not cached (or not cacheable) -> binary search for the correct glyph
-                    uint32_t a = 0, b = ctx->font->glyph_count - 1;
-                    while (b > a) {
-//printf("U+%04X (#%d) <= U+%04X <= U+%04X (#%d)\n", ctx->font->glyph_map[a].codepoint, a, cmd.cell->codepoint, ctx->font->glyph_map[b].codepoint, b);
-                        uint32_t c = (a + b + 1) >> 1;
-                        if (cmd.cell->codepoint < ctx->font->glyph_map[c].codepoint)
-                            { b = c - 1; } else { a = c; }
+                uint32_t offset = (cache_index < RF_GLYPH_CACHE_SIZE) ? ctx->glyph_offset_cache[cache_index] : INVALID_GLYPH;
+                // if the glyph is not cached (or not cacheable), look it up the hard way
+                if (offset == INVALID_GLYPH) {
+                    // not cached (or not cacheable) -> look up the glyph the hard way
+                    {
+                        // try the font's native glyph map first
+                        offset = lookup_glyph(ctx->font->glyph_map, ctx->font->glyph_count, cmd.cell->codepoint);
                     }
-                    offset = (ctx->font->glyph_map[a].codepoint == cmd.cell->codepoint)
-                        ?  ctx->font->glyph_map[a].bitmap_offset
-                        :  ctx->font->fallback_offset;
-//printf("DONE\n");
+                    if ((offset == INVALID_GLYPH) && ctx->fb_glyphs) {
+                        // look for fallback glyphs in other fonts of the same size (if allowed to)
+                        offset = lookup_glyph(ctx->fb_glyphs->glyph_map, ctx->fb_glyphs->glyph_count, cmd.cell->codepoint);
+                    }
+                    if (offset == INVALID_GLYPH) {
+                        // last resort: use font's built-in fallback glyph
+                        offset = ctx->font->fallback_offset;
+                    }
                     if (cache_index < RF_GLYPH_CACHE_SIZE) {
                         // store in cache
                         ctx->glyph_offset_cache[cache_index] = offset;

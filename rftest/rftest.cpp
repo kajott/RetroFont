@@ -505,7 +505,7 @@ void RFTestApp::loadDefaultScreen() {
 void RFTestApp::drawUI() {
     // main window begin
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(556.0f, 170.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(556.0f, 192.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
 
         ImGui::AlignTextToFramePadding();
@@ -560,6 +560,11 @@ void RFTestApp::drawUI() {
             ImGui::SliderInt("scaling mode", &m_renderMode, rmIntegral, rmSmooth, RenderModeStrings[m_renderMode]);
         } else {
             if (ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx")) { updateSize(); }
+        }
+
+        bool fallbackEnabled = (m_ctx && (m_ctx->fallback != RF_FB_NONE));
+        if (ImGui::Checkbox("allow fallback to glyphs from other fonts", &fallbackEnabled) && m_ctx) {
+            RF_SetFallbackMode(m_ctx, fallbackEnabled ? RF_FB_GLYPHS : RF_FB_NONE);
         }
     }
     ImGui::End();

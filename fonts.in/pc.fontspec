@@ -190,6 +190,7 @@ font "PC8P" "PC 8x8 (Amstrad)"
 source "ega_cpi_cp437_8x8.pbm" 8x8
 font "PC8D" "PC 8x8 (MS-DOS EGA.CPI)"
     usemap "cp437"
+    fallback_priority 100  # prefer this as fallback
 
 
 source "pc_8x14_mda.pbm" 8x14
@@ -211,6 +212,7 @@ source "ega_cpi_cp437_8x14.pbm" 8x14
 font "PC4D" "PC 8x14 (MS-DOS EGA.CPI)"
     underline 13
     usemap "cp437"
+    fallback_priority 100  # prefer this as fallback
 
 
 source "pc_8x16_vga.pbm" 8x16
@@ -227,6 +229,7 @@ source "ega_cpi_cp437_8x16.pbm" 8x16
 font "PC6D" "PC 8x16 (MS-DOS EGA.CPI)"
     underline 13
     usemap "cp437"
+    fallback_priority 100  # prefer this as fallback
 
 source "iso_cpi_cp437_8x16.pbm" 8x16
 font "PC6I" "PC 8x16 (MS-DOS ISO.CPI)"
