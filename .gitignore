@@ -1,5 +1,6 @@
 retrofont/src/fonts.c
 retrofont/src/systems.c
+retrofont/src/fallbacks.c
 
 fonts.in/*.cpi
 
@@ -9,3 +10,5 @@ _build*
 vswhere.exe
 ninja.exe
 cmake-*
+
+.cache.*
