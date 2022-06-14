@@ -82,7 +82,7 @@ void RF_SetFallbackMode(RF_Context* ctx, RF_FallbackMode mode) {
     ctx->fallback = mode;
     memset((void*)ctx->glyph_offset_cache, 0xFF, sizeof(ctx->glyph_offset_cache));
     ctx->fb_glyphs = NULL;
-    if (ctx->font && (mode == RF_FB_GLYPHS)) {
+    if (ctx->font && ((mode == RF_FB_FONT) || (mode == RF_FB_FONT_CHAR) || (mode == RF_FB_CHAR_FONT))) {
         for (const RF_FallbackGlyphs* fb = RF_FallbackGlyphsList;  fb->font_size.x && fb->font_size.y && fb->glyph_map;  ++fb) {
             if ((ctx->font->font_size.x == fb->font_size.x)
             &&  (ctx->font->font_size.y == fb->font_size.y)) {
@@ -222,7 +222,7 @@ static uint8_t* fill_border(uint8_t* p, uint32_t color, size_t count) {
 
 #define INVALID_GLYPH ((uint32_t)(-1))
 
-static uint32_t lookup_glyph(const RF_GlyphMapEntry *map, uint32_t count, uint32_t codepoint) {
+static uint32_t glyph_map_lookup(const RF_GlyphMapEntry *map, uint32_t count, uint32_t codepoint) {
     // binary search for a glyph
     uint32_t a = 0, b = count - 1;
     while (b > a) {
@@ -232,6 +232,24 @@ static uint32_t lookup_glyph(const RF_GlyphMapEntry *map, uint32_t count, uint32
             { b = c - 1; } else { a = c; }
     }
     return (map[a].codepoint == codepoint) ? map[a].bitmap_offset : INVALID_GLYPH;
+}
+
+static uint32_t glyph_map_lookup_with_fallback(const RF_GlyphMapEntry *map, uint32_t count, uint32_t codepoint, bool allow_fallback) {
+    uint32_t header, multi_fb_count;
+    uint32_t offset = glyph_map_lookup(map, count, codepoint);
+    if ((offset != INVALID_GLYPH) || !allow_fallback) { return offset; }
+    // if we arrived here, we need to look for fallback characters -> fetch the header
+    header = glyph_map_lookup(RF_FallbackMap, RF_FallbackMapSize, codepoint);
+    if (header == INVALID_GLYPH) { return header; }
+    // decode header; if it's a single fallback entry, look that up
+    multi_fb_count = header >> 24;
+    if (!multi_fb_count) { return glyph_map_lookup(map, count, header); }
+    // if we arrived here, there's multiple possible fallback characters -> iterate over them
+    header &= 0xFFFFFF;
+    do {
+        offset = glyph_map_lookup(map, count, RF_MultiFallbackData[header++]);
+    } while (--multi_fb_count && (offset == INVALID_GLYPH));
+    return offset;
 }
 
 bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
@@ -269,11 +287,15 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
                     // not cached (or not cacheable) -> look up the glyph the hard way
                     {
                         // try the font's native glyph map first
-                        offset = lookup_glyph(ctx->font->glyph_map, ctx->font->glyph_count, cmd.cell->codepoint);
+                        offset = glyph_map_lookup_with_fallback(
+                                    ctx->font->glyph_map, ctx->font->glyph_count, cmd.cell->codepoint,
+                                    (ctx->fallback == RF_FB_CHAR) || (ctx->fallback == RF_FB_CHAR_FONT));
                     }
                     if ((offset == INVALID_GLYPH) && ctx->fb_glyphs) {
                         // look for fallback glyphs in other fonts of the same size (if allowed to)
-                        offset = lookup_glyph(ctx->fb_glyphs->glyph_map, ctx->fb_glyphs->glyph_count, cmd.cell->codepoint);
+                        offset = glyph_map_lookup_with_fallback(
+                                    ctx->fb_glyphs->glyph_map, ctx->fb_glyphs->glyph_count, cmd.cell->codepoint,
+                                    (ctx->fallback == RF_FB_CHAR_FONT) || (ctx->fallback == RF_FB_FONT_CHAR));
                     }
                     if (offset == INVALID_GLYPH) {
                         // last resort: use font's built-in fallback glyph

@@ -562,9 +562,24 @@ void RFTestApp::drawUI() {
             if (ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx")) { updateSize(); }
         }
 
-        bool fallbackEnabled = (m_ctx && (m_ctx->fallback != RF_FB_NONE));
-        if (ImGui::Checkbox("allow fallback to glyphs from other fonts", &fallbackEnabled) && m_ctx) {
-            RF_SetFallbackMode(m_ctx, fallbackEnabled ? RF_FB_GLYPHS : RF_FB_NONE);
+        int fbmode = 2;
+        if (m_ctx) {
+            switch (m_ctx->fallback) {
+                case RF_FB_FONT_CHAR: fbmode = 0; break;
+                case RF_FB_FONT:      fbmode = 1; break;
+                case RF_FB_CHAR:      fbmode = 3; break;
+                case RF_FB_CHAR_FONT: fbmode = 4; break;
+            }
+        }
+        static const char* fmodeStrings[] = { "both (font first)", "other font", "no fallback", "replacement characters", "both (characters first)" };
+        if (ImGui::SliderInt("fallback mode", &fbmode, 0, 4, fmodeStrings[fbmode])) {
+            switch (fbmode) {
+                case 0:  RF_SetFallbackMode(m_ctx, RF_FB_FONT_CHAR); break;
+                case 1:  RF_SetFallbackMode(m_ctx, RF_FB_FONT);      break;
+                case 3:  RF_SetFallbackMode(m_ctx, RF_FB_CHAR);      break;
+                case 4:  RF_SetFallbackMode(m_ctx, RF_FB_CHAR_FONT); break;
+                default: RF_SetFallbackMode(m_ctx, RF_FB_NONE);      break;
+            }
         }
     }
     ImGui::End();

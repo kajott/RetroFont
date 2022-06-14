@@ -63,8 +63,11 @@ typedef struct s_RF_Context        RF_Context;
 
 // glyph fallback modes
 typedef enum e_RF_FallbackMode {
-    RF_FB_NONE = 0,  //!< allow no fallback
-    RF_FB_GLYPHS,    //!< allow fallback to other font's glyphs
+    RF_FB_NONE = 0,   //!< allow no fallback
+    RF_FB_FONT,       //!< allow fallback to other font's glyphs
+    RF_FB_CHAR,       //!< allow fallback to other characters in the current font
+    RF_FB_CHAR_FONT,  //!< allow both types of fallback, but prefer character fallback
+    RF_FB_FONT_CHAR,  //!< allow both types of fallback, but prefer font fallback
 } RF_FallbackMode;
 
 // text markup types
@@ -244,11 +247,14 @@ struct s_RF_Context {
 };
 
 // central registries
+extern const RF_Cell           RF_EmptyCell;             //!< cell with default contents
 extern const RF_System* const  RF_SystemList[];          //!< system registry
 extern const RF_Font           RF_FontList[];            //!< font registry
-extern const RF_FallbackGlyphs RF_FallbackGlyphsList[];  //!< fallback glyph map registry
-extern const uint8_t           RF_GlyphBitmaps[];        //!< glyph bitmaps
-extern const RF_Cell           RF_EmptyCell;             //!< cell with default contents
+extern const uint8_t           RF_GlyphBitmaps[];        //!< \private glyph bitmaps
+extern const RF_FallbackGlyphs RF_FallbackGlyphsList[];  //!< \private fallback glyph map registry
+extern const RF_GlyphMapEntry  RF_FallbackMap[];         //!< \private fallback character map
+extern const uint32_t          RF_FallbackMapSize;       //!< \private number of entries in RF_FallbackMap
+extern const uint32_t          RF_MultiFallbackData[];   //!< \private extra fallback map data for characters with multiple possible fallbacks
 
 //! create empty context with specified system ID
 //! \note before the context can be used, RF_ResizeScreen() must be called

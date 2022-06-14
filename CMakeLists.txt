@@ -87,6 +87,7 @@ add_library (retrofont STATIC
     retrofont/src/rfparse_int.c
     retrofont/src/fonts.c
     retrofont/src/systems.c
+    retrofont/src/fallbacks.c
     ${SYSTEMS}
 )
 
@@ -108,6 +109,12 @@ add_custom_command (
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/util
     DEPENDS ${SYSTEMS}
     MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/util/update_systems.py
+)
+
+add_custom_command (
+    OUTPUT ${CMAKE_SOURCE_DIR}/retrofont/src/fallbacks.c
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/util/generate_fallback_map.py -q ${CMAKE_SOURCE_DIR}/retrofont/src/fallbacks.c
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/util/generate_fallback_map.py
 )
 
 
