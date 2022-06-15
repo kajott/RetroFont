@@ -71,6 +71,10 @@ class Codepoints(dict):
         key = make_key(name)
         return min(cp for cp in self.values() if key in cp.key)
 
+    def find_exact(self, name):
+        key = make_key(name)
+        return min(cp for cp in self.values() if key == cp.key)
+
 ################################################################################
 
 class UnicodeBlock:
@@ -95,7 +99,7 @@ class UnicodeBlockRange:
     def __iter__(self):
         last = 0
         for a, b in self.ranges:
-            yield from range(max(last, a), b)
+            yield from range(max(last, a), b + 1)
             last = b + 1
 
     def iter(self, cplist=None):
@@ -136,6 +140,9 @@ class Fallbacks:
         self.verbose = None
 
     def add(self, from_cp, *to_cp):
+        """
+        associate one or more fallback codepoints to a source codepoint
+        """
         if (len(to_cp) == 1) and isinstance(to_cp[0], (list, tuple, set)):
             to_cp = to_cp[0]
         if isinstance(from_cp, Codepoint):
@@ -152,6 +159,37 @@ class Fallbacks:
                 fblist.append(cp)
                 if self.verbose:
                     print(self.verbose.get(from_cp, hex(from_cp)), "==>", self.verbose.get(cp, hex(cp)))
+
+    def add_multi(self, *cplist):
+        """
+        associate multiple fallbacks, specified by starting codepoint
+        and a number or string (or list thereof), whereby the source codepoint
+        will be increased with every associated fallback (i.e. there will be
+        *one* new fallback per codepoint)
+        """
+        if not(cplist) or (len(cplist) & 1):
+            raise ValueError("invalid number of arguments")
+        for from_cp, to_spec in zip(cplist[0::2], cplist[1::2]):
+            if isinstance(from_cp, Codepoint):
+                from_cp = from_cp.cp
+            elif isinstance(from_cp, str):
+                from_cp = ord(from_cp)
+            if not isinstance(to_spec, (list, tuple)):
+                to_spec = [to_spec]
+            for item in to_spec:
+                #print(hex(from_cp), "=>", item)
+                if isinstance(item, Codepoint):
+                    item = [item.cp]
+                elif isinstance(item, int):
+                    item = [item]
+                elif isinstance(item, str):
+                    item = list(map(ord, item))
+                else:
+                    raise TypeError("invalid type " + type(item) + " in fallback codepoint list")
+                for to_cp in item:
+                    #print(hex(from_cp), "=>", to_cp)
+                    self.add(from_cp, to_cp)
+                    from_cp += 1
 
     def add_cross(self, a, b):
         self.add(a, b)
@@ -184,10 +222,92 @@ if __name__ == "__main__":
         if len(decomp) == 1:
             fbs.add(cp, decomp)
 
-    # create aliases for German Eszett
-    #fbs.verbose = cps  #DEBUG
-    fbs.add(cps.find("small letter sharp s"), cps.find("small letter beta"))
-    fbs.add(cps.find("small letter sharp s"), cps.find("capital letter b"))
+    # some fonts are even lacking some basic ASCII characters
+    fbs.add_multi('[', "(/)", '`', "'", '{', "(!)")
+
+    # create aliases for the first few special characters of Latin-1 Supplement
+    fbs.add_multi(0xA0, " !cLoY|$\"Ca<--R~o+23'uP.,1o>123?")
+
+    # some more fallbacks for Latin-1 Supplement
+    fbs.add_cross(cps.find("small   letter sharp s"),       cps.find("small letter beta"))
+    fbs.add_multi(cps.find("small   letter sharp s"),       'B',
+                  cps.find("capital letter ae"),            'A',
+                  cps.find("small   letter ae"),            'a',
+                  cps.find("capital letter eth"),           'D',
+                  cps.find("small   letter eth"),           'd',
+                  cps.find("capital letter thorn"),         'P',
+                  cps.find("small   letter thorn"),         'p',
+                  cps.find("capital letter o with stroke"), 'O',
+                  cps.find("small   letter o with stroke"), 'o',
+                  cps.find("multiplication sign"),          'x',
+                  cps.find("division sign"),                ':')
+
+    # make Atari ST's fancy digits available for everyone else
+    fbs.add_multi(cps.find("segmented digit zero"), "0123456789")
+
+    # some basic arrows
+    fbs.add_multi(0x2190, "<^>v")  # U+2190 LEFTWARDS ARROW ... can't use find() here, because we'd find combining stuff instead :(
+
+    # complete the box drawings
+    boxes = list(blocks.find("Box Drawing").iter(cps))
+    box_attribs = {"light", "heavy", "double", "single"}
+    box_cache = {}
+    for cp in boxes:
+        # split codepoint name into words
+        words = cp.name.lower().split()[2:]
+        # ignore some special types of glyphs here
+        if any((w in words) for w in ("arc", "diagonal")):
+            continue
+        # search for mentions of dash and remove them,
+        # effectively aliasing dashed lines to normal ones
+        try:
+            pos = words.index("dash")
+            del words[pos-1 : pos+1]
+        except ValueError:
+            pass
+        # collect all mentions of attributes on the line; we're going to map
+        # any mixed combination to a single attribute anyway
+        attrs = set(words) & box_attribs
+        words = [w for w in words if not(w in box_attribs)]
+        # collect remaining words, all of which should be directions (and "and")
+        words = set(words) - {"and"}
+        # normalize combinations of L/R and U/D to directions
+        p = words & {"left", "right"}
+        if len(p) == 2: words = words - p | {"horizontal"}
+        p = words & {"up", "down"}
+        if len(p) == 2: words = words - p | {"vertical"}
+        # normalize attribute order
+        is_double = ("double" in attrs)
+        attrs = ["double", "heavy", "light"] if is_double \
+           else ["heavy", "light"] if ("light" in attrs) \
+           else ["light", "heavy"]  # some character sets only have heavy boxes
+        # normalize direction order
+        dirs = []
+        for d in ("vertical", "up", "down", "horizontal", "left", "right"):
+            if d in words:
+                words -= {d}
+                dirs.append(d)
+        assert not(words)  # we should have collected every word by now
+        assert len(dirs) in (1,2)  # we should have exactly one or two directions
+        if len(dirs) > 1:
+            dirs.insert(1, "and")
+        dirs = " ".join(dirs)
+        # now create the fallback aliases
+        for attr in attrs:
+            target_name = attr + " " + dirs
+            try:
+                target_cp = box_cache[target_name]
+            except KeyError:
+                target_cp = cps.find_exact("BOX DRAWINGS " + target_name.upper())
+                box_cache[target_name] = target_cp
+            if cp.cp != target_cp.cp:
+                fbs.add(cp, target_cp)
+        # ... and some extreme fallbacks down to ASCII
+        if dirs == "horizontal":
+            if attrs[0] == "double": fbs.add_multi(cp, '=')
+            else:                    fbs.add_multi(cp, '-')
+        elif dirs == "vertical":     fbs.add_multi(cp, '|', cp, '!')
+        else:                        fbs.add_multi(cp, '+')
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # RULES END HERE                                                          #
