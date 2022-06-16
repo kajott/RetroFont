@@ -56,6 +56,7 @@ class Codepoints(dict):
             if not line.strip(): continue
             cp = Codepoint(*(x.strip() for x in line.split(';')))
             self[cp.cp] = cp
+        self.cache = {}
 
     def name(self, cp):
         try:
@@ -63,17 +64,26 @@ class Codepoints(dict):
         except KeyError:
             return f"U+{cp:04X} (unknown)"
 
-    def findall(self, name):
-        key = make_key(name)
-        return sorted(cp for cp in self.values() if key in cp.key)
-
     def find(self, name):
         key = make_key(name)
-        return min(cp for cp in self.values() if key in cp.key)
-
-    def find_exact(self, name):
-        key = make_key(name)
-        return min(cp for cp in self.values() if key == cp.key)
+        try:
+            return self.cache[key]
+        except KeyError:
+            wc = 2 * key.startswith('*') + key.endswith('*')
+            if wc & 2: key = key[1:]
+            if wc & 1: key = key[:-1]
+            cmp_func = {
+                0: str.__eq__,
+                1: str.endswith,
+                2: str.startswith,
+                3: lambda needle, haystack: (needle in haystack),
+            }[wc]
+            try:
+                res = min(cp for cp in self.values() if cmp_func(cp.key, key))
+            except ValueError:
+                raise KeyError("no matching codepoint found")
+            self.cache[key] = res
+            return res
 
 ################################################################################
 
@@ -228,31 +238,32 @@ if __name__ == "__main__":
     # create aliases for the first few special characters of Latin-1 Supplement
     fbs.add_multi(0xA0, " !cLoY|$\"Ca<--R~o+23'uP.,1o>123?")
 
+    # special handling for German Eszett
+    fbs.add_cross(cps.find("latin small letter sharp s"), cps.find("greek small letter beta"))
+    fbs.add_multi(cps.find("latin small letter sharp s"), 'B')
+
     # some more fallbacks for Latin-1 Supplement
-    fbs.add_cross(cps.find("small   letter sharp s"),       cps.find("small letter beta"))
-    fbs.add_multi(cps.find("small   letter sharp s"),       'B',
-                  cps.find("capital letter ae"),            'A',
-                  cps.find("small   letter ae"),            'a',
-                  cps.find("capital letter eth"),           'D',
-                  cps.find("small   letter eth"),           'd',
-                  cps.find("capital letter thorn"),         'P',
-                  cps.find("small   letter thorn"),         'p',
-                  cps.find("capital letter o with stroke"), 'O',
-                  cps.find("small   letter o with stroke"), 'o',
-                  cps.find("multiplication sign"),          'x',
-                  cps.find("division sign"),                ':')
+    fbs.add_multi(cps.find("latin capital letter ae"),            'A',
+                  cps.find("latin small   letter ae"),            'a',
+                  cps.find("latin capital letter eth"),           'D',
+                  cps.find("latin small   letter eth"),           'd',
+                  cps.find("latin capital letter thorn"),         'P',
+                  cps.find("latin small   letter thorn"),         'p',
+                  cps.find("latin capital letter o with stroke"), 'O',
+                  cps.find("latin small   letter o with stroke"), 'o',
+                  cps.find("multiplication sign"),                'x',
+                  cps.find("division sign"),                      ':')
 
     # make Atari ST's fancy digits available for everyone else
     fbs.add_multi(cps.find("segmented digit zero"), "0123456789")
 
-    # some basic arrows
-    fbs.add_multi(0x2190, "<^>v")  # U+2190 LEFTWARDS ARROW ... can't use find() here, because we'd find combining stuff instead :(
+    # add some basic arrows
+    fbs.add_multi(cps.find("leftwards arrow"), "<^>v")
 
     # complete the box drawings
-    boxes = list(blocks.find("Box Drawing").iter(cps))
     box_attribs = {"light", "heavy", "double", "single"}
     box_cache = {}
-    for cp in boxes:
+    for cp in blocks.find("Box Drawing").iter(cps):
         # split codepoint name into words
         words = cp.name.lower().split()[2:]
         # ignore some special types of glyphs here
@@ -294,12 +305,7 @@ if __name__ == "__main__":
         dirs = " ".join(dirs)
         # now create the fallback aliases
         for attr in attrs:
-            target_name = attr + " " + dirs
-            try:
-                target_cp = box_cache[target_name]
-            except KeyError:
-                target_cp = cps.find_exact("BOX DRAWINGS " + target_name.upper())
-                box_cache[target_name] = target_cp
+            target_cp = cps.find("box drawings " + attr + " " + dirs)
             if cp.cp != target_cp.cp:
                 fbs.add(cp, target_cp)
         # ... and some extreme fallbacks down to ASCII
