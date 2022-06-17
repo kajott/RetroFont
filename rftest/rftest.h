@@ -58,6 +58,7 @@ class RFTestApp {
     int m_zoom = 1;
 
     // default screen
+    static constexpr int dsAsConfigured = -1;
     static constexpr int dsEmpty   = 0;
     static constexpr int dsKeep    = 1;
     static constexpr int dsDefault = 2;
@@ -72,7 +73,8 @@ class RFTestApp {
     int getBorderSize() const;
     void updateSize(bool force=false, bool forceDefault=false);
     void updateSize(int width, int height, bool force=false, bool forceDefault=false);
-    void loadDefaultScreen();
+    void loadDefaultScreen(int type=dsAsConfigured, const char* overrideText=nullptr);
+    inline void loadScreen(const char* text) { loadDefaultScreen(dsEmpty, text); }
 
     // event handling
     void handleKeyEvent(int key, int scancode, int action, int mods);

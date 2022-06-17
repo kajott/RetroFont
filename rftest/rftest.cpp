@@ -480,20 +480,24 @@ void RFTestApp::updateSize(int width, int height, bool force, bool forceDefault)
     #endif
 }
 
-void RFTestApp::loadDefaultScreen() {
-    if (m_defaultScreen == dsKeep) {
+void RFTestApp::loadDefaultScreen(int type, const char* overrideText) {
+    if (type == dsAsConfigured) {
+        type = m_defaultScreen;
+    }
+    if (type == dsKeep) {
         return;  // do nothing; don't even touch m_screenContentsChanged!
     }
-    if ((m_defaultScreen == dsEmpty) || (m_defaultScreen == dsDefault)) {
+    if ((type == dsEmpty) || (type == dsDefault) || overrideText) {
         RF_ClearAll(m_ctx);
     }
     RF_MoveCursor(m_ctx, 0, 0);
-    if (m_defaultScreen == dsDefault) {
+    if ((type == dsDefault) || overrideText) {
         RF_AddText(m_ctx,
+            overrideText ? overrideText :
             (m_ctx && m_ctx->system && m_ctx->system->default_screen)
                                      ? m_ctx->system->default_screen
                                      : DefaultDefaultScreen, RF_MT_INTERNAL);
-    } else if (m_defaultScreen == dsDemo) {
+    } else if (type == dsDemo) {
         srand(0x13375EED);
         RF_DemoScreen(m_ctx);
     }
@@ -580,6 +584,26 @@ void RFTestApp::drawUI() {
                 case 4:  RF_SetFallbackMode(m_ctx, RF_FB_CHAR_FONT); break;
                 default: RF_SetFallbackMode(m_ctx, RF_FB_NONE);      break;
             }
+        }
+
+        if (ImGui::Button("Load screen..."))
+            { ImGui::OpenPopup("load_screen_popup"); }
+        if (ImGui::BeginPopup("load_screen_popup")) {
+            if (ImGui::Selectable("empty screen"))   { loadDefaultScreen(dsEmpty); }
+            if (ImGui::Selectable("default screen")) { loadScreen(DefaultDefaultScreen); }
+            if (ImGui::Selectable("attribute demo")) { loadDefaultScreen(dsDemo); }
+            if (ImGui::BeginMenu("system default")) {
+                const char* scr = nullptr;
+                for (const RF_System* const* p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
+                    if ((*p_sys)->default_screen == scr) { continue; }
+                    scr = (*p_sys)->default_screen;
+                    if (scr && ImGui::Selectable((*p_sys)->name)) {
+                        loadScreen(scr);
+                    }
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndPopup();
         }
     }
     ImGui::End();
