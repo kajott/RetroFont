@@ -404,6 +404,7 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
 }
 
 void RFTestApp::handleCharEvent(unsigned int codepoint) {
+    if (m_io->WantCaptureKeyboard) { return; }
     RF_AddChar(m_ctx, codepoint);
     m_screenContentsChanged = true;
 }
@@ -508,14 +509,18 @@ void RFTestApp::loadDefaultScreen(int type, const char* overrideText) {
 
 void RFTestApp::drawUI() {
     // main window begin
-    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(556.0f, 192.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(
+        ImGui::GetMainViewport()->WorkPos.x,
+        ImGui::GetMainViewport()->WorkPos.y +
+        ImGui::GetMainViewport()->WorkSize.y),
+        ImGuiCond_FirstUseEver, ImVec2(0.0f, 1.0f));
+    ImGui::SetNextWindowSize(ImVec2(470.0f, 216.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
 
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted("on system switch:");
         ImGui::SameLine();
-        ImGui::PushItemWidth(236.0f);
+        ImGui::PushItemWidth(234.0f);
         if (ImGui::BeginCombo("##defscreen", DefaultScreenStrings[m_defaultScreen])) {
             for (int i = 0;  i < int(DefaultScreenStrings.size());  ++i) {
                 bool sel = (i == m_defaultScreen);
@@ -530,7 +535,10 @@ void RFTestApp::drawUI() {
         }
         ImGui::PopItemWidth();
 
-        if (ImGui::BeginCombo("system", (m_ctx && m_ctx->system) ? m_ctx->system->name : "???", 0)) {
+        // set a sane width for the main controls
+        ImGui::PushItemWidth(360.0f);
+
+        if (ImGui::BeginCombo("system", (m_ctx && m_ctx->system) ? m_ctx->system->name : "???", ImGuiComboFlags_HeightLarge)) {
             for (const RF_System* const* p_sys = RF_SystemList;  *p_sys;  ++p_sys) {
                 if (ImGui::Selectable((*p_sys)->name, m_ctx && (m_ctx->system == *p_sys))) {
                     if (RF_SetSystem(m_ctx, (*p_sys)->sys_id)) {
@@ -542,7 +550,7 @@ void RFTestApp::drawUI() {
             ImGui::EndCombo();
         }
 
-        if (ImGui::BeginCombo("font", (m_ctx && m_ctx->font) ? m_ctx->font->name : "???", 0)) {
+        if (ImGui::BeginCombo("font", (m_ctx && m_ctx->font) ? m_ctx->font->name : "???", ImGuiComboFlags_HeightLarge)) {
             for (const RF_Font* font = RF_FontList;  font->font_id;  ++font) {
                 if (!RF_CanUseFont(m_ctx, font)) { continue; }
                 if (ImGui::Selectable(font->name, m_ctx && (m_ctx->font == font))) {
@@ -585,6 +593,9 @@ void RFTestApp::drawUI() {
                 default: RF_SetFallbackMode(m_ctx, RF_FB_NONE);      break;
             }
         }
+
+        // end of main controls
+        ImGui::PopItemWidth();
 
         if (ImGui::Button("Load screen..."))
             { ImGui::OpenPopup("load_screen_popup"); }
