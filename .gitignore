@@ -7,6 +7,8 @@ fonts.in/*.cpi
 build/
 _build*
 
+util/__pycache__
+
 vswhere.exe
 ninja.exe
 cmake-*

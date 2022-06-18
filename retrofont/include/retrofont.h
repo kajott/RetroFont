@@ -22,6 +22,8 @@ extern "C" {
                        |  ((uint32_t)(((const char*)(s))[0])))
 //! create an ID from four characters
 #define RF_MAKE_ID(a,b,c,d) (((d) << 24) | ((c) << 16) | ((b) << 8) | (a))
+//! extract specific letter from ID
+#define RF_EXTRACT_ID(id,letter) (((id) >> ((letter) * 8)) & 0xFF)
 
 // forward definitions of structures
 typedef struct s_RF_Coord          RF_Coord;

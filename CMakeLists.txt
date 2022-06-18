@@ -68,7 +68,7 @@ set (SYSTEMS
     retrofont/src/sys_pc.c
     retrofont/src/sys_amiga.c
     retrofont/src/sys_st.c
-    retrofont/src/sys_c64.c
+    retrofont/src/sys_cbm.c
     retrofont/src/sys_zx.c
     retrofont/src/sys_robotron.c
 )
@@ -77,7 +77,7 @@ set (FONTSPECS
     fonts.in/pc.fontspec
     fonts.in/amiga.fontspec
     fonts.in/st.fontspec
-    fonts.in/c64.fontspec
+    fonts.in/cbm.fontspec
     fonts.in/zx.fontspec
     fonts.in/robotron.fontspec
 )

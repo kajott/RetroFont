@@ -1,0 +1,169 @@
+# Note: All "one eighth" blocks are actually rendered as quarter blocks in the
+#       C64/128/16/116/Plus4 fonts; but that's just how it is, not our fault!
+
+defmap "cbm_common_all"
+    map 0.30  U+2191  # UPWARDS ARROW
+    map 0.31  U+2190  # LEFTWARDS ARROW
+    map 2.28  U+1FB8C # LEFT HALF MEDIUM SHADE
+    map 3.00  U+00A0  # NO-BREAK SPACE
+    map 3.01  U+258C  # LEFT HALF BLOCK
+    map 3.02  U+2584  # LOWER HALF BLOCK
+    map 3.03  U+2594  # UPPER ONE EIGHTH BLOCK
+    map 3.04  U+2581  # LOWER ONE EIGHTH BLOCK
+    map 3.05  U+258F  # LEFT ONE EIGHTH BLOCK
+    map 3.06  U+2592  # MEDIUM SHADE
+    map 3.07  U+2595  # RIGHT ONE EIGHTH BLOCK
+    map 3.08  U+1FB8F # LOWER HALF MEDIUM SHADE
+    #   3.09          # (depends)
+    map 3.10  U+1FB87 # RIGHT ONE QUARTER BLOCK
+    map 3.12  U+2597  # QUADRANT LOWER RIGHT
+    map 3.15  U+2582  # LOWER ONE QUARTER BLOCK
+    map 3.20  U+258E  # LEFT ONE QUARTER BLOCK
+    map 3.21  U+258D  # LEFT THREE EIGHTHS BLOCK
+    map 3.22  U+1FB88 # RIGHT THREE EIGHTHS BLOCK
+    map 3.23  U+1FB82 # UPPER ONE QUARTER BLOCK
+    map 3.24  U+1FB83 # UPPER THREE EIGHTHS BLOCK
+    map 3.25  U+2583  # LOWER THREE EIGHTHS BLOCK
+    #   3.26          # (differs)
+    map 3.27  U+2596  # QUADRANT LOWER LEFT
+    map 3.28  U+259D  # QUADRANT UPPER RIGHT
+    map 3.30  U+2598  # QUADRANT UPPER LEFT
+    map 3.31  U+259A  # QUADRANT UPPER LEFT AND LOWER RIGHT
+
+defmap "cbm_common_heavy"
+    map 2.00  U+2501  # BOX DRAWINGS HEAVY HORIZONTAL
+    map 2.27  U+254B  # BOX DRAWINGS HEAVY VERTICAL AND HORIZONTAL
+    map 2.29  U+2503  # BOX DRAWINGS HEAVY VERTICAL
+    map 3.11  U+2523  # BOX DRAWINGS HEAVY VERTICAL AND RIGHT
+    map 3.13  U+2517  # BOX DRAWINGS HEAVY UP AND RIGHT
+    map 3.14  U+2513  # BOX DRAWINGS HEAVY DOWN AND LEFT
+    map 3.16  U+250F  # BOX DRAWINGS HEAVY DOWN AND RIGHT
+    map 3.17  U+253B  # BOX DRAWINGS HEAVY UP AND HORIZONTAL
+    map 3.18  U+2533  # BOX DRAWINGS HEAVY DOWN AND HORIZONTAL
+    map 3.19  U+252B  # BOX DRAWINGS HEAVY VERTICAL AND LEFT
+    map 3.29  U+251B  # BOX DRAWINGS HEAVY UP AND LEFT
+
+defmap "cbm_common_light"
+    map 2.00  U+2500  # BOX DRAWINGS LIGHT HORIZONTAL
+    map 2.27  U+253C  # BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
+    map 2.29  U+2502  # BOX DRAWINGS LIGHT VERTICAL
+    map 3.11  U+251C  # BOX DRAWINGS LIGHT VERTICAL AND RIGHT
+    map 3.13  U+2514  # BOX DRAWINGS LIGHT UP AND RIGHT
+    map 3.14  U+2510  # BOX DRAWINGS LIGHT DOWN AND LEFT
+    map 3.16  U+250C  # BOX DRAWINGS LIGHT DOWN AND RIGHT
+    map 3.17  U+2534  # BOX DRAWINGS LIGHT UP AND HORIZONTAL
+    map 3.18  U+252C  # BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
+    map 3.19  U+2524  # BOX DRAWINGS LIGHT VERTICAL AND LEFT
+    map 3.29  U+2518  # BOX DRAWINGS LIGHT UP AND LEFT
+
+defmap "cbm_unshifted"
+    map 0 '@'..'Z' '[' - ']'
+    map 1 ' '..'?'
+    # PETSCII graphics:
+    map 0.28  U+00A3  # POUND SIGN
+    map 2.01  U+2660  # BLACK SPADE SUIT
+    map 2.02  U+1FB72 # VERTICAL ONE EIGHTH BLOCK-4
+    map 2.03  U+1FB78 # HORIZONTAL ONE EIGHTH BLOCK-4
+    map 2.04  U+1FB77 # HORIZONTAL ONE EIGHTH BLOCK-3
+    map 2.05  U+1FB76 # HORIZONTAL ONE EIGHTH BLOCK-2
+    map 2.06  U+1FB79 # HORIZONTAL ONE EIGHTH BLOCK-5
+    map 2.07  U+1FB71 # VERTICAL ONE EIGHTH BLOCK-3
+    map 2.08  U+1FB73 # VERTICAL ONE EIGHTH BLOCK-5
+    map 2.09  U+256E  # BOX DRAWINGS LIGHT ARC DOWN AND LEFT
+    map 2.10  U+2570  # BOX DRAWINGS LIGHT ARC UP AND RIGHT
+    map 2.11  U+256F  # BOX DRAWINGS LIGHT ARC UP AND LEFT
+    map 2.12  U+1FB7C # LEFT AND LOWER ONE EIGHTH BLOCK
+    map 2.13  U+2572  # BOX DRAWINGS LIGHT DIAGONAL UPPER LEFT TO LOWER RIGHT
+    map 2.14  U+2571  # BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT
+    map 2.15  U+1FB7D # LEFT AND UPPER ONE EIGHTH BLOCK
+    map 2.16  U+1FB7E # RIGHT AND UPPER ONE EIGHTH BLOCK
+    map 2.17  U+25CF  # BLACK CIRCLE
+    map 2.18  U+1FB7A # HORIZONTAL ONE EIGHTH BLOCK-6
+    map 2.19  U+2665  # BLACK HEART SUIT
+    map 2.20  U+1FB70 # VERTICAL ONE EIGHTH BLOCK-2
+    map 2.21  U+256D  # BOX DRAWINGS LIGHT ARC DOWN AND RIGHT
+    map 2.22  U+2573  # BOX DRAWINGS LIGHT DIAGONAL CROSS
+    map 2.23  U+25CB  # WHITE CIRCLE
+    map 2.24  U+2663  # BLACK CLUB SUIT
+    map 2.25  U+1FB74 # VERTICAL ONE EIGHTH BLOCK-6
+    map 2.26  U+2666  # BLACK DIAMOND SUIT
+    #   2.27 - 2.29   = cbm_common
+    map 2.30  U+03C0  # GREEK SMALL LETTER PI
+    map 2.31  U+25E5  # BLACK UPPER RIGHT TRIANGLE
+    map 3.09  U+1FB99 # UPPER RIGHT TO LOWER LEFT FILL
+    map 3.26  U+1FB7F # RIGHT AND LOWER ONE EIGHTH BLOCK
+
+defmap "cbm_shifted"
+    map 0 '@' 'a'..'z' '[' - ']'
+    map 1 ' '..'?'
+    map 2 - 'A'..'Z'
+    # PETSCII graphics:
+    map 2.30  U+1FB95 # CHECKER BOARD FILL
+    map 2.31  U+1FB98 # UPPER LEFT TO LOWER RIGHT FILL
+    map 3.09  U+1FB99 # UPPER RIGHT TO LOWER LEFT FILL
+    map 3.26  U+2713  # CHECK MARK
+
+defmap "cbm_pound"
+    map 0.28  U+00A3  # POUND SIGN
+defmap "cbm_backslash"
+    map 0.28 '\'
+
+source "cbm_pet_unshifted.pbm" 8x8
+font "C08u" "Commodore PET/CBM-II (unshifted)"
+    usemap "cbm_common_all"
+    usemap "cbm_common_light"
+    usemap "cbm_unshifted"
+    usemap "cbm_backslash"
+    fallback_priority 11  # the PET fonts make a very nice fallback for PETSCII characters
+
+source "cbm_pet_shifted.pbm" 8x8
+font "C08s" "Commodore PET/CBM-II (shifted)"
+    usemap "cbm_common_all"
+    usemap "cbm_common_light"
+    usemap "cbm_shifted"
+    usemap "cbm_backslash"
+    fallback_priority 11  # the PET fonts make a very nice fallback for PETSCII characters
+
+source "cbm_vic_unshifted.pbm" 8x8
+font "C20u" "Commodore VIC-20 (unshifted)"
+    usemap "cbm_common_all"
+    usemap "cbm_common_light"
+    usemap "cbm_unshifted"
+    usemap "cbm_pound"
+
+source "cbm_vic_shifted.pbm" 8x8
+font "C20s" "Commodore VIC-20 (shifted)"
+    usemap "cbm_common_all"
+    usemap "cbm_common_light"
+    usemap "cbm_shifted"
+    usemap "cbm_pound"
+
+source "cbm_c64_unshifted.pbm" 8x8
+font "C64u" "Commodore 64/128/16/116/Plus4 (unshifted)"
+    usemap "cbm_common_all"
+    usemap "cbm_common_heavy"
+    usemap "cbm_unshifted"
+    usemap "cbm_pound"
+    fallback_priority 10  # the C64 fonts make a nice alternate fallback for PETSCII characters
+
+source "cbm_c64_shifted.pbm" 8x8
+font "C64s" "Commodore 64 (shifted)"
+    usemap "cbm_common_all"
+    usemap "cbm_common_heavy"
+    usemap "cbm_shifted"
+    usemap "cbm_pound"
+    fallback_priority 10  # the C64 fonts make a nice alternate fallback for PETSCII characters
+
+source "cbm_c128_shifted.pbm" 8x8
+font "C80s" "Commodore 128 (shifted)"
+    usemap "cbm_common_all"
+    usemap "cbm_common_heavy"
+    usemap "cbm_shifted"
+    usemap "cbm_pound"
+
+source "cbm_c16_shifted.pbm" 8x8
+font "CP4s" "Commodore 16/116/Plus4 (shifted)"
+    usemap "cbm_common_all"
+    usemap "cbm_common_heavy"
+    usemap "cbm_shifted"
+    usemap "cbm_pound"
