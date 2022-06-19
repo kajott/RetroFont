@@ -63,7 +63,7 @@ typedef struct s_RF_Context        RF_Context;
 #define RF_CP_ENTER     10  //!< advance cursor to next line
 #define RF_CP_DELETE   127  //!< remove character under cursor
 
-// glyph fallback modes
+//! glyph fallback modes
 typedef enum e_RF_FallbackMode {
     RF_FB_NONE = 0,   //!< allow no fallback
     RF_FB_FONT,       //!< allow fallback to other font's glyphs
@@ -72,12 +72,26 @@ typedef enum e_RF_FallbackMode {
     RF_FB_FONT_CHAR,  //!< allow both types of fallback, but prefer font fallback
 } RF_FallbackMode;
 
-// text markup types
+//! text markup types
 typedef enum e_RF_MarkupType {
     RF_MT_NONE     = 0x99,  //!< no markup (plain text)
     RF_MT_INTERNAL = 0x60,  //!< RetroFont's internal markup system [TODO]
     RF_MT_ANSI     = 0x1B,  //!< VT-100 / ANSI compatible Escape codes [TODO]
 } RF_MarkupType;
+
+//! monitor types
+//! \note The RetroFont library itself doesn't care about monitor color;
+//!       monochrome monitors will be rendered as white. The MonitorType is
+//!       only meant as a hint for the displaying application.
+typedef enum e_RF_MonitorType {
+    RF_MONITOR_COLOR = 0,  //!< color monitor
+    RF_MONITOR_GREEN = 1,  //!< green black&white monitor (P1 phosphor)
+    RF_MONITOR_LONG  = 2,  //!< long-persistence green black&white monitor (P2 phosphor)
+    RF_MONITOR_AMBER = 3,  //!< amber black&white monitor (P3 phosphor)
+    RF_MONITOR_WHITE = 4,  //!< white black&white monitor (P4 phosphor)
+    RF_MONITOR_RED   = 5,  //!< red plasma screen
+   _RF_MONITOR_COUNT       //!< number of defined monitor types
+} RF_MonitorType;
 
 // misc other constants
 #define RF_SIZE_DEFAULT ((uint16_t)(-1))       //!< system default size for RF_ResizeScreen()
@@ -184,6 +198,7 @@ struct s_RF_System {
     RF_Coord border_lr;             //!< default lower-right border
     RF_Coord coarse_aspect;         //!< coarse pixel aspect ratio (typically 1x1, 1x2 or 2x1)
     uint32_t blink_interval_msec;   //!< blinking interval in milliseconds; 0 = no blinking
+    RF_MonitorType monitor;         //!< monitor type (informative)
     uint32_t default_font_id;       //!< ID of the system's default font
 };
 

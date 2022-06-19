@@ -27,6 +27,15 @@ static const char* DefaultDefaultScreen =
     "Welcome to `fcR`fae`f9t`fer`fbo`fdF`f#80ff00o`f#ff3700n`f#11aafft`0!\n\n"
 ;
 
+static const GLfloat MonitorTints[_RF_MONITOR_COUNT][4] = {
+    { 1.00f, 1.00f, 1.00f, 0.f },  // RF_MONITOR_COLOR
+    { 0.00f, 1.00f, 0.00f, 1.f },  // RF_MONITOR_GREEN
+    { 0.00f, 1.00f, 0.25f, 1.f },  // RF_MONITOR_LONG
+    { 1.25f, 1.00f, 0.25f, 1.f },  // RF_MONITOR_AMBER
+    { 1.00f, 1.00f, 0.95f, 1.f },  // RF_MONITOR_WHITE
+    { 1.00f, 0.00f, 0.00f, 1.f },  // RF_MONITOR_RED
+};
+
 int RFTestApp::run(int argc, char *argv[]) {
     uint32_t want_sys_id = 0;
     uint32_t want_font_id = 0;
@@ -131,16 +140,21 @@ int RFTestApp::run(int argc, char *argv[]) {
         "\n" "uniform int uMode;"
         "\n" "uniform vec2 uSize;"
         "\n" "uniform sampler2D uTex;"
+        "\n" "uniform vec4 uTint;"
         "\n" "in vec2 vPos;"
         "\n" "out vec4 oColor;"
         "\n" "void main() {"
         "\n" "  vec2 pos = vPos;"
         "\n" "  if (uMode != 0) {"
-        "\n" "    pos *= uSize;\n"
-        "\n" "    vec2 i = floor(pos + 0.5);\n"
-        "\n" "    pos = (i + clamp((pos - i) / fwidth(pos), -0.5, 0.5)) / uSize;\n"
+        "\n" "    pos *= uSize;"
+        "\n" "    vec2 i = floor(pos + 0.5);"
+        "\n" "    pos = (i + clamp((pos - i) / fwidth(pos), -0.5, 0.5)) / uSize;"
         "\n" "  }"
-        "\n" "  oColor = texture(uTex, pos);"
+        "\n" "  vec3 c = texture(uTex, pos).rgb;"
+        "\n" "  if (uTint.a > 0.5) {"
+        "\n" "    c = vec3(dot(vec3(0.25, 0.5, 0.25), c));"
+        "\n" "  }"
+        "\n" "  oColor = vec4(c * uTint.rgb, 1.0);"
         "\n" "}"
         "\n");
         if (!fs.good()) {
@@ -155,6 +169,7 @@ int RFTestApp::run(int argc, char *argv[]) {
         m_locArea = glGetUniformLocation(m_prog, "uArea");
         m_locMode = glGetUniformLocation(m_prog, "uMode");
         m_locSize = glGetUniformLocation(m_prog, "uSize");
+        m_locTint = glGetUniformLocation(m_prog, "uTint");
     }
 
     m_ctx = RF_CreateContext(want_sys_id);
@@ -202,14 +217,26 @@ int RFTestApp::run(int argc, char *argv[]) {
         #endif
         ImGui::Render();
 
+        // determine tint and border color
+        const GLfloat *tint = MonitorTints[
+            (m_monitorType != mtAuto) ? (m_monitorType - mtOffset) :
+            (m_ctx && m_ctx->system)  ? m_ctx->system->monitor :
+                                        0  // fall back to white if uncertain
+        ];
+        GLfloat br = 0.0f, bg = 0.0f, bb = 0.0f;
+        if (m_ctx) {
+            br = RF_COLOR_R(m_ctx->border_rgb) / 255.0f;
+            bg = RF_COLOR_G(m_ctx->border_rgb) / 255.0f;
+            bb = RF_COLOR_B(m_ctx->border_rgb) / 255.0f;
+        }
+        if (tint[3] > 0.5f) {
+            // convert to monochrome if necessary
+            br = bg = bb = 0.25f * (br + bb) + 0.5f * bg;
+        }
+
         // start display rendering
         GLutil::clearError();
-        if (m_ctx) {
-            glClearColor(RF_COLOR_R(m_ctx->border_rgb) / 255.0f,
-                         RF_COLOR_G(m_ctx->border_rgb) / 255.0f,
-                         RF_COLOR_B(m_ctx->border_rgb) / 255.0f,
-                         1.0f);
-        }
+        glClearColor(br * tint[0], bg * tint[1], bb * tint[2], 1.0f);
         glViewport(0, 0, int(m_io->DisplaySize.x), int(m_io->DisplaySize.y));
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -291,6 +318,7 @@ int RFTestApp::run(int argc, char *argv[]) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
             glUniform1i(m_locMode, ((m_screenMode == smFixed) && (m_renderMode == rmBlocky)) ? 1 : 0);
             glUniform4fv(m_locArea, 1, m_area);
+            glUniform4fv(m_locTint, 1, tint);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         }
 
@@ -514,7 +542,7 @@ void RFTestApp::drawUI() {
         ImGui::GetMainViewport()->WorkPos.y +
         ImGui::GetMainViewport()->WorkSize.y),
         ImGuiCond_FirstUseEver, ImVec2(0.0f, 1.0f));
-    ImGui::SetNextWindowSize(ImVec2(470.0f, 216.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(470.0f, 240.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
 
         ImGui::AlignTextToFramePadding();
@@ -572,6 +600,15 @@ void RFTestApp::drawUI() {
             ImGui::SliderInt("scaling mode", &m_renderMode, rmIntegral, rmSmooth, RenderModeStrings[m_renderMode]);
         } else {
             if (ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx")) { updateSize(); }
+        }
+
+        static constexpr size_t autoMtypeSize = 40;
+        static char autoMtype[autoMtypeSize] = "";
+        if ((m_monitorType == mtAuto) && m_ctx && m_ctx->system) {
+            snprintf(autoMtype, autoMtypeSize, "automatic (%s)", MonitorTypeStrings[int(m_ctx->system->monitor) + mtOffset]);
+        }
+        if (ImGui::SliderInt("monitor type", &m_monitorType, mtAuto, mtMax-1, (m_monitorType == mtAuto) ? autoMtype : MonitorTypeStrings[m_monitorType])) {
+            requestFrames(1);
         }
 
         int fbmode = 2;

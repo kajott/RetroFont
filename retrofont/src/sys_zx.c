@@ -69,6 +69,6 @@ const RF_SysClass zxclass = {
 static const char zx81default[] = "`x00`Y01K`x00";
 static const char zx82default[] = "`c28`Y01`u00A9 1982 Sinclair Research Ltd`x00`Y00";
 
-//                                  sys_id,                      name,                   class,    scrn,         scrsz,    cellsz,  fontsz,  b_ul,    b_lr,  aspect, blink, default_font_id
-const RF_System RF_Sys_ZX8x     = { RF_MAKE_ID('Z','X','8','1'), "Sinclair ZX80 / ZX81", &zxclass, zx81default, {32,24}, { 8, 8}, { 8, 8}, {48,44}, {48,52}, {1,1},     0, RF_MAKE_ID('Z','X','8','1') };
-const RF_System RF_Sys_Spectrum = { RF_MAKE_ID('Z','X','8','2'), "Sinclair ZX Spectrum", &zxclass, zx82default, {32,24}, { 8, 8}, { 8, 8}, {48,44}, {48,52}, {1,1},   320, RF_MAKE_ID('Z','X','8','2') };
+//                                  sys_id,                      name,                   class,    scrn,         scrsz,    cellsz,  fontsz,  b_ul,    b_lr,  aspect, blink, monitor,         default_font_id
+const RF_System RF_Sys_ZX8x     = { RF_MAKE_ID('Z','X','8','1'), "Sinclair ZX80 / ZX81", &zxclass, zx81default, {32,24}, { 8, 8}, { 8, 8}, {48,44}, {48,52}, {1,1},     0, RF_MONITOR_WHITE, RF_MAKE_ID('Z','X','8','1') };
+const RF_System RF_Sys_Spectrum = { RF_MAKE_ID('Z','X','8','2'), "Sinclair ZX Spectrum", &zxclass, zx82default, {32,24}, { 8, 8}, { 8, 8}, {48,44}, {48,52}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('Z','X','8','2') };

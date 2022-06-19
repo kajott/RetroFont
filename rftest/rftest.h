@@ -27,6 +27,7 @@ class RFTestApp {
     GLint m_locArea;
     GLint m_locMode;
     GLint m_locSize;
+    GLint m_locTint;
 
     // UI state
     bool m_active = true;
@@ -56,6 +57,18 @@ class RFTestApp {
     inline static constexpr std::array<const char*, 4> RenderModeStrings = {{ "integer (w/o aspect ratio)", "nearest-neighbor", "antialiased", "smooth" }};
     int m_renderMode = rmBlocky;
     int m_zoom = 1;
+
+    // monitor type
+    static constexpr int mtAuto = 0;
+    static constexpr int mtOffset = 1;
+    static constexpr int mtMax = int(_RF_MONITOR_COUNT) + mtOffset;
+    inline static constexpr std::array<const char*, mtMax> MonitorTypeStrings = {{
+        "automatic", "color",
+        "green monochrome", "long-persistence green",
+        "amber monochrome", "white monochrome",
+        "red plasma"
+    }};
+    int m_monitorType = mtAuto;
 
     // default screen
     static constexpr int dsAsConfigured = -1;

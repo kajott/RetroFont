@@ -120,7 +120,7 @@ static const char default1013[] = "robotron Z 1013/A.2\n # ";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//                               sys_id,                       name,                            class,       scrn,         scrsz,  cellsz, fontsz,  b_ul,    b_lr,   aspect, blink, default_font_id
-const RF_System RF_Sys_KC85  = { RF_MAKE_ID('K','C','8','5'), "robotron HC900, KC85/2, /3, /4", &kc85class,  kc85default, {40,32}, {8,8},  {8,8}, {24,16}, {24,16}, {1,1},    320, RF_MAKE_ID('K','C','4','1') };
-const RF_System RF_Sys_KC87  = { RF_MAKE_ID('K','C','8','7'), "robotron Z 9001, KC85/1, KC87",  &kc87class,  kc87default, {40,24}, {8,8},  {8,8}, {32,44}, {32,44}, {1,1},    320, RF_MAKE_ID('K','C','8','7') };
-const RF_System RF_Sys_Z1013 = { RF_MAKE_ID('1','0','1','3'), "robotron Z 1013",                &z1013class, default1013, {32,32}, {8,8},  {8,8}, {80,16}, {80,16}, {1,1},      0, RF_MAKE_ID('1','0','1','3') };
+//                               sys_id,                       name,                            class,       scrn,         scrsz,  cellsz, fontsz,  b_ul,    b_lr,   aspect, blink, monitor,         default_font_id
+const RF_System RF_Sys_KC85  = { RF_MAKE_ID('K','C','8','5'), "robotron HC900, KC85/2, /3, /4", &kc85class,  kc85default, {40,32}, {8,8},  {8,8}, {24,16}, {24,16}, {1,1},    320, RF_MONITOR_COLOR, RF_MAKE_ID('K','C','4','1') };
+const RF_System RF_Sys_KC87  = { RF_MAKE_ID('K','C','8','7'), "robotron Z 9001, KC85/1, KC87",  &kc87class,  kc87default, {40,24}, {8,8},  {8,8}, {32,44}, {32,44}, {1,1},    320, RF_MONITOR_COLOR, RF_MAKE_ID('K','C','8','7') };
+const RF_System RF_Sys_Z1013 = { RF_MAKE_ID('1','0','1','3'), "robotron Z 1013",                &z1013class, default1013, {32,32}, {8,8},  {8,8}, {80,16}, {80,16}, {1,1},      0, RF_MONITOR_WHITE, RF_MAKE_ID('1','0','1','3') };
