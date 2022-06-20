@@ -78,6 +78,7 @@ set (FONTSPECS
     fonts.in/amiga.fontspec
     fonts.in/st.fontspec
     fonts.in/cbm.fontspec
+    fonts.in/atari8.fontspec
     fonts.in/zx.fontspec
     fonts.in/robotron.fontspec
 )
