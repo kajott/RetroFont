@@ -32,6 +32,7 @@ class RFTestApp {
     // UI state
     bool m_active = true;
     int m_renderFrames = 2;
+    bool m_showUI = true;
     bool m_showDemo = false;
     bool m_screenContentsChanged = false;
 

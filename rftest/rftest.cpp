@@ -209,7 +209,9 @@ int RFTestApp::run(int argc, char *argv[]) {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        drawUI();
+        if (m_showUI) {
+            drawUI();
+        }
         #ifndef NDEBUG
             if (m_showDemo) {
                 ImGui::ShowDemoWindow(&m_showDemo);
@@ -422,6 +424,10 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
                 printf("insert mode is %s\n", !m_ctx ? "UNKNOWN" : m_ctx->insert ? "ON" : "OFF");
             #endif
             break;
+        case GLFW_KEY_F1:
+            m_showUI = !m_showUI;
+            requestFrames(2);
+            break;
         case GLFW_KEY_F9:
             m_showDemo = !m_showDemo;
             requestFrames(2);
@@ -618,6 +624,7 @@ void RFTestApp::drawUI() {
                 case RF_FB_FONT:      fbmode = 1; break;
                 case RF_FB_CHAR:      fbmode = 3; break;
                 case RF_FB_CHAR_FONT: fbmode = 4; break;
+                default:      /* keep fbmode = 2*/break;
             }
         }
         static const char* fmodeStrings[] = { "both (font first)", "other font", "no fallback", "replacement characters", "both (characters first)" };
