@@ -117,7 +117,7 @@ static const char pet80default[] =
     " 31743 bytes free\n\n"
     "ready.\n";
 static const char vicdefault[] =
-    "**** CBM BASIC V2 ****"
+    "**** CBM BASIC V2 ****\n"
     "`y023583 BYTES FREE\n\n"
     "READY.\n";
 static const char c64default[] =

@@ -20,6 +20,8 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "string_util.h"
+
 #include "retrofont.h"
 #include "rftest.h"
 
@@ -218,6 +220,23 @@ int RFTestApp::run(int argc, char *argv[]) {
             }
         #endif
         ImGui::Render();
+
+        // update typewriter
+        if (m_typerStr) {
+            int start = m_typerPos;
+            int end = getTyperPos();
+            while ((m_typerPos < end) && m_typerStr[m_typerPos]) {
+                ++m_typerPos;
+            }
+            if (m_typerPos > start) {
+                char old = m_typerStr[m_typerPos];
+                m_typerStr[m_typerPos] = '\0';
+                RF_AddText(m_ctx, &m_typerStr[start], m_typerType);
+                m_typerStr[m_typerPos] = old;
+                if (!old) { cancelTyper(); }  // EOS reached
+            }
+            requestFrames(1);
+        }
 
         // determine tint and border color
         const GLfloat *tint = MonitorTints[
@@ -439,6 +458,7 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
 
 void RFTestApp::handleCharEvent(unsigned int codepoint) {
     if (m_io->WantCaptureKeyboard) { return; }
+    cancelTyper();
     RF_AddChar(m_ctx, codepoint);
     m_screenContentsChanged = true;
 }
@@ -447,6 +467,7 @@ void RFTestApp::handleMouseButtonEvent(int button, int action, int mods) {
     (void)mods;
     if (m_io->WantCaptureMouse) { return; }
     if ((action == GLFW_PRESS) && (button == GLFW_MOUSE_BUTTON_1) && m_ctx) {
+        cancelTyper();
         double fx = 0.0, fy = 0.0;
         // transform pixel coordinates to NDC
         glfwGetCursorPos(m_window, &fx, &fy);
@@ -515,20 +536,20 @@ void RFTestApp::updateSize(int width, int height, bool force, bool forceDefault)
     #endif
 }
 
-void RFTestApp::loadDefaultScreen(int type, const char* overrideText) {
+void RFTestApp::loadDefaultScreen(int type) {
+    cancelTyper();
     if (type == dsAsConfigured) {
         type = m_defaultScreen;
     }
     if (type == dsKeep) {
         return;  // do nothing; don't even touch m_screenContentsChanged!
     }
-    if ((type == dsEmpty) || (type == dsDefault) || overrideText) {
+    if ((type == dsEmpty) || (type == dsDefault)) {
         RF_ClearAll(m_ctx);
     }
     RF_MoveCursor(m_ctx, 0, 0);
-    if ((type == dsDefault) || overrideText) {
+    if ((type == dsDefault)) {
         RF_AddText(m_ctx,
-            overrideText ? overrideText :
             (m_ctx && m_ctx->system && m_ctx->system->default_screen)
                                      ? m_ctx->system->default_screen
                                      : DefaultDefaultScreen, RF_MT_INTERNAL);
@@ -539,9 +560,36 @@ void RFTestApp::loadDefaultScreen(int type, const char* overrideText) {
     m_screenContentsChanged = false;
 }
 
+void RFTestApp::loadScreen(const char* text, RF_MarkupType markup) {
+    loadDefaultScreen(dsEmpty);
+    if (m_baud) {
+        m_typerStr = StringUtil::copy(text);
+        m_typerType = markup;
+        m_typerStartPos = m_typerPos = 0;
+        m_typerStartTime = glfwGetTime();
+        requestFrames(1);
+    } else {
+        RF_AddText(m_ctx, text, markup);
+    }
+}
+
+void RFTestApp::cancelTyper() {
+    ::free((void*)m_typerStr);
+    m_typerStr = nullptr;
+    RF_ResetParser(m_ctx);
+}
+
+int RFTestApp::getTyperPos() {
+    double now = glfwGetTime();
+    return m_typerStartPos + int((now - m_typerStartTime) * 0.1 * m_baud);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void RFTestApp::drawUI() {
+    static constexpr size_t tempStrSize = 40;
+    static char tempStr[tempStrSize] = "";
+
     // main window begin
     ImGui::SetNextWindowPos(ImVec2(
         ImGui::GetMainViewport()->WorkPos.x,
@@ -608,12 +656,10 @@ void RFTestApp::drawUI() {
             if (ImGui::SliderInt("zoom", &m_zoom, 1, 4, "%dx")) { updateSize(); }
         }
 
-        static constexpr size_t autoMtypeSize = 40;
-        static char autoMtype[autoMtypeSize] = "";
         if ((m_monitorType == mtAuto) && m_ctx && m_ctx->system) {
-            snprintf(autoMtype, autoMtypeSize, "automatic (%s)", MonitorTypeStrings[int(m_ctx->system->monitor) + mtOffset]);
+            snprintf(tempStr, tempStrSize, "automatic (%s)", MonitorTypeStrings[int(m_ctx->system->monitor) + mtOffset]);
         }
-        if (ImGui::SliderInt("monitor type", &m_monitorType, mtAuto, mtMax-1, (m_monitorType == mtAuto) ? autoMtype : MonitorTypeStrings[m_monitorType])) {
+        if (ImGui::SliderInt("monitor type", &m_monitorType, mtAuto, mtMax-1, (m_monitorType == mtAuto) ? tempStr : MonitorTypeStrings[m_monitorType])) {
             requestFrames(1);
         }
 
@@ -641,11 +687,12 @@ void RFTestApp::drawUI() {
         // end of main controls
         ImGui::PopItemWidth();
 
+        ImGui::AlignTextToFramePadding();
         if (ImGui::Button("Load screen..."))
             { ImGui::OpenPopup("load_screen_popup"); }
         if (ImGui::BeginPopup("load_screen_popup")) {
             if (ImGui::Selectable("empty screen"))   { loadDefaultScreen(dsEmpty); }
-            if (ImGui::Selectable("default screen")) { loadScreen(DefaultDefaultScreen); }
+            if (ImGui::Selectable("default screen")) { loadScreen(DefaultDefaultScreen, RF_MT_INTERNAL); }
             if (ImGui::Selectable("attribute demo")) { loadDefaultScreen(dsDemo); }
             if (ImGui::BeginMenu("system default")) {
                 const char* scr = nullptr;
@@ -653,13 +700,42 @@ void RFTestApp::drawUI() {
                     if ((*p_sys)->default_screen == scr) { continue; }
                     scr = (*p_sys)->default_screen;
                     if (scr && ImGui::Selectable((*p_sys)->name)) {
-                        loadScreen(scr);
+                        loadScreen(scr, RF_MT_INTERNAL);
                     }
                 }
                 ImGui::EndMenu();
             }
             ImGui::EndPopup();
         }
+        ImGui::SameLine();
+        snprintf(tempStr, tempStrSize, "with %d baud", m_baud);
+        ImGui::PushItemWidth(160.0f);
+        if (ImGui::BeginCombo("##baud", m_baud ? tempStr : "immediately")) {
+            static const int BaudRates[] = { 75, 300, 1200, 9600, 38400, 115200, 0 };
+            for (const int *p_rate = BaudRates;  *p_rate;  ++p_rate) {
+                bool sel = (m_baud == *p_rate);
+                snprintf(tempStr, tempStrSize, "with %d baud", *p_rate);
+                if (ImGui::Selectable(tempStr, &sel)) {
+                    if (m_typerStr) {
+                        m_typerStartTime = glfwGetTime();
+                        m_typerStartPos = m_typerPos;
+                        m_typerPos = getTyperPos();
+                    }
+                    m_baud = *p_rate;
+                }
+            }
+            bool sel = !m_baud;
+            if (ImGui::Selectable("immediately", &sel)) {
+                m_baud = 0;
+                if (m_typerStr) {
+                    RF_AddText(m_ctx, &m_typerStr[m_typerPos], m_typerType);
+                }
+                cancelTyper();
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::PopItemWidth();
+
     }
     ImGui::End();
 }

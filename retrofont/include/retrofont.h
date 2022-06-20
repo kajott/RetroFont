@@ -330,8 +330,11 @@ void RF_Invalidate(RF_Context* ctx, bool with_border);
 //! RF_CP_* values are handled specially.
 void RF_AddChar(RF_Context* ctx, uint32_t codepoint);
 
-//! Add a string of UTF-8 text, optionally with markup.
+//! add a string of UTF-8 text, optionally with markup
 void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt);
+
+//! reset the markup parser
+void RF_ResetParser(RF_Context* ctx);
 
 //! fill a region with blanks
 //! \param attrib  attribute to use (NULL = use defaults)

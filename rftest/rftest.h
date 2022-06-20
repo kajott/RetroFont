@@ -32,9 +32,17 @@ class RFTestApp {
     // UI state
     bool m_active = true;
     int m_renderFrames = 2;
+    int m_baud = 0;
     bool m_showUI = true;
     bool m_showDemo = false;
     bool m_screenContentsChanged = false;
+
+    // automatic typewriter state
+    char* m_typerStr = nullptr;
+    int m_typerPos = 0;
+    RF_MarkupType m_typerType = RF_MT_NONE;
+    double m_typerStartTime = 0.0;
+    int m_typerStartPos = 0;
 
     // border mode
     static constexpr int bmNone    = 0;
@@ -87,8 +95,10 @@ class RFTestApp {
     int getBorderSize() const;
     void updateSize(bool force=false, bool forceDefault=false);
     void updateSize(int width, int height, bool force=false, bool forceDefault=false);
-    void loadDefaultScreen(int type=dsAsConfigured, const char* overrideText=nullptr);
-    inline void loadScreen(const char* text) { loadDefaultScreen(dsEmpty, text); }
+    void loadDefaultScreen(int type=dsAsConfigured);
+    void loadScreen(const char* text, RF_MarkupType markup=RF_MT_NONE);
+    void cancelTyper();
+    int getTyperPos();
 
     // event handling
     void handleKeyEvent(int key, int scancode, int action, int mods);

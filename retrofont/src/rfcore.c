@@ -169,7 +169,9 @@ bool RF_ResizeScreen(RF_Context* ctx, uint16_t new_width, uint16_t new_height, b
 
 void RF_MoveCursor(RF_Context* ctx, uint16_t new_col, uint16_t new_row) {
     if (!ctx || !ctx->screen) { return; }
-    ctx->screen[ctx->screen_size.x * ctx->cursor_pos.y + ctx->cursor_pos.x].dirty = 1;
+    if ((ctx->cursor_pos.x < ctx->screen_size.x) && (ctx->cursor_pos.y < ctx->screen_size.y)) {
+        ctx->screen[ctx->screen_size.x * ctx->cursor_pos.y + ctx->cursor_pos.x].dirty = 1;
+    }
     if ((new_col < ctx->screen_size.x) && (new_row < ctx->screen_size.y)) {
         ctx->screen[ctx->screen_size.x * new_row + new_col].dirty = 1;
     }
@@ -681,6 +683,13 @@ void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt) {
             RF_AddChar(ctx, 0xFFFD);
         }
     }
+}
+
+void RF_ResetParser(RF_Context* ctx) {
+    if (!ctx) { return; }
+    ctx->utf8_cb_count = ctx->esc_count = ctx->esc_remain = 0;
+    ctx->num_buf = 0;
+    ctx->esc_class = NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
