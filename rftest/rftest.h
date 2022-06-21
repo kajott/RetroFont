@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <array>
+#include <functional>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -90,6 +91,7 @@ class RFTestApp {
 
     // UI functions
     void drawUI();
+    void colorUI(const char* title, uint32_t color, std::function<void(uint32_t color)> setter);
 
     // internal functions
     int getBorderSize() const;

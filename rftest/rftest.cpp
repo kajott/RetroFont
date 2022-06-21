@@ -745,6 +745,116 @@ void RFTestApp::drawUI() {
 
     }
     ImGui::End();
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // attribute window begin
+    ImGui::SetNextWindowPos(ImVec2(
+        ImGui::GetMainViewport()->WorkPos.x +
+        ImGui::GetMainViewport()->WorkSize.x,
+        ImGui::GetMainViewport()->WorkPos.y +
+        ImGui::GetMainViewport()->WorkSize.y),
+        ImGuiCond_FirstUseEver, ImVec2(1.0f, 1.0f));
+    ImGui::SetNextWindowSize(ImVec2(390.0f, 272.0f), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Attributes", nullptr, 0)) {
+        colorUI("border color",
+                m_ctx ? m_ctx->border_color : RF_COLOR_DEFAULT,
+                [=] (uint32_t color) { RF_SetBorderColor(m_ctx, color); });
+        colorUI("default background color",
+                m_ctx ? m_ctx->default_bg : RF_COLOR_DEFAULT,
+                [=] (uint32_t color) { RF_SetBackgroundColor(m_ctx, color); });
+        colorUI("default foreground color",
+                m_ctx ? m_ctx->default_fg : RF_COLOR_DEFAULT,
+                [=] (uint32_t color) { RF_SetForegroundColor(m_ctx, color); });
+        colorUI("typed character background color",
+                m_ctx ? m_ctx->attrib.bg : RF_COLOR_DEFAULT,
+                [=] (uint32_t color) { if (m_ctx) { m_ctx->attrib.bg = color; } });
+        colorUI("typed character foreground color",
+                m_ctx ? m_ctx->attrib.fg : RF_COLOR_DEFAULT,
+                [=] (uint32_t color) { if (m_ctx) { m_ctx->attrib.fg = color; } });
+
+        if (ImGui::TreeNodeEx("typed character attributes", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnDoubleClick)) {
+            #define MAKE_TOGGLE(attr,label) do { \
+                bool b = m_ctx && !!m_ctx->attrib.attr; \
+                if (ImGui::Checkbox(label, &b) && m_ctx) { \
+                    m_ctx->attrib.attr = b ? 1 : 0; \
+                } \
+            } while (0)
+            MAKE_TOGGLE(bold,      "bold");   ImGui::SameLine();
+            MAKE_TOGGLE(dim,       "dim");    ImGui::SameLine();
+            MAKE_TOGGLE(underline, "line");   ImGui::SameLine();
+            MAKE_TOGGLE(blink,     "blink");  ImGui::SameLine();
+            MAKE_TOGGLE(reverse,   "rev");    ImGui::SameLine();
+            MAKE_TOGGLE(invisible, "invis");
+            #undef MAKE_TOGGLE
+            ImGui::TreePop();
+        }
+    }
+    ImGui::End();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void RFTestApp::colorUI(const char* title, uint32_t color, std::function<void(uint32_t color)> setter) {
+    if (!ImGui::TreeNodeEx(title, ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnDoubleClick))
+        { return; }
+
+    // Default
+    bool active = (color == RF_COLOR_DEFAULT);
+    if (active) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]);
+    }
+    if (ImGui::Button("Default")) {
+        setter(RF_COLOR_DEFAULT);
+    }
+    if (active) {
+        ImGui::PopStyleColor(1);
+    }
+
+    // Std16
+    ImGui::PushItemWidth(16.0f);
+    for (int i = 0;  i < 16;  ++i) {
+        static const ImU32 colors[16] = {
+            0xFF000000, 0xFF800000, 0xFF008000, 0xFF808000, 0xFF000080, 0xFF800080, 0xFF008080, 0xFFC0C0C0,
+            0xFF404040, 0xFFFF0000, 0xFF00FF00, 0xFFFFFF00, 0xFF0000FF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFFFFFF,
+        };
+        ImGui::SameLine(0.0f, i ? 0.0f : -1.0f);
+        ImGui::PushStyleColor(ImGuiCol_Button,        colors[i]);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, colors[i]);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  colors[i]);
+        ImGui::PushStyleColor(ImGuiCol_Text, ((0xFC80 >> i) & 1) ? 0xFF000000 : 0xFFFFFFFF);
+        ImGui::PushID(i);
+        if (ImGui::Button((color == (RF_COLOR_BLACK + i)) ? "X" : " ")) {
+            setter(RF_COLOR_BLACK + i);
+        }
+        ImGui::PopID();
+        ImGui::PopStyleColor(4);
+    }
+    ImGui::PopItemWidth();
+
+    // RGB
+    ImGui::SameLine();
+    float rgb[3] = { .0f, .0f, .0f };
+    active = RF_IS_RGB_COLOR(color);
+    if (active) {
+        rgb[0] = RF_COLOR_R(color) / 255.f;
+        rgb[1] = RF_COLOR_G(color) / 255.f;
+        rgb[2] = RF_COLOR_B(color) / 255.f;
+    } else {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+    }
+    if (ImGui::ColorEdit3("RGB", rgb, ImGuiColorEditFlags_NoInputs)) {
+        setter(RF_COLOR_RGB(
+            uint8_t(rgb[0] * 255.f + .5f),
+            uint8_t(rgb[1] * 255.f + .5f),
+            uint8_t(rgb[2] * 255.f + .5f)
+        ));
+    }
+    if (!active) {
+        ImGui::PopStyleColor(1);
+    }
+
+    ImGui::TreePop();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
