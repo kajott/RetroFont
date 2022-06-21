@@ -18,8 +18,8 @@ uint32_t kc85_pre_map_color(uint32_t color, uint32_t default1, uint32_t default2
     return RF_MapRGBToStandardColor(color, 200);
 }
 
-uint32_t kc85_map_border_color(uint32_t sys_id, uint32_t color) {
-    (void)sys_id, (void)color;
+uint32_t kc85_map_border_color(RF_Context* ctx, uint32_t color) {
+    (void)ctx, (void)color;
     return 0;  // border is always black
 }
 
@@ -77,8 +77,8 @@ uint32_t kc87_map_color(uint32_t color, uint32_t default1, uint32_t default2) {
     return RF_MapStandardColorToRGB(color, 0,255, 0,255);
 }
 
-uint32_t kc87_map_border_color(uint32_t sys_id, uint32_t color) {
-    (void)sys_id;
+uint32_t kc87_map_border_color(RF_Context* ctx, uint32_t color) {
+    (void)ctx;
     return kc87_map_color(color, RF_COLOR_BLACK, 0);
 }
 
@@ -100,8 +100,8 @@ static const char kc87default[] = "`f4robotron  Z 9001\n`0\n`F2OS\n>";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-uint32_t z1013_map_border_color(uint32_t sys_id, uint32_t color) {
-    (void)sys_id, (void)color;
+uint32_t z1013_map_border_color(RF_Context* ctx, uint32_t color) {
+    (void)ctx, (void)color;
     return 0;
 }
 

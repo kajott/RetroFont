@@ -24,15 +24,15 @@ uint32_t pc_rgb_color(uint32_t color) {
     }
 }
 
-uint32_t pc_map_border_color (uint32_t sys_id, uint32_t color) {
-    if (IS_MDA(sys_id) || (color == RF_COLOR_DEFAULT)) {
+uint32_t pc_map_border_color(RF_Context* ctx, uint32_t color) {
+    if (IS_MDA(ctx->system->sys_id) || (color == RF_COLOR_DEFAULT)) {
         return 0;
     } else {
         return pc_rgb_color(pc_std_color(color));
     }
 }
 
-void pc_render_cell (const RF_RenderCommand* cmd) {
+void pc_render_cell(const RF_RenderCommand* cmd) {
     uint32_t fg, bg;
     uint16_t cs = 0, ce = 0;
     bool is_gfx;

@@ -28,11 +28,11 @@ uint32_t st_map_color(uint32_t sys_id, uint32_t color, uint32_t default1, uint32
     return RF_MapStandardColorToRGB(color, 0x00,0xFF, 0x60,0xFF);
 }
 
-uint32_t st_map_border_color (uint32_t sys_id, uint32_t color) {
-    return st_map_color(sys_id, color, RF_COLOR_WHITE | RF_COLOR_BRIGHT, RF_COLOR_WHITE | RF_COLOR_BRIGHT);
+uint32_t st_map_border_color(RF_Context* ctx, uint32_t color) {
+    return st_map_color(ctx->system->sys_id, color, RF_COLOR_WHITE | RF_COLOR_BRIGHT, RF_COLOR_WHITE | RF_COLOR_BRIGHT);
 }
 
-void st_render_cell (const RF_RenderCommand* cmd) {
+void st_render_cell(const RF_RenderCommand* cmd) {
     uint32_t fg, bg;
     if (!cmd || !cmd->cell) { return; }
     fg = st_map_color(cmd->ctx->system->sys_id, cmd->cell->fg, cmd->ctx->default_fg, RF_COLOR_BLACK);

@@ -259,7 +259,7 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     RF_RenderCommand cmd;
     if (!ctx || !ctx->system || !ctx->font || !ctx->screen || !ctx->bitmap) { return false; }
     if (ctx->border_color_changed) {
-        uint32_t color = ctx->system->cls->map_border_color(ctx->system->sys_id, ctx->border_color);
+        uint32_t color = ctx->system->cls->map_border_color(ctx, ctx->border_color);
         if (ctx->has_border) {
             uint8_t* p = fill_border(ctx->bitmap, color, ctx->bitmap_size.x * ctx->system->border_ul.y + ctx->system->border_ul.x);
             for (uint16_t y = ctx->screen_size.y * ctx->cell_size.y;  y;  --y) {

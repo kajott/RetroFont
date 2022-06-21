@@ -22,8 +22,8 @@ uint32_t amiga_map_color(uint32_t sys_id, uint32_t color, uint32_t default1, boo
     }
 }
 
-uint32_t amiga_map_border_color(uint32_t sys_id, uint32_t color) {
-    return amiga_map_color(sys_id, color, RF_COLOR_DEFAULT, false);
+uint32_t amiga_map_border_color(RF_Context* ctx, uint32_t color) {
+    return amiga_map_color(ctx->system->sys_id, color, RF_COLOR_DEFAULT, false);
 }
 
 void amiga_render_cell(const RF_RenderCommand* cmd) {

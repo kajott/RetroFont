@@ -66,8 +66,8 @@ uint32_t cbm_map_color(uint32_t sys_id, uint32_t color, bool is_fg, bool is_bord
     return RF_MapStandardColorToRGB(color, 0, 170, 0, 255);  // TODO: map color properly here
 }
 
-uint32_t cbm_map_border_color(uint32_t sys_id, uint32_t color) {
-    return cbm_map_color(sys_id, color, true, true);
+uint32_t cbm_map_border_color(RF_Context* ctx, uint32_t color) {
+    return cbm_map_color(ctx->system->sys_id, color, true, true);
 }
 
 void cbm_render_cell(const RF_RenderCommand* cmd) {
@@ -82,8 +82,8 @@ void cbm_render_cell(const RF_RenderCommand* cmd) {
     RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false, false);
 }
 
-uint32_t pet_map_border_color(uint32_t sys_id, uint32_t color) {
-    (void)sys_id, (void)color;
+uint32_t pet_map_border_color(RF_Context* ctx, uint32_t color) {
+    (void)ctx, (void)color;
     return 0;  // always black
 }
 

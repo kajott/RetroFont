@@ -47,8 +47,8 @@ uint8_t atari8_map_color(uint32_t sys_id, uint32_t color, uint8_t default1) {
     return (uint8_t)color;
 }
 
-uint32_t atari8_map_border_color(uint32_t sys_id, uint32_t color) {
-    return atari8_palettes[atari8_map_color(sys_id, color, 0)];
+uint32_t atari8_map_border_color(RF_Context* ctx, uint32_t color) {
+    return atari8_palettes[atari8_map_color(ctx->system->sys_id, color, 0)];
 }
 
 void atari8_render_cell(const RF_RenderCommand* cmd) {

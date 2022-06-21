@@ -130,7 +130,7 @@ struct s_RF_Cell {
 
 //! command structure used in the render_cell system class method
 struct s_RF_RenderCommand {
-    const RF_Context *ctx;      //!< context to draw from
+    RF_Context *ctx;            //!< context to draw from
                                 //!< \note this pointer, and the 'system' and 'font'
                                 //!        pointers are guaranteed to be valid
     RF_Cell *cell;              //!< cell to draw
@@ -159,7 +159,8 @@ void RF_RenderCell(
 //! method table for a system class
 struct s_RF_SysClass {
     //! map a border color to RGB
-    uint32_t (*map_border_color) (uint32_t sys_id, uint32_t color);
+    //! \note 'ctx' and 'ctx->system' are guaranteed to be valid
+    uint32_t (*map_border_color) (RF_Context* ctx, uint32_t color);
 
     //! render a single character cell.
     //! This method typically resolves the foreground and background colors

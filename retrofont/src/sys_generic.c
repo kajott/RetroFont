@@ -10,11 +10,12 @@ uint32_t gen_map_color(uint32_t color, uint32_t default1, uint32_t default2) {
     return RF_MapStandardColorToRGB(color, 0,160, 0,255);
 }
 
-uint32_t gen_map_border_color (uint32_t sys_id, uint32_t color) {
-    return gen_map_color(color, 0, sys_id);
+uint32_t gen_map_border_color(RF_Context* ctx, uint32_t color) {
+    (void)ctx;
+    return gen_map_color(color, 0, 0);
 }
 
-void gen_render_cell (const RF_RenderCommand* cmd) {
+void gen_render_cell(const RF_RenderCommand* cmd) {
     uint32_t fg, bg;
     if (!cmd || !cmd->cell) { return; }
     fg = gen_map_color(cmd->cell->fg, cmd->ctx->default_fg, 0xEEDC82);

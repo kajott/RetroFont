@@ -21,8 +21,8 @@ uint32_t zx_std_color(uint32_t color, uint32_t default_color, bool is_fg) {
 
 #define zx_rgb_color(color) RF_MapStandardColorToRGB(color, 0, CINT, 0, 255)
 
-uint32_t zx_map_border_color (uint32_t sys_id, uint32_t color) {
-    if (IS_SPECTRUM(sys_id)) {
+uint32_t zx_map_border_color(RF_Context* ctx, uint32_t color) {
+    if (IS_SPECTRUM(ctx->system->sys_id)) {
         color = zx_std_color(color, RF_COLOR_DEFAULT, false);
         color &= ~RF_COLOR_BRIGHT;  // border can not be bright
         return zx_rgb_color(color);
