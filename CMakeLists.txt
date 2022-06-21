@@ -69,6 +69,7 @@ set (SYSTEMS
     retrofont/src/sys_amiga.c
     retrofont/src/sys_st.c
     retrofont/src/sys_cbm.c
+    retrofont/src/sys_atari8.c
     retrofont/src/sys_zx.c
     retrofont/src/sys_robotron.c
 )
