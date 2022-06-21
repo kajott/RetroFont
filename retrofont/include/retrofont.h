@@ -9,11 +9,6 @@
 extern "C" {
 #endif
 
-// glyph lookup cache configuration
-#define RF_GLYPH_CACHE_MIN  32  //!< first codepoint to cache
-#define RF_GLYPH_CACHE_MAX 255  //!< last codepoint to cache
-#define RF_GLYPH_CACHE_SIZE (RF_GLYPH_CACHE_MAX - RF_GLYPH_CACHE_MIN + 1)  //!< size of the glyph case
-
 //! create an ID from a string
 //! \note the 's' parameter *must* be at least 4 characters long!
 #define RF_MAKE_ID_S(s) ((((uint32_t)(((const char*)(s))[3])) << 24) \
@@ -24,6 +19,15 @@ extern "C" {
 #define RF_MAKE_ID(a,b,c,d) (((d) << 24) | ((c) << 16) | ((b) << 8) | (a))
 //! extract specific letter from ID
 #define RF_EXTRACT_ID(id,letter) (((id) >> ((letter) * 8)) & 0xFF)
+
+// glyph lookup cache configuration
+#define RF_GLYPH_CACHE_MIN  32  //!< first codepoint to cache
+#define RF_GLYPH_CACHE_MAX 255  //!< last codepoint to cache
+#define RF_GLYPH_CACHE_SIZE (RF_GLYPH_CACHE_MAX - RF_GLYPH_CACHE_MIN + 1)  //!< size of the glyph case
+
+// palette cache configuration
+#define RF_PAL_CACHE_BITS 4  //!< bits per component to reduce color prior to palette lookup
+#define RF_PAL_CACHE_SIZE (1 << ((RF_PAL_CACHE_BITS) * 3))  //!< size of the palette cache
 
 // forward definitions of structures
 typedef struct s_RF_Coord          RF_Coord;
@@ -75,7 +79,7 @@ typedef enum e_RF_FallbackMode {
 //! text markup types
 typedef enum e_RF_MarkupType {
     RF_MT_NONE     = 0x99,  //!< no markup (plain text)
-    RF_MT_INTERNAL = 0x60,  //!< RetroFont's internal markup system [TODO]
+    RF_MT_INTERNAL = 0x60,  //!< RetroFont's internal markup system
     RF_MT_ANSI     = 0x1B,  //!< VT-100 / ANSI compatible Escape codes [TODO]
 } RF_MarkupType;
 
@@ -97,17 +101,6 @@ typedef enum e_RF_MonitorType {
 #define RF_SIZE_DEFAULT ((uint16_t)(-1))       //!< system default size for RF_ResizeScreen()
 #define RF_SIZE_PIXELS  0x8000u                //!< system's default_screen_size is in pixels
 #define RF_SIZE_MASK    (RF_SIZE_PIXELS - 1u)  //!< mask to remove RF_SIZE_PIXELS flag
-
-//! map any RGB color to one of the standard 16 colors (RF_COLOR_DEFAULT is left untouched)
-//! \param bright_threshold  if the brightest component is brighter than this, the bright flag is set
-uint32_t RF_MapRGBToStandardColor(uint32_t color, uint8_t bright_threshold);
-
-//! map one of the standard 16 colors to RGB
-//! \param std0     intensity value for inactive components if bright flag is not set
-//! \param std1     intensity value for   active components if bright flag is not set
-//! \param bright0  intensity value for inactive components if bright flag is     set
-//! \param bright1  intensity value for   active components if bright flag is     set
-uint32_t RF_MapStandardColorToRGB(uint32_t color, uint8_t std0, uint8_t std1, uint8_t bright0, uint8_t bright1);
 
 //! 2D point coordinate
 struct s_RF_Coord {
@@ -255,6 +248,7 @@ struct s_RF_Context {
     bool last_blink_phase;      //!< \private blink phase of the last RF_Render() call
     uint32_t glyph_offset_cache[RF_GLYPH_CACHE_SIZE];  //!< \private glyph cache (-1 = uncached)
     const RF_FallbackGlyphs* fb_glyphs;                //!< \private fallback glyph list (NULL = no fallback)
+    uint8_t pal_cache[RF_PAL_CACHE_SIZE];  //!< \private palette cache (0xFF = uncached)
 
 //private: // (markup parser)
     uint8_t utf8_cb_count;      //!< \private UTF-8 continuation byte count
@@ -348,6 +342,33 @@ void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uin
 //! render the screen (or rather, the "dirty" parts of it)
 //! \returns true if anything changed, false otherwise
 bool RF_Render(RF_Context* ctx, uint32_t time_msec);
+
+//! map any RGB color to one of the standard 16 colors (RF_COLOR_DEFAULT is left untouched)
+//! \param bright_threshold  if the brightest component is brighter than this, the bright flag is set
+uint32_t RF_MapRGBToStandardColor(uint32_t color, uint8_t bright_threshold);
+
+//! map one of the standard 16 colors to RGB
+//! \param std0     intensity value for inactive components if bright flag is not set
+//! \param std1     intensity value for   active components if bright flag is not set
+//! \param bright0  intensity value for inactive components if bright flag is     set
+//! \param bright1  intensity value for   active components if bright flag is     set
+uint32_t RF_MapStandardColorToRGB(uint32_t color, uint8_t std0, uint8_t std1, uint8_t bright0, uint8_t bright1);
+
+//! \private look up a color from a palette (using the context's cache)
+//! \param ctx       context to use for caching; NULL for no cache
+//! \param pal       palette data (i.e. array of RGB colors to match against)
+//! \param pal_size  number of entries in the palette
+//! \param color     color to search for (must be an RGB color)
+//! \returns index of the closest color in the palette
+//! \note If 'ctx' is valid, the context's palette cache will be used; this
+//!       will make subsequent lookups of the same (or similar) color(s) much
+//!       faster, but matching will only have RF_PAL_CACHE_BITS bits of
+//!       precision per component, and only the first 255 palette entries are
+//!       cacheable.
+uint32_t RF_PaletteLookup(RF_Context* ctx, const uint32_t* pal, uint32_t pal_size, uint32_t color);
+
+//! \private invalidate a context's palette cache
+void RF_InvalidatePalette(RF_Context* ctx);
 
 //! destroy a context
 void RF_DestroyContext(RF_Context* ctx);

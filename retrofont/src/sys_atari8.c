@@ -31,31 +31,34 @@ const uint8_t atari8_default_color_map[16] = {
     0x00, 0x19, 0x1D, 0x1A, 0x14, 0x16, 0x22, 0x50, 0x20, 0x59, 0x5D, 0x5A, 0x54, 0x56, 0x7F, 0x70,
 };
 
-uint8_t atari8_map_color(uint32_t sys_id, uint32_t color, uint8_t default1) {
-    bool is_pal = (RF_EXTRACT_ID(sys_id, 3) == 'P');
+uint8_t atari8_map_color(RF_Context* ctx, uint32_t color, uint8_t default1) {
+    bool is_pal = (RF_EXTRACT_ID(ctx->system->sys_id, 3) == 'P');
     if (color == RF_COLOR_DEFAULT) {
         color = default1;
-    } else {
-        color = RF_MapRGBToStandardColor(color, 200);  // FIXME: perform proper color mapping
+    } else if (RF_IS_RGB_COLOR(color)) {
+        color = RF_PaletteLookup(ctx, &atari8_palettes[is_pal ? 0x80 : 0x00], 0x80, color);
+    } else if (RF_IS_STD_COLOR(color)) {
         color = atari8_default_color_map[color & 15];
         if (is_pal && (color & 0x0F)) {
             // shift hue for PAL
             color = ((color + 0x0E) & 0x0F) | (color & 0x70);
         }
+    } else {  // native color?
+        color &= 0x7F;
     }
     if (is_pal) { color |= 0x80; }
     return (uint8_t)color;
 }
 
 uint32_t atari8_map_border_color(RF_Context* ctx, uint32_t color) {
-    return atari8_palettes[atari8_map_color(ctx->system->sys_id, color, 0)];
+    return atari8_palettes[atari8_map_color(ctx, color, 0)];
 }
 
 void atari8_render_cell(const RF_RenderCommand* cmd) {
     uint8_t fg, bg;
     if (!cmd || !cmd->cell) { return; }
-    bg = atari8_map_color(cmd->ctx->system->sys_id, cmd->ctx->default_bg, 0x29);
-    fg = atari8_map_color(cmd->ctx->system->sys_id, cmd->ctx->default_fg, 0x50);
+    bg = atari8_map_color(cmd->ctx, cmd->ctx->default_bg, 0x29);
+    fg = atari8_map_color(cmd->ctx, cmd->ctx->default_fg, 0x50);
     fg = (fg & 0xF0) | (bg & 0x0F);  // ANTIC mode 2 color mapping
     RF_RenderCell(cmd, atari8_palettes[fg], atari8_palettes[bg], 0,0, 0,0, cmd->is_cursor, false, false, false);
 }

@@ -38,6 +38,7 @@ bool RF_SetSystem(RF_Context* ctx, uint32_t sys_id) {
                 ctx->pixel_aspect = (4.0f * (float)sy) / (3.0f * (float)sx);
             }
             ctx->border_color_changed = true;
+            RF_InvalidatePalette(ctx);
             return true;
         }
     }
@@ -731,4 +732,51 @@ uint32_t RF_MapStandardColorToRGB(uint32_t color, uint8_t std0, uint8_t std1, ui
         case RF_COLOR_WHITE   | RF_COLOR_BRIGHT: return RF_COLOR_RGB(bright1, bright1, bright1);
         default: return color;
     }
+}
+
+void RF_InvalidatePalette(RF_Context* ctx) {
+    if (ctx) {
+        memset(ctx->pal_cache, 0xFF, sizeof(ctx->pal_cache));
+    }
+}
+
+uint32_t RF_PaletteLookup(RF_Context* ctx, const uint32_t* pal, uint32_t pal_size, uint32_t color) {
+    uint32_t best_index = 0;
+    uint32_t best_dist = 0x3FFFF;
+    uint32_t cache_idx = 0;
+    uint32_t mask = 0xFFFFFF;
+    if (!pal || !pal_size) { return 0; }
+
+    // cache initialization and check
+    if (ctx) {
+        cache_idx = ((RF_COLOR_R(color) >> (8 - RF_PAL_CACHE_BITS)) << (RF_PAL_CACHE_BITS * 2))
+                  | ((RF_COLOR_G(color) >> (8 - RF_PAL_CACHE_BITS)) <<  RF_PAL_CACHE_BITS)
+                  |  (RF_COLOR_B(color) >> (8 - RF_PAL_CACHE_BITS));
+        best_index = ctx->pal_cache[cache_idx];
+        if (best_index < 0xFF) { return best_index; }
+        mask = (0xFF << (8 - RF_PAL_CACHE_BITS)) & 0xFF;
+        mask |= (mask << 8) | (mask << 16);
+        color &= mask;
+    }
+
+    // main search loop
+    for (uint32_t index = 0;  index < pal_size;  ++index) {
+        uint32_t check = pal[index] & mask;
+        int32_t cdist = (check & 0xFF) - (color & 0xFF);
+        uint32_t dist = (uint32_t)(cdist * cdist);
+        cdist = ((check >> 8) & 0xFF) - ((color >> 8) & 0xFF);
+        dist += (uint32_t)(cdist * cdist);
+        cdist = ((check >> 16) & 0xFF) - ((color >> 16) & 0xFF);
+        dist += (uint32_t)(cdist * cdist);
+        if (dist < best_dist) {
+            best_dist = dist;
+            best_index = index;
+        }
+    }
+
+    // cache finalization
+    if (ctx && (best_index < 0xFF)) {
+        ctx->pal_cache[cache_idx] = (uint8_t)best_index;
+    }
+    return best_index;
 }

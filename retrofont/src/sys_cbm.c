@@ -38,19 +38,16 @@ const uint8_t cbm_default_color_maps[3][16] = {
     /* 2: TED    */ { 0x00, 0x16, 0x15, 0x13, 0x12, 0x14, 0x17, 0x61, 0x11, 0x66, 0x65, 0x63, 0x62, 0x64, 0x67, 0x71 },
 };
 
-uint32_t cbm_map_color(uint32_t sys_id, uint32_t color, bool is_fg, bool is_border) {
+uint32_t cbm_map_color(RF_Context* ctx, uint32_t color, bool is_fg, bool is_border) {
+    uint32_t sys_id = ctx->system->sys_id;
+    bool is_vic = (RF_EXTRACT_ID(sys_id, 1) == '2');
+    bool is_ted = (RF_EXTRACT_ID(sys_id, 1) == 'P');
+    bool is_pal = (RF_EXTRACT_ID(sys_id, 3) == 'P');
     const uint32_t *pal = &cbm_palettes[
-        (RF_EXTRACT_ID(sys_id, 1) == 'P') ? (
-            ((RF_EXTRACT_ID(sys_id, 3) == 'N') ? 0x0C0 : 0x040)
-        ) : (
-            ((RF_EXTRACT_ID(sys_id, 3) == 'N') ? 0x010 : 0x000)
-          + ((RF_EXTRACT_ID(sys_id, 1) == '2') ? 0x000 : 0x020)
-        )
+        is_ted ?  (is_pal ? 0x040 : 0x0C0)
+               : ((is_pal ? 0x000 : 0x010) + (is_vic ? 0x000 : 0x020))
     ];
-    const uint8_t *cmap = cbm_default_color_maps[
-        (RF_EXTRACT_ID(sys_id, 1) == 'P') ? 2 :
-        (RF_EXTRACT_ID(sys_id, 1) == '2') ? 0 :
-                                            1];
+    const uint8_t *cmap = cbm_default_color_maps[is_ted ? 2 : (is_vic ? 0 : 1)];
     if (color == RF_COLOR_DEFAULT) {
         switch (RF_EXTRACT_ID(sys_id, 1)) {
             case 'P': return is_border ? pal[0x6E] : is_fg ? pal[0] : pal[0x71];  // TED default colors
@@ -59,26 +56,26 @@ uint32_t cbm_map_color(uint32_t sys_id, uint32_t color, bool is_fg, bool is_bord
             default:  return is_fg ? pal[14] : pal[ 6];  // C64 default colors
         }
     }
-    color = RF_MapRGBToStandardColor(color, 200);  // TODO: do *not* do this (it loses fidelity!), but map RGB color to C64 color below
-    if (RF_IS_STD_COLOR(color)) {
+    if (RF_IS_RGB_COLOR(color)) {
+        return pal[RF_PaletteLookup(ctx, pal, is_ted ? 128 : 16, color)];
+    } else if (RF_IS_STD_COLOR(color)) {
         return pal[cmap[color & 15]];
+    } else {  // native color
+        return pal[color & (is_ted ? 127 : 15)];
     }
-    return RF_MapStandardColorToRGB(color, 0, 170, 0, 255);  // TODO: map color properly here
 }
 
 uint32_t cbm_map_border_color(RF_Context* ctx, uint32_t color) {
-    return cbm_map_color(ctx->system->sys_id, color, true, true);
+    return cbm_map_color(ctx, color, true, true);
 }
 
 void cbm_render_cell(const RF_RenderCommand* cmd) {
     uint32_t fg, bg;
     if (!cmd || !cmd->cell) { return; }
-
     fg = cmd->cell->fg;
     if (fg == RF_COLOR_DEFAULT) { fg = cmd->ctx->default_fg; }
-    fg = cbm_map_color(cmd->ctx->system->sys_id, fg, true, false);
-    bg = cbm_map_color(cmd->ctx->system->sys_id, cmd->ctx->default_bg, false, false);
-
+    fg = cbm_map_color(cmd->ctx, fg, true, false);
+    bg = cbm_map_color(cmd->ctx, cmd->ctx->default_bg, false, false);
     RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false, false);
 }
 
