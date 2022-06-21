@@ -238,6 +238,19 @@ int RFTestApp::run(int argc, char *argv[]) {
             requestFrames(1);
         }
 
+        // process screen content update from RetroFont library
+        if (m_ctx) {
+            if (RF_Render(m_ctx, uint32_t(glfwGetTime() * 1000.0))) {
+                glBindTexture(GL_TEXTURE_2D, m_tex);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8,
+                             m_ctx->bitmap_size.x, m_ctx->bitmap_size.y,
+                             0, GL_RGB, GL_UNSIGNED_BYTE,
+                             (const void*) m_ctx->bitmap);
+                glBindTexture(GL_TEXTURE_2D, 0);
+                GLutil::checkError("texture update");
+            }
+        }
+
         // determine tint and border color
         const GLfloat *tint = MonitorTints[
             (m_monitorType != mtAuto) ? (m_monitorType - mtOffset) :
@@ -327,17 +340,11 @@ int RFTestApp::run(int argc, char *argv[]) {
             // actual drawing
             glUseProgram(m_prog);
             glBindTexture(GL_TEXTURE_2D, m_tex);
-            if (RF_Render(m_ctx, uint32_t(glfwGetTime() * 1000.0))) {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8,
-                             m_ctx->bitmap_size.x, m_ctx->bitmap_size.y,
-                             0, GL_RGB, GL_UNSIGNED_BYTE,
-                             (const void*) m_ctx->bitmap);
-                glUniform2f(m_locSize, float(m_ctx->bitmap_size.x), float(m_ctx->bitmap_size.y));
-            }
             GLenum filter = (m_screenMode == smDynamic) || (m_renderMode <= rmUnfiltered) ? GL_NEAREST : GL_LINEAR;
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
             glUniform1i(m_locMode, ((m_screenMode == smFixed) && (m_renderMode == rmBlocky)) ? 1 : 0);
+            glUniform2f(m_locSize, float(m_ctx->bitmap_size.x), float(m_ctx->bitmap_size.y));
             glUniform4fv(m_locArea, 1, m_area);
             glUniform4fv(m_locTint, 1, tint);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
