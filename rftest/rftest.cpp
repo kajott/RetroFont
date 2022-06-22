@@ -567,7 +567,9 @@ void RFTestApp::loadDefaultScreen(int type) {
 }
 
 void RFTestApp::loadScreen(const char* text, RF_MarkupType markup) {
-    loadDefaultScreen(dsEmpty);
+    cancelTyper();
+    RF_ClearScreen(m_ctx, nullptr);
+    RF_MoveCursor(m_ctx, 0, 0);
     if (m_baud) {
         m_typerStr = StringUtil::copy(text);
         m_typerType = markup;
@@ -577,6 +579,7 @@ void RFTestApp::loadScreen(const char* text, RF_MarkupType markup) {
     } else {
         RF_AddText(m_ctx, text, markup);
     }
+    m_screenContentsChanged = true;
 }
 
 void RFTestApp::cancelTyper() {
