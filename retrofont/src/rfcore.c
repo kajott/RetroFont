@@ -481,11 +481,16 @@ void RF_AddChar(RF_Context* ctx, uint32_t codepoint) {
             }
             // clear what remains
             RF_ClearRegion(ctx, ctx->cursor_pos.x, ctx->cursor_pos.y - 1, ctx->screen_size.x, ctx->cursor_pos.y, &ctx->attrib);
-            RF_ClearRegion(ctx, ctx->screen_size.x - ctx->cursor_pos.x, ctx->cursor_pos.y, ctx->screen_size.x, ctx->cursor_pos.y + 1, &ctx->attrib);
+            RF_ClearRegion(ctx, ctx->screen_size.x - ctx->cursor_pos.x, ctx->cursor_pos.y, ctx->screen_size.x, ctx->cursor_pos.y + 1,
+                           &ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x + ctx->screen_size.x - ctx->cursor_pos.x - 1]);
+            ctx->cursor_pos.x = 0;
+        } else if ((ctx->cursor_pos.y + 1) == ctx->screen_size.y) {
+            // overwrite mode, at end of screen -> insert new line
+            RF_ScrollRegion(ctx, 0, 0, 0, 0, -1, &ctx->screen[ctx->screen_size.x * ctx->screen_size.y - 1]);
             ctx->cursor_pos.x = 0;
         } else {
-            // clear the remainder of the current line
-            RF_ClearRegion(ctx, ctx->cursor_pos.x, ctx->cursor_pos.y, ctx->screen_size.x, ctx->cursor_pos.y + 1, &ctx->attrib);
+            // otherwise, only move cursor in overwrite mode
+            pos->dirty = 1;
             ctx->cursor_pos.x = 0;
             if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
                 ctx->cursor_pos.y = ctx->screen_size.y - 1;
@@ -535,7 +540,8 @@ void RF_AddChar(RF_Context* ctx, uint32_t codepoint) {
                 }
             } else {
                 if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
-                    ctx->cursor_pos.y = 0;
+                    RF_ScrollRegion(ctx, 0, 0, 0, 0, -1, &ctx->attrib);
+                    --ctx->cursor_pos.y;
                 }
             }
         }

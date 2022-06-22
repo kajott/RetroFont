@@ -179,7 +179,6 @@ int RFTestApp::run(int argc, char *argv[]) {
         fprintf(stderr, "ERROR: no such system (sys_id=0x%08X)!\n", want_sys_id);
         return 1;
     }
-    m_ctx->insert = true;
     if (want_font_id) {
         if (!RF_SetFont(m_ctx, want_font_id)) {
             fprintf(stderr, "ERROR: no such font (font_id=0x%08X) or incompatible size!\n", want_font_id);

@@ -59,7 +59,7 @@ void pc_render_cell(const RF_RenderCommand* cmd) {
     if (cmd->is_cursor && !cmd->blink_phase && !is_gfx) {
         ce = cmd->ctx->cell_size.y;
         if (ce > 8) { --ce; }
-        cs = cmd->ctx->insert ? (ce - 2) : (cmd->ctx->cell_size.y >> 1);
+        cs = cmd->ctx->insert ? (cmd->ctx->cell_size.y >> 1) : (ce - 2);
     }
 
     // render the main cell
