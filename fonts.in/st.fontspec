@@ -1,4 +1,5 @@
 defmap "st"
+    # https://www.unicode.org/L2/L2019/19025-aux-mappings.zip/MAPPINGS/ATARISTV.TXT
     map 00.01  U+21E7  # UPWARDS WHITE ARROW
     map 00.02  U+21E9  # DOWNWARDS WHITE ARROW
     map 00.03  U+21E8  # RIGHTWARDS WHITE ARROW
@@ -12,6 +13,8 @@ defmap "st"
     map 00.11  U+266A  # EIGHTH NOTE
     map 00.12  U+240C  # SYMBOL FOR FORM FEED
     map 00.13  U+240D  # SYMBOL FOR CARRIAGE RETURN
+    map 00.14  U+F82A  # Atari logo, left half
+    map 00.15  U+F82B  # Atari logo, right half
     map 01.00  U+1FBF0 # SEGMENTED DIGIT ZERO
     map 01.01  U+1FBF1 # SEGMENTED DIGIT ONE
     map 01.02  U+1FBF2 # SEGMENTED DIGIT TWO
@@ -24,9 +27,10 @@ defmap "st"
     map 01.09  U+1FBF9 # SEGMENTED DIGIT NINE
     map 01.10  U+0259  # LATIN SMALL LETTER SCHWA
     map 01.11  U+241B  # SYMBOL FOR ESCAPE
-    # not mapped:
-    # - $0E-$0F = Atari logo
-    # - $1C-$1F = J. R. Dobbs face
+    map 01.12  U+F82C  # Image of J.R. "Bob" Dobbs, upper left quarter
+    map 01.13  U+F82D  # Image of J.R. "Bob" Dobbs, upper right quarter
+    map 01.14  U+F82E  # Image of J.R. "Bob" Dobbs, lower left quarter
+    map 01.15  U+F82F  # Image of J.R. "Bob" Dobbs, lower right quarter
 
     # http://ftp.unicode.org/Public/MAPPINGS/VENDORS/MISC/ATARIST.TXT
     map 02.00  U+0020  # SPACE
