@@ -68,6 +68,7 @@ set (SYSTEMS
     retrofont/src/sys_pc.c
     retrofont/src/sys_amiga.c
     retrofont/src/sys_st.c
+    retrofont/src/sys_apple2.c
     retrofont/src/sys_cbm.c
     retrofont/src/sys_atari8.c
     retrofont/src/sys_zx.c
@@ -79,6 +80,7 @@ set (FONTSPECS
     fonts.in/pc.fontspec
     fonts.in/amiga.fontspec
     fonts.in/st.fontspec
+    fonts.in/apple2.fontspec
     fonts.in/cbm.fontspec
     fonts.in/atari8.fontspec
     fonts.in/zx.fontspec

@@ -1,0 +1,58 @@
+source "2513.pbm" 6x8
+# regarding the size, the 2513 is slightly weird:
+# - the glyphs themselves all fit into a 5x7 grid
+# - the datasheet specifies them as 5x8, with the uppermost scanline always empty
+# - we're encoding them as 6x8 here, with padding at the right and bottom edges
+font "2513" "Signetics 2513"
+    map 0 '@'..'G'
+    map 1 'H'..'O'
+    map 2 'P'..'W'
+    map 3 'X'..'_'
+    map 4 ' '..'&' U+0027
+    map 5 '('..'/'
+    map 6 '0'..'7'
+    map 7 '8'..'?'
+    alias 'a'..'z' 'A'..'Z'
+
+source "apple2e.pbm" 8x8
+# The cell size on Apple II is actually 7x8, but they are stored in ROM as 8x8
+# with a padding column at the right edge. Since 8x8 makes the font more
+# practical for "misuse" in other contexts, we leave it like that here.
+font "AP2e" "Apple IIe/IIc"
+    map 5 ' '..'?'
+    map 6 '@'..'_'
+    map 7 '`'..'~'
+    # https://www.unicode.org/L2/L2019/19025-aux-mappings.zip/MAPPINGS/APL2ALT1.TXT
+    map 7.31  U+2425  # SYMBOL FOR DELETE FORM TWO
+    map 2.00  U+F8FF  # Apple logo, filled (closed Apple, solid Apple)
+    map 2.01  U+F87F  # Apple logo, outline (open Apple, hollow Apple)
+    map 2.02  U+1FBB0 # ARROWHEAD-SHAPED POINTER
+    map 2.03  U+231B  # HOURGLASS
+    map 2.04  U+2713  # CHECK MARK
+    map 2.05  U+1FBB1 # INVERSE CHECK MARK
+    map 2.06  U+1FBB2 # LEFT HALF RUNNING MAN
+    map 2.07  U+1FBB3 # RIGHT HALF RUNNING MAN
+    map 2.08  U+2190  # LEFTWARDS ARROW
+    map 2.09  U+2026  # HORIZONTAL ELLIPSIS
+    map 2.10  U+2193  # DOWNWARDS ARROW
+    map 2.11  U+2191  # UPWARDS ARROW
+    map 2.12  U+2594  # UPPER ONE EIGHTH BLOCK
+    map 2.13  U+21B2  # DOWNWARDS ARROW WITH TIP LEFTWARDS
+    map 2.14  U+2589  # LEFT SEVEN EIGHTHS BLOCK
+    map 2.15  U+1FBB5 # LEFTWARDS ARROW AND UPPER AND LOWER ONE EIGHTH BLOCK
+    map 2.16  U+1FBB6 # RIGHTWARDS ARROW AND UPPER AND LOWER ONE EIGHTH BLOCK
+    map 2.17  U+1FBB7 # DOWNWARDS ARROW AND RIGHT ONE EIGHTH BLOCK
+    map 2.18  U+1FBB8 # UPWARDS ARROW AND RIGHT ONE EIGHTH BLOCK
+    map 2.19  U+2500  # BOX DRAWINGS LIGHT HORIZONTAL
+    map 2.20  U+1FB7C # LEFT AND LOWER ONE EIGHTH BLOCK
+    map 2.21  U+2192  # RIGHTWARDS ARROW
+    map 2.22  U+2592  # MEDIUM SHADE
+    map 2.23  U+1FB90 # INVERSE MEDIUM SHADE
+    map 2.24  U+1FBB9 # LEFT HALF FOLDER
+    map 2.25  U+1FBBA # RIGHT HALF FOLDER
+    map 2.26  U+2595  # RIGHT ONE EIGHTH BLOCK
+    map 2.27  U+25C6  # BLACK DIAMOND
+    map 2.28  U+1FB80 # UPPER AND LOWER ONE EIGHTH BLOCK
+    map 2.29  U+1FBBB # VOIDED GREEK CROSS
+    map 2.30  U+1FBBC # RIGHT OPEN SQUARED DOT
+    map 2.31  U+258F  # LEFT ONE EIGHTH BLOCK

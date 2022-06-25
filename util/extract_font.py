@@ -4,6 +4,7 @@ Generic bitmap font extractor.
 """
 import argparse
 import hashlib
+import glob
 import sys
 import os
 
@@ -57,14 +58,16 @@ if __name__ == "__main__":
                         help="number of non-empty glyphs required for a successful scan")
     parser.add_argument("-f", "--full", metavar="INDEX", type=int,
                         help="index of a fully filled glyph (used to improve search accuracy; default: no filled glyph)")
-    parser.add_argument("-c", "--chars", metavar="COUNT", type=int, default=256,
-                        help="maximum number of chars to extract (if address range doesn't have a TO component; default: %(default)s)")
+    parser.add_argument("-c", "--chars", metavar="COUNT", type=int, default=0x10000,
+                        help="maximum number of chars to extract (if address range doesn't have a TO component; default: unlimited")
     parser.add_argument("-o", "--output", metavar="PBM",
                         help="output PBM file (only useful for single inputs; address ranges will be merged into a single font; default: derive from input)")
     parser.add_argument("-n", "--dry-run", action='store_true',
                         help="don't actually write the output files")
     parser.add_argument("-r", "--bitrev", "--lsb-first", action='store_true',
                         help="interpret font data as LSB-first (default: MSB-first)")
+    parser.add_argument("-v", "--invert", "--reverse", action='store_true',
+                        help="invert bits")
     parser.add_argument("-w", "--width", type=int, default=32,
                         help="characters per row in the output image files (default: %(default)s)")
     args = parser.parse_args()
@@ -72,17 +75,19 @@ if __name__ == "__main__":
     bpl = (args.size.x + 7) >> 3  # bytes per scanline
     bpc = bpl * args.size.y       # bytes per character
     bitrange = (0,1,2,3,4,5,6,7) if args.bitrev else (7,6,5,4,3,2,1,0)
+    xor = 1 if args.invert else 0
     empty = b'\x00' * bpc
     full = bytes(sum((int((i + b) < args.size.x) << s) for b,s in enumerate(bitrange)) for i in range(0, args.size.x, 8)) * args.size.y
     line_length = args.size.x * args.width
 
     inputs = []
     for i in args.inputs:
-        if os.path.isdir(i):
-            for root, dirs, files in os.walk(i):
-                inputs.extend(os.path.join(root, f) for f in files)
-        else:
-            inputs.append(i)
+        for j in glob.glob(i):
+            if os.path.isdir(j):
+                for root, dirs, files in os.walk(j):
+                    inputs.extend(os.path.join(root, f) for f in files)
+            else:
+                inputs.append(j)
     if (len(inputs) > 1) and args.output:
         parser.error("can't use --output option with multiple inputs")
 
@@ -146,7 +151,7 @@ if __name__ == "__main__":
                 for y in range(args.size.y):
                     row = []
                     for x in data[offset + y * bpl : offset + (y + 1) * bpl]:
-                        row.extend((x >> b) & 1 for b in bitrange)
+                        row.extend(((x >> b) & 1) ^ xor for b in bitrange)
                     char.append(row[:args.size.x])
                 chars.append(char)
         if args.output:
