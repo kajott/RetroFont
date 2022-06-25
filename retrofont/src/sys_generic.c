@@ -4,32 +4,27 @@
 
 #include "retrofont.h"
 
-uint32_t gen_map_color(uint32_t color, uint32_t default1, uint32_t default2) {
-    if (color == RF_COLOR_DEFAULT) { color = default1; }
-    if (color == RF_COLOR_DEFAULT) { color = default2; }
+uint32_t gen_map_border_color(RF_Context* ctx, uint32_t color) {
+    (void)ctx;
     return RF_MapStandardColorToRGB(color, 0,160, 0,255);
 }
 
-uint32_t gen_map_border_color(RF_Context* ctx, uint32_t color) {
-    (void)ctx;
-    return gen_map_color(color, 0, 0);
-}
-
-void gen_render_cell(const RF_RenderCommand* cmd) {
-    uint32_t fg, bg;
-    if (!cmd || !cmd->cell) { return; }
-    fg = gen_map_color(cmd->cell->fg, cmd->ctx->default_fg, 0xEEDC82);
-    bg = gen_map_color(cmd->cell->bg, cmd->ctx->default_bg, 0x000000);
+void gen_prepare_cell(RF_RenderCommand* cmd) {
+    if (cmd->fg == RF_COLOR_DEFAULT) { cmd->fg = 0xEEDC82; }
+    if (cmd->bg == RF_COLOR_DEFAULT) { cmd->bg = 0x000000; }
     if (cmd->cell->dim) {
-        fg = ((fg & 0xFEFEFE) + (bg & 0xFEFEFE)) >> 1;
+        cmd->fg = ((cmd->fg & 0xFEFEFE) + (cmd->bg & 0xFEFEFE)) >> 1;
     }
-    RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor, false, true, true);
+    cmd->reverse_cursor = cmd->is_cursor;
+    cmd->bold = !!(cmd->cell->bold);
+    cmd->underline = !!(cmd->cell->underline);
 }
 
-const RF_SysClass genclass = {
+static const RF_SysClass genclass = {
     gen_map_border_color,
-    gen_render_cell,
-    NULL,  // check_font
+    gen_prepare_cell,
+    NULL,  // render_cell = default
+    NULL,  // check_font = default
 };
 
 //                                 sys_id,            name,      class,    scrn, scrsz,   cellsz, fontsz, b_ul,  b_lr, aspect, blink, monitor,          default_font_id

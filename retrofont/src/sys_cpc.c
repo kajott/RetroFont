@@ -32,11 +32,8 @@ const uint8_t cpc_default_color_maps[2][16] = {
     /* mode 1 (fg only) */ {    0,    2,    2,    2,    3,    3,    1,    1,    1,    2,    2,    2,    3,    3,    1,    1 },
 };
 
-uint8_t cpc_map_color(RF_Context* ctx, uint32_t color, uint32_t default1, bool is_fg) {
+uint32_t cpc_map_color(RF_Context* ctx, uint32_t color, bool is_fg) {
     uint8_t mode = RF_EXTRACT_ID(ctx->system->sys_id, 3) - '0';
-    if (color == RF_COLOR_DEFAULT) {
-        color = default1;
-    }
     if ((mode == 2) || ((mode == 1) && !is_fg)) {
         // mode 2 shall act like a monochrome mode, everything else doesn't make sense;
         // same goes for the background of mode 1
@@ -46,11 +43,11 @@ uint8_t cpc_map_color(RF_Context* ctx, uint32_t color, uint32_t default1, bool i
         return is_fg ? 1 : 0;
     } else if (RF_IS_RGB_COLOR(color)) {
         static const uint8_t mode2ncol[3] = { 14, 4, 2};
-        return (uint8_t) RF_PaletteLookup(ctx, cpc_palette, mode2ncol[mode], color);
+        return RF_PaletteLookup(ctx, cpc_palette, mode2ncol[mode], color);
     } else if (RF_IS_STD_COLOR(color)) {
         return cpc_default_color_maps[mode][color & 15];
     } else {  // native color?
-        return (uint8_t) (color & 15);
+        return (color & 15);
     }
 }
 
@@ -69,26 +66,27 @@ uint32_t cpc_map_border_color(RF_Context* ctx, uint32_t color) {
                         cpc_map_rgb_component(RF_COLOR_B(color)));
 }
 
-void cpc_render_cell(const RF_RenderCommand* cmd) {
-    uint8_t fg, bg;
-    if (!cmd || !cmd->cell) { return; }
+void cpc_prepare_cell(RF_RenderCommand* cmd) {
     if (cmd->cell->blink) {
         // there are just two color combinations with default blinking in
         // the ROM palette, and one of them is super-weird (bright red/blue),
         // so let's force everything that blinks to the default blue/yellow
-        bg = cmd->blink_phase ? 1 : 0;
-        fg = bg ^ 1;
+        cmd->fg = cmd->blink_phase ? 1 : 0;
+        cmd->bg = cmd->fg ^ 1;
     } else {
-        bg = cpc_map_color(cmd->ctx, cmd->cell->bg, cmd->ctx->default_bg, false);
-        fg = cpc_map_color(cmd->ctx, cmd->cell->fg, cmd->ctx->default_fg, true);
+        cmd->fg = cpc_map_color(cmd->ctx, cmd->fg, true);
+        cmd->bg = cpc_map_color(cmd->ctx, cmd->bg, false);
     }
-    RF_RenderCell(cmd, cpc_palette[fg], cpc_palette[bg], 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false, false);
+    cmd->fg = cpc_palette[cmd->fg];
+    cmd->bg = cpc_palette[cmd->bg];
+    cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
 }
 
-const RF_SysClass cpcclass = {
+static const RF_SysClass cpcclass = {
     cpc_map_border_color,
-    cpc_render_cell,
-    NULL,  // check_font
+    cpc_prepare_cell,
+    NULL,  // render_cell = default
+    NULL,  // check_font = default
 };
 
 static const char cpcdefault[] =

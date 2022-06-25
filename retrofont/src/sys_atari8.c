@@ -54,19 +54,20 @@ uint32_t atari8_map_border_color(RF_Context* ctx, uint32_t color) {
     return atari8_palettes[atari8_map_color(ctx, color, 0)];
 }
 
-void atari8_render_cell(const RF_RenderCommand* cmd) {
-    uint8_t fg, bg;
-    if (!cmd || !cmd->cell) { return; }
-    bg = atari8_map_color(cmd->ctx, cmd->ctx->default_bg, 0x29);
-    fg = atari8_map_color(cmd->ctx, cmd->ctx->default_fg, 0x50);
-    fg = (fg & 0xF0) | (bg & 0x0F);  // ANTIC mode 2 color mapping
-    RF_RenderCell(cmd, atari8_palettes[fg], atari8_palettes[bg], 0,0, 0,0, cmd->is_cursor, false, false, false);
+void atari8_prepare_cell(RF_RenderCommand* cmd) {
+    cmd->bg = atari8_map_color(cmd->ctx, cmd->ctx->default_bg, 0x29);
+    cmd->fg = atari8_map_color(cmd->ctx, cmd->ctx->default_fg, 0x50);
+    cmd->fg = (cmd->fg & 0xF0) | (cmd->bg & 0x0F);  // ANTIC mode 2 color mapping
+    cmd->fg = atari8_palettes[cmd->fg];
+    cmd->bg = atari8_palettes[cmd->bg];
+    cmd->reverse_cursor = cmd->is_cursor;
 }
 
-const RF_SysClass a8class = {
+static const RF_SysClass a8class = {
     atari8_map_border_color,
-    atari8_render_cell,
-    NULL,  // check_font
+    atari8_prepare_cell,
+    NULL,  // render_cell = default
+    NULL,  // check_font = default
 };
 
 static const char a8default[] =

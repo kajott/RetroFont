@@ -123,31 +123,42 @@ struct s_RF_Cell {
 
 //! command structure used in the render_cell system class method
 struct s_RF_RenderCommand {
+    // these fields are inputs to the render_cell() class method
     RF_Context *ctx;            //!< context to draw from
                                 //!< \note this pointer, and the 'system' and 'font'
                                 //!        pointers are guaranteed to be valid
     RF_Cell *cell;              //!< cell to draw
-    const uint8_t *glyph_data;  //!< glyph data to use for drawing
+                                //!< \note this pointer is guaranteed to be valid
+    const uint8_t *glyph_data;  //!< glyph data to use for drawing (only set *after* prepare_cell())
     uint8_t *pixel;             //!< pointer to upper-left corner of the cell in the target bitmap
     bool is_cursor;             //!< whether this cell is at the current cursor location
     bool blink_phase;           //!< blink phase (toggles between true and false periodically)
+
+    // the following fields are used by RF_RenderCell();
+    // they are initialized to sensible defaults by the RF_Render(),
+    // but the render_call() class method can modify them as it sees fit
+    uint32_t codepoint;         //!< codepoint to render (initialized to cell->codepoint)
+    uint32_t fg;                //!< foreground color (initialized to cell->fg or ctx->default_fg, must be RGB for RF_RenderCell())
+    uint32_t bg;                //!< background color (initialized to cell->bg or ctx->default_bg, must be RGB for RF_RenderCell())
+    RF_Coord offset;            //!< offset of the glyph inside the cell (initialized to 0,0)
+    uint16_t line_start;        //!< start row of extra underline (e.g. for cursor)
+    uint16_t line_end;          //!< end row (non-inclusive) of extra underline (e.g. for cursor)
+    bool underline;             //!< use underlining as defined in the font (unless overridden by line_start/line_end)
+                                //!< (initialized to false, set to cell->underline if system supports it)
+    bool bold;                  //!< enable bold printing (initialized to false, set to cell->bold if system supports it)
+    bool invisible;             //!< force the character to be invisible (all-background) (initialized to cell->invisible)
+    // the following three reverse flags are XOR'ed together in RF_RenderCell
+    // and if the result is true, fg and bg will be swapped
+    bool reverse_attr;          //!< reverse flag, initialized to cell->reverse
+    bool reverse_cursor;        //!< reverse flag, typically used for cursor
+    bool reverse_blink;         //!< reverse flag, typically used for blinking
 };
 
-//! render a cell with specific RGB colors; honors the reverse and invisible flags,
-//! but can perform an extra reverse or force invisibility if needed for blinking
-void RF_RenderCell(
-    const RF_RenderCommand* cmd,  //!< render command with base data
-    uint32_t fg,                  //!< resolved foreground color (must be RGB!)
-    uint32_t bg,                  //!< resolved background color (must be RGB!)
-    uint16_t offset_x,            //!< X offset of the glyph in the cell
-    uint16_t offset_y,            //!< Y offset of the glyph in the cell
-    uint16_t line_start,          //!< start row of extra underline (e.g. for cursor)
-    uint16_t line_end,            //!< end row (non-inclusive) of extra underline (e.g. for cursor)
-    bool extra_reverse,           //!< whether to flip FG and BG color once more
-    bool force_invisible,         //!< force the character to be invisible (all-background)
-    bool allow_underline,         //!< allow underlining as defined in the font
-    bool allow_bold               //!< allow bold printing
-);
+//! render a cell with the settings specified in the second half of the
+//! RF_RenderCommand structure
+//! \note This will change fg/bg and line_start/line_end according to the
+//!       reverse_* and underline flags!
+void RF_RenderCell(RF_RenderCommand* cmd);
 
 //! method table for a system class
 struct s_RF_SysClass {
@@ -155,10 +166,24 @@ struct s_RF_SysClass {
     //! \note 'ctx' and 'ctx->system' are guaranteed to be valid
     uint32_t (*map_border_color) (RF_Context* ctx, uint32_t color);
 
+    //! prepare rendering a single cell.
+    //! Either this method or render_cell() has to resolve the colors to RGB
+    //! and process attributes in a system-specific way.
+    //! In particular, prepare_cell() can also divert rendering to a
+    //! different codepoint; at render_cell(), it's too late for that.
+    //! \note This can be NULL; in that case, render_cell does all the duty.
+    //! \note 'cmd' and its members are guaranteed to be valid when this is called
+    void (*prepare_cell) (RF_RenderCommand* cmd);
+
     //! render a single character cell.
-    //! This method typically resolves the foreground and background colors
-    //! to RGB in a system-specific way and then calls RF_RenderCell().
-    void (*render_cell) (const RF_RenderCommand* cmd);
+    //! Either this method or prepare_cell() has to resolve the colors to RGB
+    //! and process attributes in a system-specific way.
+    //! \note This can be NULL; in that case, RF_RenderCell() will be called.
+    //! \note If this not not NULL, RF_RenderCell() is *not* called automatically!
+    //!       (This is done so that the system can define its fully custom
+    //!       rendering, or post-process the pixel data.)
+    //! \note 'cmd' and its members are guaranteed to be valid when this is called
+    void (*render_cell) (RF_RenderCommand* cmd);
 
     //! check whether a font is applicable for that system.
     //! This method can be used to further filter eligible fonts, in addition

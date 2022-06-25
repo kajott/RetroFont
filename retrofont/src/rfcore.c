@@ -277,13 +277,29 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     cmd.cell = ctx->screen;
     cmd.blink_phase = ctx->system->blink_interval_msec ? (((time_msec / ctx->system->blink_interval_msec) & 1) != 0) : false;
     for (uint16_t y = 0;  y < ctx->screen_size.y;  ++y) {
-        cmd.pixel = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * ctx->cell_size.y) * ctx->stride
-                                + (ctx->has_border ? ctx->system->border_ul.x : 0) * 3];
+        uint8_t* pixel_ptr = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * ctx->cell_size.y) * ctx->stride
+                                         + (ctx->has_border ? ctx->system->border_ul.x : 0) * 3];
         for (uint16_t x = 0;  x < ctx->screen_size.x;  ++x) {
             cmd.is_cursor = (y == ctx->cursor_pos.y) && (x == ctx->cursor_pos.x);
             if (cmd.cell->dirty || ((cmd.blink_phase != ctx->last_blink_phase) && (cmd.cell->blink || cmd.is_cursor))) {
+                // prepare the RenderCommand
+                cmd.glyph_data = NULL;
+                cmd.pixel = pixel_ptr;
+                cmd.codepoint = cmd.cell->codepoint;
+                cmd.fg = cmd.cell->fg;  if (cmd.fg == RF_COLOR_DEFAULT) { cmd.fg = ctx->default_fg; }
+                cmd.bg = cmd.cell->bg;  if (cmd.bg == RF_COLOR_DEFAULT) { cmd.bg = ctx->default_bg; }
+                cmd.offset.x = cmd.offset.y = 0;
+                cmd.line_start = cmd.line_end = 0;
+                cmd.underline = cmd.bold = false;
+                cmd.invisible = !!cmd.cell->invisible;
+                cmd.reverse_attr = !!cmd.cell->reverse;
+                cmd.reverse_cursor = cmd.reverse_blink = false;
+                if (ctx->system->cls->prepare_cell) {
+                    ctx->system->cls->prepare_cell(&cmd);
+                }
+
                 // try to retrieve the offset from the cache
-                uint32_t cache_index = cmd.cell->codepoint - RF_GLYPH_CACHE_MIN;
+                uint32_t cache_index = cmd.codepoint - RF_GLYPH_CACHE_MIN;
                 uint32_t offset = (cache_index < RF_GLYPH_CACHE_SIZE) ? ctx->glyph_offset_cache[cache_index] : INVALID_GLYPH;
                 // if the glyph is not cached (or not cacheable), look it up the hard way
                 if (offset == INVALID_GLYPH) {
@@ -291,13 +307,13 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
                     {
                         // try the font's native glyph map first
                         offset = glyph_map_lookup_with_fallback(
-                                    ctx->font->glyph_map, ctx->font->glyph_count, cmd.cell->codepoint,
+                                    ctx->font->glyph_map, ctx->font->glyph_count, cmd.codepoint,
                                     (ctx->fallback == RF_FB_CHAR) || (ctx->fallback == RF_FB_CHAR_FONT));
                     }
                     if ((offset == INVALID_GLYPH) && ctx->fb_glyphs) {
                         // look for fallback glyphs in other fonts of the same size (if allowed to)
                         offset = glyph_map_lookup_with_fallback(
-                                    ctx->fb_glyphs->glyph_map, ctx->fb_glyphs->glyph_count, cmd.cell->codepoint,
+                                    ctx->fb_glyphs->glyph_map, ctx->fb_glyphs->glyph_count, cmd.codepoint,
                                     (ctx->fallback == RF_FB_CHAR_FONT) || (ctx->fallback == RF_FB_FONT_CHAR));
                     }
                     if (offset == INVALID_GLYPH) {
@@ -312,55 +328,53 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
 
                 // render the glyph
                 cmd.glyph_data = &RF_GlyphBitmaps[offset];
-                ctx->system->cls->render_cell(&cmd);
+                if (ctx->system->cls->render_cell) {
+                    ctx->system->cls->render_cell(&cmd);
+                } else {
+                    RF_RenderCell(&cmd);
+                }
                 cmd.cell->dirty = 0;
                 result = true;
             }
             ++cmd.cell;
-            cmd.pixel += ctx->cell_size.x * 3;
+            pixel_ptr += ctx->cell_size.x * 3;
         }
     }
     ctx->last_blink_phase = cmd.blink_phase;
     return result;
 }
 
-void RF_RenderCell(
-    const RF_RenderCommand* cmd,
-    uint32_t fg,         uint32_t bg,
-    uint16_t offset_x,   uint16_t offset_y,
-    uint16_t line_start, uint16_t line_end,
-    bool extra_reverse,
-    bool force_invisible,
-    bool allow_underline,
-    bool allow_bold
-) {
-    uint8_t *p, bits = 0;
+void RF_RenderCell(RF_RenderCommand* cmd) {
+    uint8_t *p, bits = 0, mask = 0xFF;
     const uint8_t *g;
     uint32_t color;
     if (!cmd || !cmd->cell || !cmd->pixel || !cmd->glyph_data) { return; }
-    if (cmd->cell->reverse) { extra_reverse = !extra_reverse; }
-    if (extra_reverse) { uint32_t t = fg;  fg = bg;  bg = t; }
-    if (cmd->cell->invisible || force_invisible) { fg = bg; }
-    if (line_start >= line_end) { line_start = cmd->ctx->cell_size.y; line_end = 0; }
-    if (allow_underline && cmd->ctx->font->underline_row && cmd->cell->underline) {
-        if (line_start >  cmd->ctx->font->underline_row)      { line_start = cmd->ctx->font->underline_row; }
-        if (line_end   < (cmd->ctx->font->underline_row + 1)) { line_end   = cmd->ctx->font->underline_row + 1; }
+    if (!RF_IS_RGB_COLOR(cmd->fg)) { cmd->fg = (cmd->fg == RF_COLOR_DEFAULT) ? 0xFFFFFF : RF_MapStandardColorToRGB(cmd->fg, 0,160, 0,255); }
+    if (!RF_IS_RGB_COLOR(cmd->bg)) { cmd->bg = (cmd->bg == RF_COLOR_DEFAULT) ? 0xFFFFFF : RF_MapStandardColorToRGB(cmd->bg, 0,160, 0,255); }
+    if ((cmd->reverse_attr ? 1 : 0) ^ (cmd->reverse_cursor ? 1 : 0) ^ (cmd->reverse_blink ? 1 : 0)) {
+        uint32_t t = cmd->fg;  cmd->fg = cmd->bg;  cmd->bg = t;
+    }
+    if (cmd->invisible) { mask = 0; }
+    if (cmd->line_start >= cmd->line_end) { cmd->line_start = cmd->ctx->cell_size.y; cmd->line_end = 0; }
+    if (cmd->underline && cmd->ctx->font->underline_row && cmd->cell->underline) {
+        if (cmd->line_start >  cmd->ctx->font->underline_row)      { cmd->line_start = cmd->ctx->font->underline_row; }
+        if (cmd->line_end   < (cmd->ctx->font->underline_row + 1)) { cmd->line_end   = cmd->ctx->font->underline_row + 1; }
     }
     g = cmd->glyph_data;
     for (uint16_t y = 0;  y < cmd->ctx->cell_size.y;  ++y) {
-        bool core_row = (y >= offset_y) && (y < (offset_y + cmd->ctx->font->font_size.y));
-        bool line_row = (y >= line_start) && (y < line_end);
+        bool core_row = (y >= cmd->offset.y) && (y < (cmd->offset.y + cmd->ctx->font->font_size.y));
+        bool line_row = (y >= cmd->line_start) && (y < cmd->line_end);
         bool prev = false;
         p = &cmd->pixel[cmd->ctx->stride * y];
         bits = 0;
-        for (uint16_t x = offset_x;  x;  --x) {
-            PUT_PIXEL(p, line_row ? fg : bg);
+        for (uint16_t x = cmd->offset.x;  x;  --x) {
+            PUT_PIXEL(p, line_row ? cmd->fg : cmd->bg);
         }
-        for (uint16_t x = 0;  x < (cmd->ctx->cell_size.x - offset_x);  ++x) {
-            if (core_row && (x < cmd->ctx->font->font_size.x) && !(x & 7)) { bits = *g++; }
-            color = (line_row || (bits & 1) || prev) ? fg : bg;
+        for (uint16_t x = 0;  x < (cmd->ctx->cell_size.x - cmd->offset.x);  ++x) {
+            if (core_row && (x < cmd->ctx->font->font_size.x) && !(x & 7)) { bits = (*g++) & mask; }
+            color = (line_row || (bits & 1) || prev) ? cmd->fg : cmd->bg;
             PUT_PIXEL(p, color);
-            if (cmd->cell->bold && allow_bold) { prev = (bits & 1); }
+            if (cmd->bold) { prev = !!(bits & 1); }
             bits >>= 1;
         }
     }

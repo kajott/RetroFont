@@ -4,10 +4,9 @@
 
 #include "retrofont.h"
 
-uint32_t amiga_map_color(uint32_t sys_id, uint32_t color, uint32_t default1, bool fg) {
-    if (color == RF_COLOR_DEFAULT) { color = default1; }
+uint32_t amiga_map_color(uint32_t sys_id, uint32_t color, bool fg) {
     if (color == RF_COLOR_DEFAULT) {
-        if (((sys_id >> 8) & 0xFF) == '1') {
+        if (RF_EXTRACT_ID(sys_id, 1) == '1') {
             color = fg ? (RF_COLOR_WHITE | RF_COLOR_BRIGHT) : RF_COLOR_BLUE;
         } else {
             color = fg ? RF_COLOR_BLACK                     : RF_COLOR_WHITE;
@@ -15,23 +14,25 @@ uint32_t amiga_map_color(uint32_t sys_id, uint32_t color, uint32_t default1, boo
     }
     color = RF_MapRGBToStandardColor(color, 200);
     switch (color) {
-        case RF_COLOR_BLUE:                    return 0x0055AA;
-        case RF_COLOR_YELLOW:                  return 0xFF8000;
+        case RF_COLOR_BLUE:                    return 0x0055AA;  // Kickstart 1.x blue background
+        case RF_COLOR_YELLOW:                  return 0xFF8000;  // Kickstart 1.x orange
         case RF_COLOR_BLACK | RF_COLOR_BRIGHT: return 0x555555;
         default: return RF_MapStandardColorToRGB(color, 0x00,0xAA, 0x00,0xFF);
     }
 }
 
 uint32_t amiga_map_border_color(RF_Context* ctx, uint32_t color) {
-    return amiga_map_color(ctx->system->sys_id, color, RF_COLOR_DEFAULT, false);
+    return amiga_map_color(ctx->system->sys_id, color, false);
 }
 
-void amiga_render_cell(const RF_RenderCommand* cmd) {
-    uint32_t fg, bg;
-    if (!cmd || !cmd->cell) { return; }
-    fg = amiga_map_color(cmd->ctx->system->sys_id, cmd->cell->fg, cmd->ctx->default_fg, true);
-    bg = amiga_map_color(cmd->ctx->system->sys_id, cmd->cell->bg, cmd->ctx->default_bg, false);
-    RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor, false, true, true);
+void amiga_prepare_cell(RF_RenderCommand* cmd) {
+    cmd->fg = amiga_map_color(cmd->ctx->system->sys_id, cmd->fg, true);
+    cmd->bg = amiga_map_color(cmd->ctx->system->sys_id, cmd->bg, false);
+    cmd->reverse_cursor = cmd->is_cursor;
+    // The AmigaOS API has support for bold and underline text, so assume
+    // that there attributes are supported.
+    cmd->bold = !!(cmd->cell->bold);
+    cmd->underline = !!(cmd->cell->underline);
 }
 
 bool amiga_check_font(uint32_t sys_id, const RF_Font* font) {
@@ -40,9 +41,10 @@ bool amiga_check_font(uint32_t sys_id, const RF_Font* font) {
         || ((font->font_size.y * 2) < (font->font_size.x * 3));
 }
 
-const RF_SysClass amigaclass = {
+static const RF_SysClass amigaclass = {
     amiga_map_border_color,
-    amiga_render_cell,
+    amiga_prepare_cell,
+    NULL,  // render_cell = default
     amiga_check_font,
 };
 

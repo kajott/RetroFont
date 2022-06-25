@@ -12,38 +12,33 @@ static const uint32_t kc85_fg_color_map[16] = {
     0x000000, 0xA000FF, 0x00FFA0, 0x00A0FF, 0xFFA000, 0xFF00A0, 0xA0FF00, 0xFFFFFF,
 };
 
-uint32_t kc85_pre_map_color(uint32_t color, uint32_t default1, uint32_t default2) {
-    if (color == RF_COLOR_DEFAULT) { color = default1; }
-    if (color == RF_COLOR_DEFAULT) { color = default2; }
-    return RF_MapRGBToStandardColor(color, 200);
-}
+#define kc85_pre_map_color(color, default) \
+    RF_MapRGBToStandardColor((color == RF_COLOR_DEFAULT) ? (default) : (color), 200)
 
 uint32_t kc85_map_border_color(RF_Context* ctx, uint32_t color) {
     (void)ctx, (void)color;
     return 0;  // border is always black
 }
 
-void kc85_render_cell(const RF_RenderCommand* cmd) {
-    uint32_t fg, bg;
-    uint16_t line = 999;
-    if (!cmd || !cmd->cell) { return; }
-    fg = kc85_pre_map_color(cmd->cell->fg, cmd->ctx->default_fg, RF_COLOR_WHITE);
-    bg = kc85_pre_map_color(cmd->cell->bg, cmd->ctx->default_bg, RF_COLOR_BLUE);
-    if (cmd->ctx->insert && cmd->is_cursor) { line = 6; }
-    RF_RenderCell(cmd,
-        kc85_fg_color_map[fg & 15],
-        RF_MapStandardColorToRGB(bg & (~RF_COLOR_BRIGHT), 0,160, 0,160),
-        0,0,
-        line, line+1,
-        !cmd->ctx->insert && cmd->is_cursor && !cmd->blink_phase,
-        cmd->cell->blink && cmd->blink_phase,
-        false, false);
+void kc85_prepare_cell(RF_RenderCommand* cmd) {
+    bool line_cursor = cmd->is_cursor && (cmd->codepoint == 32);
+    cmd->fg = kc85_pre_map_color(cmd->fg, RF_COLOR_WHITE);
+    cmd->bg = kc85_pre_map_color(cmd->bg, RF_COLOR_BLUE);
+    cmd->fg = kc85_fg_color_map[cmd->fg & 15];
+    cmd->bg = RF_MapStandardColorToRGB(cmd->bg, 0,160, 0,160);
+    if (line_cursor) {
+        cmd->line_start = 6;
+        cmd->line_end = 7;
+    }
+    cmd->reverse_cursor = cmd->is_cursor && !line_cursor && !cmd->blink_phase;
+    if (cmd->cell->blink && cmd->blink_phase) { cmd->invisible = true; }
 }
 
-const RF_SysClass kc85class = {
+static const RF_SysClass kc85class = {
     kc85_map_border_color,
-    kc85_render_cell,
-    NULL,  // check_font
+    kc85_prepare_cell,
+    NULL,  // render_cell = default
+    NULL,  // check_font = default
 };
 
 static const char kc85default[] =
@@ -70,30 +65,29 @@ static const char kc85default[] =
 
 ////////////////////////////////////////////////////////////////////////////////
 
-uint32_t kc87_map_color(uint32_t color, uint32_t default1, uint32_t default2) {
+uint32_t kc87_map_color(uint32_t color, uint32_t default1) {
     if (color == RF_COLOR_DEFAULT) { color = default1; }
-    if (color == RF_COLOR_DEFAULT) { color = default2; }
     color = RF_MapRGBToStandardColor(color, 200);
     return RF_MapStandardColorToRGB(color, 0,255, 0,255);
 }
 
 uint32_t kc87_map_border_color(RF_Context* ctx, uint32_t color) {
     (void)ctx;
-    return kc87_map_color(color, RF_COLOR_BLACK, 0);
+    return kc87_map_color(color, RF_COLOR_BLACK);
 }
 
-void kc87_render_cell(const RF_RenderCommand* cmd) {
-    uint32_t fg, bg;
-    if (!cmd || !cmd->cell) { return; }
-    fg = kc87_map_color(cmd->cell->fg, cmd->ctx->default_fg, RF_COLOR_WHITE);
-    bg = kc87_map_color(cmd->cell->bg, cmd->ctx->default_bg, RF_COLOR_BLACK);
-    RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor ? !cmd->blink_phase : (cmd->cell->blink && cmd->blink_phase), false, false, false);
+void kc87_prepare_cell(RF_RenderCommand* cmd) {
+    cmd->fg = kc87_map_color(cmd->fg, RF_COLOR_WHITE);
+    cmd->bg = kc87_map_color(cmd->bg, RF_COLOR_BLACK);
+    cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
+    cmd->reverse_blink = !cmd->is_cursor && cmd->cell->blink && cmd->blink_phase;
 }
 
-const RF_SysClass kc87class = {
+static const RF_SysClass kc87class = {
     kc87_map_border_color,
-    kc87_render_cell,
-    NULL,  // check_font
+    kc87_prepare_cell,
+    NULL,  // render_cell = default
+    NULL,  // check_font = default
 };
 
 static const char kc87default[] = "`f4robotron  Z 9001\n`0\n`F2OS\n>";
@@ -105,15 +99,16 @@ uint32_t z1013_map_border_color(RF_Context* ctx, uint32_t color) {
     return 0;
 }
 
-void z1013_render_cell(const RF_RenderCommand* cmd) {
-    if (!cmd || !cmd->cell) { return; }
-    RF_RenderCell(cmd, 0xFFFFFF, cmd->is_cursor ? 0xFFFFFF : 0x000000, 0,0, 0,0, false, false, false, false);
+void z1013_prepare_cell(RF_RenderCommand* cmd) {
+    cmd->fg = 0xFFFFFF;
+    cmd->bg = cmd->is_cursor ? 0xFFFFFF : 0x000000;
 }
 
-const RF_SysClass z1013class = {
+static const RF_SysClass z1013class = {
     z1013_map_border_color,
-    z1013_render_cell,
-    NULL,  // check_font
+    z1013_prepare_cell,
+    NULL,  // render_cell = default
+    NULL,  // check_font = default
 };
 
 static const char default1013[] = "robotron Z 1013/A.2\n # ";

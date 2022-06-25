@@ -10,12 +10,6 @@
 
 #define pc_std_color(color) RF_MapRGBToStandardColor(color, 200)
 
-uint32_t pc_map_color(uint32_t color, uint32_t default1, uint32_t default2) {
-    if (color == RF_COLOR_DEFAULT) { color = default1; }
-    if (color == RF_COLOR_DEFAULT) { color = default2; }
-    return pc_std_color(color);
-}
-
 uint32_t pc_rgb_color(uint32_t color) {
     if (color == RF_COLOR_YELLOW) {
         return 0xAA5500;
@@ -32,42 +26,38 @@ uint32_t pc_map_border_color(RF_Context* ctx, uint32_t color) {
     }
 }
 
-void pc_render_cell(const RF_RenderCommand* cmd) {
-    uint32_t fg, bg;
-    uint16_t cs = 0, ce = 0;
+void pc_render_cell(RF_RenderCommand* cmd) {
     bool is_gfx;
-    if (!cmd || !cmd->cell) { return; }
 
     // resolve to standard color
-    fg = pc_map_color(cmd->cell->fg, cmd->ctx->default_fg, RF_COLOR_WHITE);
-    bg = pc_map_color(cmd->cell->bg, cmd->ctx->default_bg, RF_COLOR_BLACK);
+    cmd->fg = pc_std_color((cmd->fg == RF_COLOR_DEFAULT) ? RF_COLOR_WHITE : cmd->fg);
+    cmd->bg = pc_std_color((cmd->bg == RF_COLOR_DEFAULT) ? RF_COLOR_BLACK : cmd->bg);
 
     // map MDA color: any FG color becomes white, only white BG is white
     if (IS_MDA(cmd->ctx->system->sys_id)) {
-        if ((fg & RF_COLOR_WHITE) != RF_COLOR_BLACK)
-            { fg = RF_COLOR_WHITE | (fg & RF_COLOR_BRIGHT); }
-        if ((bg & RF_COLOR_WHITE) != RF_COLOR_WHITE)
-            { bg = RF_COLOR_BLACK | (bg & RF_COLOR_BRIGHT); }
+        if ((cmd->fg & RF_COLOR_WHITE) != RF_COLOR_BLACK)
+            { cmd->fg = RF_COLOR_WHITE | (cmd->fg & RF_COLOR_BRIGHT); }
+        if ((cmd->bg & RF_COLOR_WHITE) != RF_COLOR_WHITE)
+            { cmd->bg = RF_COLOR_BLACK | (cmd->bg & RF_COLOR_BRIGHT); }
     }
 
     // map color back to RGB
-    fg = pc_rgb_color(fg);
-    bg = pc_rgb_color(bg);
+    cmd->fg = pc_rgb_color(cmd->fg);
+    cmd->bg = pc_rgb_color(cmd->bg);
 
     // set cursor
     is_gfx = (((cmd->ctx->system->sys_id >> 16) & 0xFF) == 'g');
     if (cmd->is_cursor && !cmd->blink_phase && !is_gfx) {
-        ce = cmd->ctx->cell_size.y;
-        if (ce > 8) { --ce; }
-        cs = cmd->ctx->insert ? (cmd->ctx->cell_size.y >> 1) : (ce - 2);
+        cmd->line_end = cmd->ctx->cell_size.y;
+        if (cmd->line_end > 8) { --cmd->line_end; }
+        cmd->line_start = cmd->ctx->insert ? (cmd->ctx->cell_size.y >> 1) : (cmd->line_end - 2);
     }
 
     // render the main cell
-    RF_RenderCell(cmd, fg,bg, 0,0, cs,ce,
-        is_gfx && cmd->is_cursor,
-        IS_MDA(cmd->ctx->system->sys_id) && cmd->cell->blink && cmd->blink_phase,
-        IS_MDA(cmd->ctx->system->sys_id) || is_gfx,
-        false);
+    cmd->reverse_cursor = is_gfx && cmd->is_cursor;
+    cmd->reverse_blink = IS_MDA(cmd->ctx->system->sys_id) && cmd->cell->blink && cmd->blink_phase;
+    cmd->underline = IS_MDA(cmd->ctx->system->sys_id);
+    RF_RenderCell(cmd);
 
     // replicate the 9th column if required
     // - on actual VGA, this is done for characters 0xC0 to 0xDF;
@@ -77,7 +67,7 @@ void pc_render_cell(const RF_RenderCommand* cmd) {
     // to be specific), but none of those extends to the right (of course,
     // because otherwise it would've been broken on real MDA/EGA/VGA too),
     // so it's fine to treat the whole block as eligible
-    if ((cmd->ctx->cell_size.x == 9) && ((cmd->cell->codepoint & (~0x7F)) == 0x2500)) {
+    if ((cmd->ctx->cell_size.x == 9) && ((cmd->codepoint & (~0x7F)) == 0x2500)) {
         uint8_t *p = &cmd->pixel[7 * 3];
         for (uint16_t i = cmd->ctx->cell_size.y;  i;  --i) {
             p[3] = p[0];
@@ -88,10 +78,11 @@ void pc_render_cell(const RF_RenderCommand* cmd) {
     }
 }
 
-const RF_SysClass pcclass = {
+static const RF_SysClass pcclass = {
     pc_map_border_color,
+    NULL,  // prepare_cell = default (unused)
     pc_render_cell,
-    NULL,  // check_font
+    NULL,  // check_font = default
 };
 
 static const char default_pc[] =

@@ -4,9 +4,8 @@
 
 #include "retrofont.h"
 
-uint32_t st_map_color(uint32_t sys_id, uint32_t color, uint32_t default1, uint32_t default2) {
+uint32_t st_map_color(uint32_t sys_id, uint32_t color, uint32_t default1) {
     if (color == RF_COLOR_DEFAULT) { color = default1; }
-    if (color == RF_COLOR_DEFAULT) { color = default2; }
     color = RF_MapRGBToStandardColor(color, 200);
     if ((sys_id >> 24) == 'H') {
         // high-res: reduce everything to black & white
@@ -29,21 +28,20 @@ uint32_t st_map_color(uint32_t sys_id, uint32_t color, uint32_t default1, uint32
 }
 
 uint32_t st_map_border_color(RF_Context* ctx, uint32_t color) {
-    return st_map_color(ctx->system->sys_id, color, RF_COLOR_WHITE | RF_COLOR_BRIGHT, RF_COLOR_WHITE | RF_COLOR_BRIGHT);
+    return st_map_color(ctx->system->sys_id, color, RF_COLOR_WHITE | RF_COLOR_BRIGHT);
 }
 
-void st_render_cell(const RF_RenderCommand* cmd) {
-    uint32_t fg, bg;
-    if (!cmd || !cmd->cell) { return; }
-    fg = st_map_color(cmd->ctx->system->sys_id, cmd->cell->fg, cmd->ctx->default_fg, RF_COLOR_BLACK);
-    bg = st_map_color(cmd->ctx->system->sys_id, cmd->cell->bg, cmd->ctx->default_bg, RF_COLOR_WHITE | RF_COLOR_BRIGHT);
-    RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor, false, false, false);
+void st_prepare_cell(RF_RenderCommand* cmd) {
+    cmd->fg = st_map_color(cmd->ctx->system->sys_id, cmd->fg, RF_COLOR_BLACK);
+    cmd->bg = st_map_color(cmd->ctx->system->sys_id, cmd->bg, RF_COLOR_WHITE | RF_COLOR_BRIGHT);
+    cmd->reverse_cursor = cmd->is_cursor;
 }
 
-const RF_SysClass stclass = {
+static const RF_SysClass stclass = {
     st_map_border_color,
-    st_render_cell,
-    NULL,  // check_font
+    st_prepare_cell,
+    NULL,  // render_cell = default
+    NULL,  // check_font = default
 };
 
 static const char stdefault[] = "`y12Memory Test:\nST RAM       `+r  1024 KB`0\nMemory Test Complete.\n\n";

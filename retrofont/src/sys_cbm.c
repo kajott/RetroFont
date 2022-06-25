@@ -70,14 +70,10 @@ uint32_t cbm_map_border_color(RF_Context* ctx, uint32_t color) {
     return cbm_map_color(ctx, color, true, true);
 }
 
-void cbm_render_cell(const RF_RenderCommand* cmd) {
-    uint32_t fg, bg;
-    if (!cmd || !cmd->cell) { return; }
-    fg = cmd->cell->fg;
-    if (fg == RF_COLOR_DEFAULT) { fg = cmd->ctx->default_fg; }
-    fg = cbm_map_color(cmd->ctx, fg, true, false);
-    bg = cbm_map_color(cmd->ctx, cmd->ctx->default_bg, false, false);
-    RF_RenderCell(cmd, fg, bg, 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false, false);
+void cbm_prepare_cell(RF_RenderCommand* cmd) {
+    cmd->fg = cbm_map_color(cmd->ctx, cmd->fg, true, false);
+    cmd->bg = cbm_map_color(cmd->ctx, cmd->ctx->default_bg, false, false);
+    cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
 }
 
 uint32_t pet_map_border_color(RF_Context* ctx, uint32_t color) {
@@ -85,25 +81,29 @@ uint32_t pet_map_border_color(RF_Context* ctx, uint32_t color) {
     return 0;  // always black
 }
 
-void pet_render_cell(const RF_RenderCommand* cmd) {
-    if (!cmd || !cmd->cell) { return; }
-    RF_RenderCell(cmd, 0xFFFFFF,0, 0,0, 0,0, cmd->is_cursor && !cmd->blink_phase, false, false, false);
+void pet_render_cell(RF_RenderCommand* cmd) {
+    cmd->fg = 0xFFFFFF;
+    cmd->bg = 0x000000;
+    cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
+    RF_RenderCell(cmd);
     if (cmd->ctx->system->cell_size.y > 8) {
         // PET 8032's ninth row is *always* black
         memset(&cmd->pixel[cmd->ctx->stride * 8], 0, 24);
     }
 }
 
-const RF_SysClass cbmclass = {
+static const RF_SysClass cbmclass = {
     cbm_map_border_color,
-    cbm_render_cell,
-    NULL,  // check_font
+    cbm_prepare_cell,
+    NULL,  // render_cell = default
+    NULL,  // check_font = default
 };
 
-const RF_SysClass petclass = {
+static const RF_SysClass petclass = {
     pet_map_border_color,
+    NULL,  // prepare_cell = default (unused)
     pet_render_cell,
-    NULL,  // check_font
+    NULL,  // check_font = default
 };
 
 static const char pet40default[] =
