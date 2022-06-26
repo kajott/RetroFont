@@ -35,10 +35,12 @@ General remarks:
   - Microsofts EGA.CPI and ISO.CPI files
 - default boot screen for pre-VGA systems is from a 5150 PC and MS-DOS 3.30
 - default boot screen for VGA systems is from a 486DX2-based clone with AMIBIOS and MS-DOS 6.22
-- 9-pixel wide rendering is emulated on all systems that are affected (MDA, and EGA/VGA 350/400-line text modes)
+- 9-pixel wide rendering is emulated on all relevant systems (MDA, and EGA/VGA 350/400-line text modes)
   - replication of the 8th column into the 9th for box-drawing characters is emulated as well
-- CGA/EGA/VGA text modes simulate the option with extended background colors, but no blinking (Int 10h with AX=1003h BX=0000h)
-- for EGA/VGA, additonal graphics-based modes are simulated that use 8-pixel wide fonts, and 480 instead of 400 lines for VGA, but no blinking at all
+- for EGA/VGA, modes come in three flavors:
+  - standard text mode (with blinking)
+  - text mode without blinking, but with all 16 colors available as background colors (Int 10h with AX=1003h BX=0000h)
+  - graphics mode with 8-pixel wide fonts, no blinking at all, and 480 instead of 400 lines for VGA
 - RGBI "dark yellow" color maps to brown, as on real CGA/EGA/VGA
 
 ## Commodore Amiga

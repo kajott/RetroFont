@@ -290,6 +290,7 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
                 cmd.bg = cmd.cell->bg;  if (cmd.bg == RF_COLOR_DEFAULT) { cmd.bg = ctx->default_bg; }
                 cmd.offset.x = cmd.offset.y = 0;
                 cmd.line_start = cmd.line_end = 0;
+                cmd.line_xor = false;
                 cmd.underline = cmd.bold = false;
                 cmd.invisible = !!cmd.cell->invisible;
                 cmd.reverse_attr = !!cmd.cell->reverse;
@@ -364,18 +365,24 @@ void RF_RenderCell(RF_RenderCommand* cmd) {
     for (uint16_t y = 0;  y < cmd->ctx->cell_size.y;  ++y) {
         bool core_row = (y >= cmd->offset.y) && (y < (cmd->offset.y + cmd->ctx->font->font_size.y));
         bool line_row = (y >= cmd->line_start) && (y < cmd->line_end);
-        bool prev = false;
+        uint8_t prev = 0;
         p = &cmd->pixel[cmd->ctx->stride * y];
         bits = 0;
         for (uint16_t x = cmd->offset.x;  x;  --x) {
             PUT_PIXEL(p, line_row ? cmd->fg : cmd->bg);
         }
         for (uint16_t x = 0;  x < (cmd->ctx->cell_size.x - cmd->offset.x);  ++x) {
-            if (core_row && (x < cmd->ctx->font->font_size.x) && !(x & 7)) { bits = (*g++) & mask; }
-            color = (line_row || (bits & 1) || prev) ? cmd->fg : cmd->bg;
+            if (core_row && (x < cmd->ctx->font->font_size.x) && !(x & 7)) {
+                bits = (*g++) & mask;
+                if (line_row) {
+                    bits = cmd->line_xor ? (bits ^ 0xFF) : 0xFF;
+                }
+            }
+            color = ((bits & 1) | prev) ? cmd->fg : cmd->bg;
             PUT_PIXEL(p, color);
-            if (cmd->bold) { prev = !!(bits & 1); }
+            if (cmd->bold) { prev = bits & 1; }
             bits >>= 1;
+            if (line_row) { bits |= 0x80; }
         }
     }
 }
