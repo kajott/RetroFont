@@ -63,8 +63,7 @@ void pc_render_cell(RF_RenderCommand* cmd) {
 
     // render the main cell
     cmd->reverse_cursor = is_gfx && cmd->is_cursor;
-    cmd->underline = is_mda;
-    cmd->line_xor = true;
+    cmd->underline = is_mda && !!cmd->cell->underline;
     RF_RenderCell(cmd);
 
     // replicate the 9th column if required

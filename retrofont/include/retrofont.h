@@ -141,11 +141,12 @@ struct s_RF_RenderCommand {
     uint32_t fg;                //!< foreground color (initialized to cell->fg or ctx->default_fg, must be RGB for RF_RenderCell())
     uint32_t bg;                //!< background color (initialized to cell->bg or ctx->default_bg, must be RGB for RF_RenderCell())
     RF_Coord offset;            //!< offset of the glyph inside the cell (initialized to 0,0)
-    uint16_t line_start;        //!< start row of extra underline (e.g. for cursor)
-    uint16_t line_end;          //!< end row (non-inclusive) of extra underline (e.g. for cursor)
-    bool underline;             //!< use underlining as defined in the font (unless overridden by line_start/line_end)
+    uint16_t line_start;        //!< start row of extra line (e.g. for cursor)
+    uint16_t line_end;          //!< end row (non-inclusive) of extra line (e.g. for cursor)
+    bool line_xor;              //!< false: extra line forces foreground color; \n
+                                //!< true (default): extra line flips color (*after* underlining)
+    bool underline;             //!< use underlining as defined in the font
                                 //!< (initialized to false, set to cell->underline if system supports it)
-    bool line_xor;              //!< false: underlining forces foreground color; true: underline flips color
     bool bold;                  //!< enable bold printing (initialized to false, set to cell->bold if system supports it)
     bool invisible;             //!< force the character to be invisible (all-background) (initialized to cell->invisible)
     // the following three reverse flags are XOR'ed together in RF_RenderCell

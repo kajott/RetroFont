@@ -213,9 +213,10 @@ void RF_DestroyContext(RF_Context* ctx) {
 ///////////////////////////////////////////////////////////////////////////////
 
 #define PUT_PIXEL(p, color) do { \
-    *p++ = RF_COLOR_R(color); \
-    *p++ = RF_COLOR_G(color); \
-    *p++ = RF_COLOR_B(color); \
+    uint32_t color_ = color; \
+    *p++ = RF_COLOR_R(color_); \
+    *p++ = RF_COLOR_G(color_); \
+    *p++ = RF_COLOR_B(color_); \
 } while (0)
 
 static uint8_t* fill_border(uint8_t* p, uint32_t color, size_t count) {
@@ -290,7 +291,7 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
                 cmd.bg = cmd.cell->bg;  if (cmd.bg == RF_COLOR_DEFAULT) { cmd.bg = ctx->default_bg; }
                 cmd.offset.x = cmd.offset.y = 0;
                 cmd.line_start = cmd.line_end = 0;
-                cmd.line_xor = false;
+                cmd.line_xor = true;
                 cmd.underline = cmd.bold = false;
                 cmd.invisible = !!cmd.cell->invisible;
                 cmd.reverse_attr = !!cmd.cell->reverse;
@@ -346,43 +347,37 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
 }
 
 void RF_RenderCell(RF_RenderCommand* cmd) {
-    uint8_t *p, bits = 0, mask = 0xFF;
+    uint8_t *p, bits, mask, lsb, lsb_mask;
     const uint8_t *g;
-    uint32_t color;
+    uint16_t uline_pos;
     if (!cmd || !cmd->cell || !cmd->pixel || !cmd->glyph_data) { return; }
     if (!RF_IS_RGB_COLOR(cmd->fg)) { cmd->fg = (cmd->fg == RF_COLOR_DEFAULT) ? 0xFFFFFF : RF_MapStandardColorToRGB(cmd->fg, 0,160, 0,255); }
     if (!RF_IS_RGB_COLOR(cmd->bg)) { cmd->bg = (cmd->bg == RF_COLOR_DEFAULT) ? 0xFFFFFF : RF_MapStandardColorToRGB(cmd->bg, 0,160, 0,255); }
     if ((cmd->reverse_attr ? 1 : 0) ^ (cmd->reverse_cursor ? 1 : 0) ^ (cmd->reverse_blink ? 1 : 0)) {
         uint32_t t = cmd->fg;  cmd->fg = cmd->bg;  cmd->bg = t;
     }
-    if (cmd->invisible) { mask = 0; }
-    if (cmd->line_start >= cmd->line_end) { cmd->line_start = cmd->ctx->cell_size.y; cmd->line_end = 0; }
-    if (cmd->underline && cmd->ctx->font->underline_row && cmd->cell->underline) {
-        if (cmd->line_start >  cmd->ctx->font->underline_row)      { cmd->line_start = cmd->ctx->font->underline_row; }
-        if (cmd->line_end   < (cmd->ctx->font->underline_row + 1)) { cmd->line_end   = cmd->ctx->font->underline_row + 1; }
-    }
+    mask = cmd->invisible ? 0 : 0xFF;
+    lsb_mask = cmd->bold ? 1 : 0;
+    uline_pos = (cmd->underline && cmd->ctx->font->underline_row) ? (cmd->offset.y + cmd->ctx->font->underline_row) : cmd->ctx->cell_size.y;
     g = cmd->glyph_data;
     for (uint16_t y = 0;  y < cmd->ctx->cell_size.y;  ++y) {
-        bool core_row = (y >= cmd->offset.y) && (y < (cmd->offset.y + cmd->ctx->font->font_size.y));
-        bool line_row = (y >= cmd->line_start) && (y < cmd->line_end);
-        uint8_t prev = 0;
+        const bool core_row = (y >= cmd->offset.y) && (y < (cmd->offset.y + cmd->ctx->font->font_size.y));
+        const bool uline_row = (y == uline_pos);
+        const bool xline_row = (y >= cmd->line_start) && (y < cmd->line_end);
+        const uint8_t line_or  = (uline_row || (xline_row && !cmd->line_xor)) ? 1 : 0;
+        const uint8_t line_xor = xline_row && cmd->line_xor ? 1 : 0;
         p = &cmd->pixel[cmd->ctx->stride * y];
-        bits = 0;
         for (uint16_t x = cmd->offset.x;  x;  --x) {
-            PUT_PIXEL(p, line_row ? cmd->fg : cmd->bg);
+            PUT_PIXEL(p, (line_or ^ line_xor) ? cmd->fg : cmd->bg);
         }
+        bits = lsb = 0;
         for (uint16_t x = 0;  x < (cmd->ctx->cell_size.x - cmd->offset.x);  ++x) {
             if (core_row && (x < cmd->ctx->font->font_size.x) && !(x & 7)) {
                 bits = (*g++) & mask;
-                if (line_row) {
-                    bits = cmd->line_xor ? (bits ^ 0xFF) : 0xFF;
-                }
             }
-            color = ((bits & 1) | prev) ? cmd->fg : cmd->bg;
-            PUT_PIXEL(p, color);
-            if (cmd->bold) { prev = bits & 1; }
+            PUT_PIXEL(p, (((bits & 1) | lsb | line_or) ^ line_xor) ? cmd->fg : cmd->bg);
+            lsb = bits & lsb_mask;
             bits >>= 1;
-            if (line_row) { bits |= 0x80; }
         }
     }
 }
