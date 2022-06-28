@@ -331,7 +331,7 @@ void RF_MoveCursor(RF_Context* ctx, uint16_t new_col, uint16_t new_row);
 //! set the default foreground color
 #define RF_SetForegroundColor(ctx, c) do { (ctx)->default_fg = c;   RF_Invalidate(ctx, false); } while(0)
 //! set the default background color
-#define RF_SetBackgroundColor(ctx, c) do { (ctx)->default_bg = c;   RF_Invalidate(ctx, false); } while(0)
+#define RF_SetBackgroundColor(ctx, c) do { (ctx)->default_bg = c;   RF_Invalidate(ctx, false); (ctx)->border_color_changed = true; } while(0)
 //! set the border color
 #define RF_SetBorderColor(ctx, c)     do { (ctx)->border_color = c; (ctx)->border_color_changed = true; } while(0)
 

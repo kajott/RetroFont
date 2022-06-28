@@ -14,7 +14,6 @@
 - [X] Sinclair ZX 80/81/Spectrum
 - [X] Commodore Amiga
 - [X] Commodore 64/128
-  - [ ] C128 80-column mode
 - [X] Commodore PET
 - [X] Commodore V(I)C-20
 - [X] Commodore TED

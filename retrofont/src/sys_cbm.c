@@ -38,6 +38,16 @@ const uint8_t cbm_default_color_maps[3][16] = {
     /* 2: TED    */ { 0x00, 0x16, 0x15, 0x13, 0x12, 0x14, 0x17, 0x61, 0x11, 0x66, 0x65, 0x63, 0x62, 0x64, 0x67, 0x71 },
 };
 
+uint32_t cbm_map_rgbi_color(uint32_t color) {
+    // C128 80-column RGBI mode -> same color logic as for PC RGBI
+    color = RF_MapRGBToStandardColor(color, 200);
+    if (color == RF_COLOR_YELLOW) {
+        return 0xAA5500;
+    } else {
+        return RF_MapStandardColorToRGB(color, 0,170, 85,255);
+    }
+}
+
 uint32_t cbm_map_color(RF_Context* ctx, uint32_t color, bool is_fg, bool is_border) {
     uint32_t sys_id = ctx->system->sys_id;
     bool is_vic = (RF_EXTRACT_ID(sys_id, 1) == '2');
@@ -52,12 +62,15 @@ uint32_t cbm_map_color(RF_Context* ctx, uint32_t color, bool is_fg, bool is_bord
         switch (RF_EXTRACT_ID(sys_id, 1)) {
             case 'P': return is_border ? pal[0x6E] : is_fg ? pal[0] : pal[0x71];  // TED default colors
             case '2': return is_border ? pal[3] : is_fg ? pal[6] : pal[1];  // VIC-20 default colors
-            case '8': return is_fg ? pal[13] : pal[11];  // C128 default colors
+            case '8': return is_fg ? pal[13] : pal[11];  // C128 40-column default colors
+            case '1': return is_fg ? (RF_COLOR_CYAN | RF_COLOR_BRIGHT) : RF_COLOR_BLACK;  // C128 80-column default colors
             case 'S': return is_border ? pal[3] : is_fg ? pal[6] : pal[1];  // SX-64 default colors
             default:  return is_fg ? pal[14] : pal[6];  // C64 default colors
         }
     }
-    if (RF_IS_RGB_COLOR(color)) {
+    if (sys_id == RF_MAKE_ID('C','1','2','8')) {
+        return cbm_map_rgbi_color(color);
+    } else if (RF_IS_RGB_COLOR(color)) {
         return pal[RF_PaletteLookup(ctx, pal, is_ted ? 128 : 16, color)];
     } else if (RF_IS_STD_COLOR(color)) {
         return pal[cmap[color & 15]];
@@ -67,6 +80,10 @@ uint32_t cbm_map_color(RF_Context* ctx, uint32_t color, bool is_fg, bool is_bord
 }
 
 uint32_t cbm_map_border_color(RF_Context* ctx, uint32_t color) {
+    if (ctx->system->sys_id == RF_MAKE_ID('C','1','2','8')) {
+        if (ctx->default_bg == RF_COLOR_DEFAULT) { return 0; }
+        return cbm_map_rgbi_color(ctx->default_bg);
+    }
     return cbm_map_color(ctx, color, true, true);
 }
 
@@ -137,16 +154,17 @@ static const char plus4default[] =
     " 3-PLUS-1 ON KEY F1\n\n"
     "READY.\n";
 
-//                                  sys_id,                         name,                            class,    scrn,         scrsz,   cellsz,  fontsz,   b_ul,    b_lr,  aspect, blink, monitor,          default_font_id
-const RF_System RF_Sys_PET40      = { RF_MAKE_ID('C','0','4','N'), "Commodore PET 2001",            &petclass, pet40default, {40,24}, { 8, 8}, { 8, 8}, {32,33}, {32,41}, {1,1},   333, RF_MONITOR_GREEN, RF_MAKE_ID('C','0','8','s') };
-const RF_System RF_Sys_PET80      = { RF_MAKE_ID('C','0','8','N'), "Commodore PET 8032",            &petclass, pet80default, {80,25}, { 8, 9}, { 8, 8}, {32,20}, {32,22}, {1,2},   333, RF_MONITOR_GREEN, RF_MAKE_ID('C','0','8','s') };
-const RF_System RF_Sys_VIC20_NTSC = { RF_MAKE_ID('C','2','0','N'), "Commodore VIC-20 (NTSC)",       &cbmclass, vicdefault,   {22,23}, { 8, 8}, { 8, 8}, {14,28}, {16,28}, {2,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','2','0','s') };
-const RF_System RF_Sys_VIC20_PAL  = { RF_MAKE_ID('C','2','0','P'), "Commodore VIC-20 (PAL)",        &cbmclass, vicdefault,   {22,23}, { 8, 8}, { 8, 8}, {12,52}, {14,52}, {2,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','2','0','s') };
-const RF_System RF_Sys_C64_NTSC   = { RF_MAKE_ID('C','6','4','N'), "Commodore 64 (NTSC)",           &cbmclass, c64default,   {40,25}, { 8, 8}, { 8, 8}, {46,20}, {46,20}, {1,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','6','4','s') };
-const RF_System RF_Sys_C64_PAL    = { RF_MAKE_ID('C','6','4','P'), "Commodore 64 (PAL)",            &cbmclass, c64default,   {40,25}, { 8, 8}, { 8, 8}, {42,44}, {42,44}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','6','4','s') };
-const RF_System RF_Sys_SX64_NTSC  = { RF_MAKE_ID('C','S','X','N'), "Commodore SX-64 (NTSC)",        &cbmclass, sx64default,  {40,25}, { 8, 8}, { 8, 8}, {46,20}, {46,20}, {1,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','6','4','s') };
-const RF_System RF_Sys_SX64_PAL   = { RF_MAKE_ID('C','S','X','P'), "Commodore SX-64 (PAL)",         &cbmclass, sx64default,  {40,25}, { 8, 8}, { 8, 8}, {42,44}, {42,44}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','6','4','s') };
-const RF_System RF_Sys_C128_NTSC  = { RF_MAKE_ID('C','8','0','N'), "Commodore 128 (NTSC)",          &cbmclass, c128default,  {40,25}, { 8, 8}, { 8, 8}, {46,20}, {46,20}, {1,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','8','0','s') };
-const RF_System RF_Sys_C128_PAL   = { RF_MAKE_ID('C','8','0','P'), "Commodore 128 (PAL)",           &cbmclass, c128default,  {40,25}, { 8, 8}, { 8, 8}, {42,44}, {42,44}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','8','0','s') };
-const RF_System RF_Sys_Plus4_NTSC = { RF_MAKE_ID('C','P','4','N'), "Commodore 16/116/Plus4 (NTSC)", &cbmclass, plus4default, {40,25}, { 8, 8}, { 8, 8}, {46,20}, {46,20}, {1,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','P','4','s') };
-const RF_System RF_Sys_Plus4_PAL  = { RF_MAKE_ID('C','P','4','P'), "Commodore 16/116/Plus4 (PAL)",  &cbmclass, plus4default, {40,25}, { 8, 8}, { 8, 8}, {42,44}, {42,44}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','P','4','s') };
+//                                  sys_id,                         name,                             class,    scrn,         scrsz,   cellsz,  fontsz,   b_ul,    b_lr,  aspect, blink, monitor,          default_font_id
+const RF_System RF_Sys_PET40      = { RF_MAKE_ID('C','0','4','N'), "Commodore PET 2001",             &petclass, pet40default, {40,24}, { 8, 8}, { 8, 8}, {32,33}, {32,41}, {1,1},   333, RF_MONITOR_GREEN, RF_MAKE_ID('C','0','8','s') };
+const RF_System RF_Sys_PET80      = { RF_MAKE_ID('C','0','8','N'), "Commodore PET 8032",             &petclass, pet80default, {80,25}, { 8, 9}, { 8, 8}, {32,20}, {32,22}, {1,2},   333, RF_MONITOR_GREEN, RF_MAKE_ID('C','0','8','s') };
+const RF_System RF_Sys_VIC20_NTSC = { RF_MAKE_ID('C','2','0','N'), "Commodore VIC-20 (NTSC)",        &cbmclass, vicdefault,   {22,23}, { 8, 8}, { 8, 8}, {14,28}, {16,28}, {2,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','2','0','s') };
+const RF_System RF_Sys_VIC20_PAL  = { RF_MAKE_ID('C','2','0','P'), "Commodore VIC-20 (PAL)",         &cbmclass, vicdefault,   {22,23}, { 8, 8}, { 8, 8}, {12,52}, {14,52}, {2,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','2','0','s') };
+const RF_System RF_Sys_C64_NTSC   = { RF_MAKE_ID('C','6','4','N'), "Commodore 64 (NTSC)",            &cbmclass, c64default,   {40,25}, { 8, 8}, { 8, 8}, {46,20}, {46,20}, {1,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','6','4','s') };
+const RF_System RF_Sys_C64_PAL    = { RF_MAKE_ID('C','6','4','P'), "Commodore 64 (PAL)",             &cbmclass, c64default,   {40,25}, { 8, 8}, { 8, 8}, {42,44}, {42,44}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','6','4','s') };
+const RF_System RF_Sys_SX64_NTSC  = { RF_MAKE_ID('C','S','X','N'), "Commodore SX-64 (NTSC)",         &cbmclass, sx64default,  {40,25}, { 8, 8}, { 8, 8}, {46,20}, {46,20}, {1,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','6','4','s') };
+const RF_System RF_Sys_SX64_PAL   = { RF_MAKE_ID('C','S','X','P'), "Commodore SX-64 (PAL)",          &cbmclass, sx64default,  {40,25}, { 8, 8}, { 8, 8}, {42,44}, {42,44}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','6','4','s') };
+const RF_System RF_Sys_C128_NTSC  = { RF_MAKE_ID('C','8','0','N'), "Commodore 128 (40-column NTSC)", &cbmclass, c128default,  {40,25}, { 8, 8}, { 8, 8}, {46,20}, {46,20}, {1,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','8','0','s') };
+const RF_System RF_Sys_C128_PAL   = { RF_MAKE_ID('C','8','0','P'), "Commodore 128 (40-column PAL)",  &cbmclass, c128default,  {40,25}, { 8, 8}, { 8, 8}, {42,44}, {42,44}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','8','0','s') };
+const RF_System RF_Sys_C128_80Col = { RF_MAKE_ID('C','1','2','8'), "Commodore 128 (80-column)",      &cbmclass, c128default,  {80,25}, { 8, 8}, { 8, 8}, {94,20}, {92,20}, {1,2},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','8','0','s') };
+const RF_System RF_Sys_Plus4_NTSC = { RF_MAKE_ID('C','P','4','N'), "Commodore 16/116/Plus4 (NTSC)",  &cbmclass, plus4default, {40,25}, { 8, 8}, { 8, 8}, {46,20}, {46,20}, {1,1},   266, RF_MONITOR_COLOR, RF_MAKE_ID('C','P','4','s') };
+const RF_System RF_Sys_Plus4_PAL  = { RF_MAKE_ID('C','P','4','P'), "Commodore 16/116/Plus4 (PAL)",   &cbmclass, plus4default, {40,25}, { 8, 8}, { 8, 8}, {42,44}, {42,44}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('C','P','4','s') };
