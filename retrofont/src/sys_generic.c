@@ -6,6 +6,7 @@
 
 uint32_t gen_map_border_color(RF_Context* ctx, uint32_t color) {
     (void)ctx;
+    if (color == RF_COLOR_DEFAULT) { return 0; }
     return RF_MapStandardColorToRGB(color, 0,160, 0,255);
 }
 
