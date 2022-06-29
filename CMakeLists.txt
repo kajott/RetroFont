@@ -73,6 +73,7 @@ set (SYSTEMS
     retrofont/src/sys_atari8.c
     retrofont/src/sys_zx.c
     retrofont/src/sys_cpc.c
+    retrofont/src/sys_bbc.c
     retrofont/src/sys_robotron.c
 )
 
@@ -84,6 +85,7 @@ set (FONTSPECS
     fonts.in/cbm.fontspec
     fonts.in/atari8.fontspec
     fonts.in/zx.fontspec
+    fonts.in/bbc.fontspec
     fonts.in/cpc.fontspec
     fonts.in/robotron.fontspec
 )

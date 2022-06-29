@@ -1,0 +1,7 @@
+source "bbc.pbm" 8x8
+font "BBCM" "BBC Micro"
+    map 0 ' '..'?'
+    map 1 '@'..'_'
+    map 2 - 'a'..'~'
+    map 2.00  U+00A3  # POUND SIGN
+    map 2.31  U+2588  # FULL BLOCK
