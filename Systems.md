@@ -74,7 +74,6 @@ General remarks:
 - Apple I and unexpanded II use a 6x8 font which is a manual pixel-by-pixel restoration of the Signetics 2513 ROM
 
 ## Commodore
-
 - the following systems are emulated:
   - PET 2001 ("classic" PET)
   - PET 8032 (as a representative of the 80-column CBM machines)
@@ -85,21 +84,23 @@ General remarks:
 - the mapping of the 16 standard RGBI colors to VIC/-II/TED colors is done manually
 
 ## Atari 8-Bit
-
 - only ANTIC mode 2 (40x24 monochrome text) is emulated
   - no per-cell attributes except reverse video
 - background color can be set to anything (with the 16 standard RGBI colors mapped manually); foreground is forced to the same hue but different brightness, as on the original hardware
 - NTSC/PAL palettes extracted from the [Atari800](https://atari800.github.io) emulator
 
 ## Sinclair ZX80, ZX81, Spectrum
-
 - fonts extracted from screenshots (ROM doesn't contain all graphics characters)
 - ZX80/81 system defaults to the ZX81 font
   - for ZX80 "emulation", just pick the ZX81 system and the ZX80 font
 - ZX Spectrum default screen hides the cursor (as it does on the real device)
 
-## Amstrad CPC
+## BBC Micro
+- all graphics modes emulated
+- only the underline cursor is emulated (no dual cursors)
+- SAA5050 font (for mode 7) taken from a CC0-licensed external project called "[Bedstead](http://bjh21.me.uk/bedstead/)"
 
+## Amstrad CPC
 - modes 0, 1 and 2 supported
 - mode 0 emulates the ROM's default 14-color palette, plus the 15th entry for everything that blinks
   - the 16th entry (green/blue blinking) is currently not used at all

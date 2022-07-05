@@ -29,15 +29,27 @@ uint32_t bbc_map_border_color(RF_Context* ctx, uint32_t color) {
 }
 
 void bbc_render_cell(RF_RenderCommand* cmd) {
-    static const uint8_t bbc_color_count[8] = { 2, 4, 8, 2, 2, 4, 2, 8 };
+    static const uint8_t bbc_color_count[8] = { 2, 4, 8, 2, 2, 4, 2, 0 };
     uint8_t colors = bbc_color_count[RF_EXTRACT_ID(cmd->ctx->system->sys_id, 3) & 7];
     bool cursor = cmd->is_cursor && !cmd->blink_phase;
     bool blink = cmd->cell->blink && cmd->blink_phase;
     cmd->fg = bbc_map_color(cmd->fg, colors, blink, RF_COLOR_WHITE);
     cmd->bg = bbc_map_color(cmd->bg, colors, blink, RF_COLOR_BLACK);
 
+    // alternate blink and cursor handling in mode 7 (teletext)
+    if (colors == 0) {
+        if (blink) { cmd->invisible = true; }
+        if (cursor) {
+            cmd->line_start = 18;
+            cmd->line_end = 20;
+        }
+    }
+
     // draw the main cell
     RF_RenderCell(cmd);
+    if (colors == 0) {
+        return;  // teletext mode -> we're done here
+    }
 
     // draw the inverted cursor
     if (cursor) {
@@ -75,4 +87,4 @@ const RF_System RF_Sys_BBC_Mode3 = { RF_MAKE_ID('B','B','C','3'), "BBC Micro (Mo
 const RF_System RF_Sys_BBC_Mode4 = { RF_MAKE_ID('B','B','C','4'), "BBC Micro (Mode 4: 40x32 monochrome graphics)", &bbcclass, defaultbbc, {40,32}, {8,8},  {8,8}, {48,16}, {48,16}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('B','B','C','M') };
 const RF_System RF_Sys_BBC_Mode5 = { RF_MAKE_ID('B','B','C','5'), "BBC Micro (Mode 5: 20x32 4-color graphics)",    &bbcclass, defaultbbc, {20,32}, {8,8},  {8,8}, {24,16}, {24,16}, {2,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('B','B','C','M') };
 const RF_System RF_Sys_BBC_Mode6 = { RF_MAKE_ID('B','B','C','6'), "BBC Micro (Mode 6: 40x25 monochrome text)",     &bbcclass, defaultbbc, {40,25}, {8,10}, {8,8}, {48,16}, {48,22}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('B','B','C','M') };
-//const RF_System RF_Sys_BBC_Mode7 = { RF_MAKE_ID('B','B','C','7'), "BBC Micro (Mode 7: 40x25 Teletext)",            &bbcclass, defaultbbc, {40,25}, {8,8},  {8,8}, {48,16}, {48,22}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('B','B','C','M') };
+const RF_System RF_Sys_BBC_Mode7 = { RF_MAKE_ID('B','B','C','7'), "BBC Micro (Mode 7: 40x25 Teletext)",            &bbcclass, defaultbbc, {40,25},{12,20},{12,20},{72,38}, {72,38}, {1,1},   320, RF_MONITOR_COLOR, RF_MAKE_ID('5','0','5','0') };

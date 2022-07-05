@@ -86,6 +86,7 @@ set (FONTSPECS
     fonts.in/atari8.fontspec
     fonts.in/zx.fontspec
     fonts.in/bbc.fontspec
+    fonts.in/saa505x.fontspec
     fonts.in/cpc.fontspec
     fonts.in/robotron.fontspec
 )

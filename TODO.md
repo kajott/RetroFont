@@ -21,7 +21,7 @@
 - [X] Atari ST
 - [ ] Acorn Atom
 - [ ] Acorn Electron
-- [ ] BBC Micro
+- [X] BBC Micro
 - [ ] Acorn Archimedes
 - [X] Amstrad CPC
 - [ ] MSX
