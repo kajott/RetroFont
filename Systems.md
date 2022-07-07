@@ -18,6 +18,7 @@ General remarks:
   - no bold and underline styles unless the system's OS supports them
   - no blinking text unless there is hardware support for it
     - exception: software-driven blinking cursors are emulated if the system's OS does it too (e.g. Commodore KERNAL)
+- in many cases, cursor blink rates are just estimated; corrections are welcome
 
 ## "Generic" Pseudo-System
 - supports any font size
@@ -88,6 +89,12 @@ General remarks:
   - no per-cell attributes except reverse video
 - background color can be set to anything (with the 16 standard RGBI colors mapped manually); foreground is forced to the same hue but different brightness, as on the original hardware
 - NTSC/PAL palettes extracted from the [Atari800](https://atari800.github.io) emulator
+
+## MC6847-based systems (Tandy CoCo, Dragon 32/64, Acon Atom)
+- only text mode is emulated
+- Atom has 2x3-cell semigraphics and switchable green/orange color scheme
+- CoCo/Dragon have multicolor 2x2-cell semigraphics
+- CoCo colorful flashing cursor is emulated
 
 ## Sinclair ZX80, ZX81, Spectrum
 - fonts extracted from screenshots (ROM doesn't contain all graphics characters)

@@ -71,9 +71,10 @@ set (SYSTEMS
     retrofont/src/sys_apple2.c
     retrofont/src/sys_cbm.c
     retrofont/src/sys_atari8.c
+    retrofont/src/sys_mc6847.c
+    retrofont/src/sys_bbc.c
     retrofont/src/sys_zx.c
     retrofont/src/sys_cpc.c
-    retrofont/src/sys_bbc.c
     retrofont/src/sys_robotron.c
 )
 
@@ -84,6 +85,7 @@ set (FONTSPECS
     fonts.in/apple2.fontspec
     fonts.in/cbm.fontspec
     fonts.in/atari8.fontspec
+    fonts.in/mc6847.fontspec
     fonts.in/zx.fontspec
     fonts.in/bbc.fontspec
     fonts.in/saa505x.fontspec

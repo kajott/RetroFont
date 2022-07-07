@@ -19,7 +19,7 @@
 - [X] Commodore TED
 - [X] Atari 8-Bit
 - [X] Atari ST
-- [ ] Acorn Atom
+- [X] Acorn Atom
 - [ ] Acorn Electron
 - [X] BBC Micro
 - [ ] Acorn Archimedes
@@ -28,6 +28,8 @@
 - [X] Apple I/II
   - [ ] 80-column mode
 - [ ] TRS-80
+  - [X] CoCo 1
+  - [ ] CoCo 2
 - [ ] TI 99/4(A)
 - [X] Robotron KC85/KC87/Z1013
 - [ ] Teletext
