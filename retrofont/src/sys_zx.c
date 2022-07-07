@@ -47,8 +47,8 @@ void zx_prepare_cell(RF_RenderCommand* cmd) {
         cmd->fg = 0;
         cmd->bg = 0xFFFFFF;
     }
-    cmd->reverse_cursor = cmd->is_cursor   && !cmd->blink_phase;
-    cmd->reverse_blink  = cmd->cell->blink && !cmd->blink_phase;
+    cmd->reverse_cursor = cmd->is_cursor   && !(cmd->blink_phase & 1);
+    cmd->reverse_blink  = cmd->cell->blink && !(cmd->blink_phase & 1);
 }
 
 static const RF_SysClass zxclass = {

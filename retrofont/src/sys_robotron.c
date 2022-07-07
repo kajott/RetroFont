@@ -30,8 +30,8 @@ void kc85_prepare_cell(RF_RenderCommand* cmd) {
         cmd->line_start = 6;
         cmd->line_end = 7;
     }
-    cmd->reverse_cursor = cmd->is_cursor && !line_cursor && !cmd->blink_phase;
-    if (cmd->cell->blink && cmd->blink_phase) { cmd->invisible = true; }
+    cmd->reverse_cursor = cmd->is_cursor && !line_cursor && !(cmd->blink_phase & 1);
+    if (cmd->cell->blink && (cmd->blink_phase & 1)) { cmd->invisible = true; }
 }
 
 static const RF_SysClass kc85class = {
@@ -79,8 +79,8 @@ uint32_t kc87_map_border_color(RF_Context* ctx, uint32_t color) {
 void kc87_prepare_cell(RF_RenderCommand* cmd) {
     cmd->fg = kc87_map_color(cmd->fg, RF_COLOR_WHITE);
     cmd->bg = kc87_map_color(cmd->bg, RF_COLOR_BLACK);
-    cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
-    cmd->reverse_blink = !cmd->is_cursor && cmd->cell->blink && cmd->blink_phase;
+    cmd->reverse_cursor = cmd->is_cursor && !(cmd->blink_phase & 1);
+    cmd->reverse_blink = !cmd->is_cursor && cmd->cell->blink && (cmd->blink_phase & 1);
 }
 
 static const RF_SysClass kc87class = {

@@ -22,14 +22,14 @@ void a2_prepare_cell(RF_RenderCommand* cmd) {
             break;
         case '2': // Apple II: inverse cursor, bottom-aligned, blinking supported
             cmd->offset.x = cmd->offset.y = 1;
-            cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
-            cmd->reverse_blink = cmd->cell->blink && cmd->blink_phase && !cmd->reverse_cursor;
+            cmd->reverse_cursor = cmd->is_cursor && !(cmd->blink_phase & 1);
+            cmd->reverse_blink = cmd->cell->blink && (cmd->blink_phase & 1) && !cmd->reverse_cursor;
             break;
         default:  // Apple IIe: 0x7F special character cursor
             cursor_char = 0x2425;  // 0x7F maps to U+2425 SYMBOL FOR DELETE FORM TWO
             break;
     }
-    if (cmd->is_cursor && cursor_char && !cmd->blink_phase) {
+    if (cmd->is_cursor && cursor_char && !(cmd->blink_phase & 1)) {
         cmd->codepoint = cursor_char;
     }
 }

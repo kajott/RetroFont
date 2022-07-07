@@ -71,7 +71,7 @@ void cpc_prepare_cell(RF_RenderCommand* cmd) {
         // there are just two color combinations with default blinking in
         // the ROM palette, and one of them is super-weird (bright red/blue),
         // so let's force everything that blinks to the default blue/yellow
-        cmd->fg = cmd->blink_phase ? 1 : 0;
+        cmd->fg = cmd->blink_phase & 1;
         cmd->bg = cmd->fg ^ 1;
     } else {
         cmd->fg = cpc_map_color(cmd->ctx, cmd->fg, true);
@@ -79,7 +79,7 @@ void cpc_prepare_cell(RF_RenderCommand* cmd) {
     }
     cmd->fg = cpc_palette[cmd->fg];
     cmd->bg = cpc_palette[cmd->bg];
-    cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
+    cmd->reverse_cursor = cmd->is_cursor && !(cmd->blink_phase & 1);
 }
 
 static const RF_SysClass cpcclass = {

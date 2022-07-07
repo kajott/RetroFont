@@ -276,7 +276,7 @@ bool RF_Render(RF_Context* ctx, uint32_t time_msec) {
     }
     cmd.ctx = ctx;
     cmd.cell = ctx->screen;
-    cmd.blink_phase = ctx->system->blink_interval_msec ? (((time_msec / ctx->system->blink_interval_msec) & 1) != 0) : false;
+    cmd.blink_phase = ctx->system->blink_interval_msec ? (uint8_t)(time_msec / ctx->system->blink_interval_msec) : 0;
     for (uint16_t y = 0;  y < ctx->screen_size.y;  ++y) {
         uint8_t* pixel_ptr = &ctx->bitmap[((ctx->has_border ? ctx->system->border_ul.y : 0) + y * ctx->cell_size.y) * ctx->stride
                                          + (ctx->has_border ? ctx->system->border_ul.x : 0) * 3];

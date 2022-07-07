@@ -31,8 +31,8 @@ uint32_t bbc_map_border_color(RF_Context* ctx, uint32_t color) {
 void bbc_render_cell(RF_RenderCommand* cmd) {
     static const uint8_t bbc_color_count[8] = { 2, 4, 8, 2, 2, 4, 2, 0 };
     uint8_t colors = bbc_color_count[RF_EXTRACT_ID(cmd->ctx->system->sys_id, 3) & 7];
-    bool cursor = cmd->is_cursor && !cmd->blink_phase;
-    bool blink = cmd->cell->blink && cmd->blink_phase;
+    bool cursor = cmd->is_cursor && !(cmd->blink_phase & 1);
+    bool blink = cmd->cell->blink && (cmd->blink_phase & 1);
     cmd->fg = bbc_map_color(cmd->fg, colors, blink, RF_COLOR_WHITE);
     cmd->bg = bbc_map_color(cmd->bg, colors, blink, RF_COLOR_BLACK);
 

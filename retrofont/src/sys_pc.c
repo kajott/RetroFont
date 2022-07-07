@@ -45,7 +45,7 @@ void pc_render_cell(RF_RenderCommand* cmd) {
     // text mode blink handling
     if (!is_gfx && (RF_EXTRACT_ID(cmd->ctx->system->sys_id, 3) != 't')) {
         cmd->bg &= ~RF_COLOR_BRIGHT;  // no bright background
-        if (cmd->cell->blink && !cmd->blink_phase) {
+        if (cmd->cell->blink && !(cmd->blink_phase & 1)) {
             cmd->invisible = true;
         }
     }
@@ -55,7 +55,7 @@ void pc_render_cell(RF_RenderCommand* cmd) {
     cmd->bg = pc_rgb_color(cmd->bg);
 
     // set cursor
-    if (cmd->is_cursor && !cmd->blink_phase && !is_gfx) {
+    if (cmd->is_cursor && !(cmd->blink_phase & 1) && !is_gfx) {
         cmd->line_end = cmd->ctx->cell_size.y;
         if (cmd->line_end > 8) { --cmd->line_end; }
         cmd->line_start = cmd->ctx->insert ? (cmd->ctx->cell_size.y >> 1) : (cmd->line_end - 2);

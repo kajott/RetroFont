@@ -132,7 +132,7 @@ struct s_RF_RenderCommand {
     const uint8_t *glyph_data;  //!< glyph data to use for drawing (only set *after* prepare_cell())
     uint8_t *pixel;             //!< pointer to upper-left corner of the cell in the target bitmap
     bool is_cursor;             //!< whether this cell is at the current cursor location
-    bool blink_phase;           //!< blink phase (toggles between true and false periodically)
+    uint8_t blink_phase;        //!< blink phase (increases every blink_interval_msec milliseconds)
 
     // the following fields are used by RF_RenderCell();
     // they are initialized to sensible defaults by the RF_Render(),
@@ -272,7 +272,7 @@ struct s_RF_Context {
     uint32_t border_color;      //!< \private border color (default / standard / RGB)
     bool border_color_changed;  //!< \private true if the border color changed
     bool has_border;            //!< \private whether the border in included in the bitmap
-    bool last_blink_phase;      //!< \private blink phase of the last RF_Render() call
+    uint8_t last_blink_phase;   //!< \private blink phase of the last RF_Render() call
     uint32_t glyph_offset_cache[RF_GLYPH_CACHE_SIZE];  //!< \private glyph cache (-1 = uncached)
     const RF_FallbackGlyphs* fb_glyphs;                //!< \private fallback glyph list (NULL = no fallback)
     uint8_t pal_cache[RF_PAL_CACHE_SIZE];  //!< \private palette cache (0xFF = uncached)

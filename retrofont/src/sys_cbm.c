@@ -90,7 +90,7 @@ uint32_t cbm_map_border_color(RF_Context* ctx, uint32_t color) {
 void cbm_prepare_cell(RF_RenderCommand* cmd) {
     cmd->fg = cbm_map_color(cmd->ctx, cmd->fg, true, false);
     cmd->bg = cbm_map_color(cmd->ctx, cmd->ctx->default_bg, false, false);
-    cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
+    cmd->reverse_cursor = cmd->is_cursor && !(cmd->blink_phase & 1);
 }
 
 uint32_t pet_map_border_color(RF_Context* ctx, uint32_t color) {
@@ -101,7 +101,7 @@ uint32_t pet_map_border_color(RF_Context* ctx, uint32_t color) {
 void pet_render_cell(RF_RenderCommand* cmd) {
     cmd->fg = 0xFFFFFF;
     cmd->bg = 0x000000;
-    cmd->reverse_cursor = cmd->is_cursor && !cmd->blink_phase;
+    cmd->reverse_cursor = cmd->is_cursor && !(cmd->blink_phase & 1);
     RF_RenderCell(cmd);
     if (cmd->ctx->system->cell_size.y > 8) {
         // PET 8032's ninth row is *always* black
