@@ -8,6 +8,13 @@ defmap "mc6847base"
     alias U+2B29 '*'  # BLACK SMALL DIAMOND
     alias 'a'..'z' 'A'..'Z'
 
+defmap "mc6847t1"
+    map 5 '^' 'a'..'z' "{|}~_"
+    map 6 '@' 'A'..'Z' "[\]"
+    map 6.30   U+2191  # UPWARDS ARROW
+    map 6.31   U+2190  # LEFTWARDS ARROW
+    map 7 ' '..'?'
+
 defmap "mc6847sg6"
     map 2.00  U+00A0  # NO-BREAK SPACE
     map 2.01  U+1FB00 # BLOCK SEXTANT-1
@@ -107,3 +114,7 @@ font "MT0Z" "Motorola MC6847 (with all semigraphics)"
     usemap "mc6847base"
     usemap "mc6847sg4"
     usemap "mc6847sg6"
+
+font "MT14" "Motorola MC6847T1"
+    usemap "mc6847t1"
+    usemap "mc6847sg4"

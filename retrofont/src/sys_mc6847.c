@@ -53,11 +53,13 @@ static const char defaultatom[] = "ACORN ATOM\n\n>";
 ////////////////////////////////////////////////////////////////////////////////
 
 void coco_prepare_cell(RF_RenderCommand* cmd) {
-    if (cmd->is_cursor && (cmd->ctx->system->sys_id == RF_MAKE_ID('C','o','C','o'))) {
+    bool old_vdu = ((cmd->ctx->font->font_id  & 0xFFFFFF) == RF_MAKE_ID('M','T','0',0));
+    bool is_coco = ((cmd->ctx->system->sys_id & 0xFFFFFF) == RF_MAKE_ID('C','o','C',0));
+    if (cmd->is_cursor && is_coco) {
         // CoCo colorful cursor
         cmd->bg = cmd->fg = mc6847_palette[cmd->blink_phase & 7];
-    } else if ((cmd->codepoint & (~0x1F)) == 0x2580) {
-        // block graphics character -> allow the basic 8 colors
+    } else if (((cmd->codepoint & (~0x1F)) == 0x2580) || (cmd->codepoint == 0xA0)) {
+        // block graphics character -> allow the basic 8 colors ("Semigraphic 4" mode)
         cmd->fg = mc6847_map_color(cmd->ctx, cmd->fg, 9);
         cmd->bg = mc6847_map_color(cmd->ctx, cmd->bg, 0);
         // force one of the colors to black
@@ -70,6 +72,8 @@ void coco_prepare_cell(RF_RenderCommand* cmd) {
         cmd->fg = mc6847_palette[9];
         cmd->bg = mc6847_palette[0];
         cmd->reverse_cursor = cmd->is_cursor && !(cmd->blink_phase & 1);
+        // render lowercase ASCII as reverse uppercase if the original font is used
+        cmd->reverse_blink = old_vdu && (cmd->codepoint >= 'a') && (cmd->codepoint <= 'z');
     }
 }
 
@@ -93,7 +97,8 @@ static const char defaultdragon[] =
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//                                sys_id,                       name,                          class,     scrn,           scrsz,  cellsz, fontsz , b_ul,    b_lr,  aspect, blink, monitor,          default_font_id
-const RF_System RF_Sys_CoCo   = { RF_MAKE_ID('C','o','C','o'), "Tandy TRS-80 Color Computer", &cococlass, defaultcoco,   {32,16}, {8,12}, {8,12}, {56,24}, {56,24}, {1,1},   100, RF_MONITOR_COLOR, RF_MAKE_ID('M','T','0','4') };
-const RF_System RF_Sys_Dragon = { RF_MAKE_ID('D','R','3','2'), "Dragon 32/64",                &cococlass, defaultdragon, {32,16}, {8,12}, {8,12}, {56,24}, {56,24}, {1,1},   533, RF_MONITOR_COLOR, RF_MAKE_ID('M','T','0','4') };
-const RF_System RF_Sys_Atom   = { RF_MAKE_ID('A','T','O','M'), "Acorn Atom",                  &atomclass, defaultatom,   {32,16}, {8,12}, {8,12}, {56,24}, {56,24}, {1,1},     0, RF_MONITOR_COLOR, RF_MAKE_ID('M','T','0','6') };
+//                                sys_id,                       name,                            class,     scrn,           scrsz,  cellsz, fontsz , b_ul,    b_lr,  aspect, blink, monitor,          default_font_id
+const RF_System RF_Sys_Atom   = { RF_MAKE_ID('A','T','O','M'), "Acorn Atom",                    &atomclass, defaultatom,   {32,16}, {8,12}, {8,12}, {56,24}, {56,24}, {1,1},     0, RF_MONITOR_COLOR, RF_MAKE_ID('M','T','0','6') };
+const RF_System RF_Sys_Dragon = { RF_MAKE_ID('D','R','3','2'), "Dragon 32/64",                  &cococlass, defaultdragon, {32,16}, {8,12}, {8,12}, {56,24}, {56,24}, {1,1},   533, RF_MONITOR_COLOR, RF_MAKE_ID('M','T','0','4') };
+const RF_System RF_Sys_CoCo   = { RF_MAKE_ID('C','o','C','o'), "Tandy TRS-80 Color Computer",   &cococlass, defaultcoco,   {32,16}, {8,12}, {8,12}, {56,24}, {56,24}, {1,1},   100, RF_MONITOR_COLOR, RF_MAKE_ID('M','T','0','4') };
+const RF_System RF_Sys_CoCo2  = { RF_MAKE_ID('C','o','C','2'), "Tandy TRS-80 Color Computer 2", &cococlass, defaultcoco,   {32,16}, {8,12}, {8,12}, {56,24}, {56,24}, {1,1},   100, RF_MONITOR_COLOR, RF_MAKE_ID('M','T','1','4') };

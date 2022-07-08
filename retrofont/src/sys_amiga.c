@@ -38,7 +38,7 @@ void amiga_prepare_cell(RF_RenderCommand* cmd) {
 bool amiga_check_font(uint32_t sys_id, const RF_Font* font) {
     // reject tall fonts in non-interlaced mode, 'cause that'd look ridiculous
     return ((sys_id >> 24) == 'i')
-        || ((font->font_size.y * 2) < (font->font_size.x * 3));
+        || ((font->font_size.y * 2) <= (font->font_size.x * 3));
 }
 
 static const RF_SysClass amigaclass = {

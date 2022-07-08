@@ -90,11 +90,13 @@ General remarks:
 - background color can be set to anything (with the 16 standard RGBI colors mapped manually); foreground is forced to the same hue but different brightness, as on the original hardware
 - NTSC/PAL palettes extracted from the [Atari800](https://atari800.github.io) emulator
 
-## MC6847-based systems (Tandy CoCo, Dragon 32/64, Acon Atom)
+## MC6847-based systems (Tandy CoCo/2, Dragon 32/64, Acon Atom)
 - only text mode is emulated
 - Atom has 2x3-cell semigraphics and switchable green/orange color scheme
+  - multicolor semigraphics are *not* emulated
 - CoCo/Dragon have multicolor 2x2-cell semigraphics
 - CoCo colorful flashing cursor is emulated
+- CoCo 1 lowercase ASCII is rendered as reverse-video uppercase if the original font is used
 
 ## Sinclair ZX80, ZX81, Spectrum
 - fonts extracted from screenshots (ROM doesn't contain all graphics characters)
