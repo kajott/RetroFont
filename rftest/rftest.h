@@ -37,6 +37,8 @@ class RFTestApp {
     bool m_showUI = true;
     bool m_showDemo = false;
     bool m_screenContentsChanged = false;
+    char* m_docData = nullptr;
+    RF_MarkupType m_docType = RF_MT_NONE;
 
     // automatic typewriter state
     char* m_typerStr = nullptr;
@@ -82,11 +84,12 @@ class RFTestApp {
 
     // default screen
     static constexpr int dsAsConfigured = -1;
-    static constexpr int dsEmpty   = 0;
-    static constexpr int dsKeep    = 1;
-    static constexpr int dsDefault = 2;
-    static constexpr int dsDemo    = 3;
-    inline static constexpr std::array<const char*, 4> DefaultScreenStrings = {{ "clear screen", "keep previous contents", "load system default screen", "load attribute test screen" }};
+    static constexpr int dsEmpty    = 0;
+    static constexpr int dsKeep     = 1;
+    static constexpr int dsDefault  = 2;
+    static constexpr int dsPrevious = 3;
+    static constexpr int dsDemo     = 4;
+    inline static constexpr std::array<const char*, 5> DefaultScreenStrings = {{ "clear screen", "keep previous contents", "load system default screen", "re-load previous document", "load attribute test screen" }};
     int m_defaultScreen = dsDefault;
 
     // UI functions
@@ -108,6 +111,7 @@ class RFTestApp {
     void handleMouseButtonEvent(int button, int action, int mods);
     void handleCursorPosEvent(double xpos, double ypos);
     void handleScrollEvent(double xoffset, double yoffset);
+    void handleDropEvent(int path_count, const char* paths[]);
 
 public:
     inline RFTestApp() {}

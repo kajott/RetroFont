@@ -22,6 +22,8 @@ It is, however, **not** an emulator! Only the visual aspect of text rendering is
   - all fancy pseudographics characters are mapped to their Unicode codepoints
   - if a font doesn't support a codepoint (and none supports all of them!), fall-back to suitable replacement characters or other fonts of the same size is possible
 - screen can be tinted in green or amber for "realistic" monochrome systems
+- drag&drop text files into the test application window to load them
+  - optionally with simulated baud rate limit
 
 
 ## Build Prerequisites

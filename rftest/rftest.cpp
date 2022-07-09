@@ -90,6 +90,8 @@ int RFTestApp::run(int argc, char *argv[]) {
         { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->handleScrollEvent(xoffset, yoffset); });
     glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height)
         { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->updateSize(width, height); });
+    glfwSetDropCallback(m_window, [](GLFWwindow* window, int path_count, const char* paths[])
+        { static_cast<RFTestApp*>(glfwGetWindowUserPointer(window))->handleDropEvent(path_count, paths); });
 
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1);
@@ -550,7 +552,7 @@ void RFTestApp::loadDefaultScreen(int type) {
     if (type == dsKeep) {
         return;  // do nothing; don't even touch m_screenContentsChanged!
     }
-    if ((type == dsEmpty) || (type == dsDefault)) {
+    if ((type == dsEmpty) || (type == dsDefault) || (type == dsPrevious)) {
         RF_ClearAll(m_ctx);
     }
     RF_MoveCursor(m_ctx, 0, 0);
@@ -559,6 +561,8 @@ void RFTestApp::loadDefaultScreen(int type) {
             (m_ctx && m_ctx->system && m_ctx->system->default_screen)
                                      ? m_ctx->system->default_screen
                                      : DefaultDefaultScreen, RF_MT_INTERNAL);
+    } else if ((type == dsPrevious) && m_docData) {
+        RF_AddText(m_ctx, m_docData, m_docType);
     } else if (type == dsDemo) {
         srand(0x13375EED);
         RF_DemoScreen(m_ctx);
@@ -580,6 +584,14 @@ void RFTestApp::loadScreen(const char* text, RF_MarkupType markup) {
         RF_AddText(m_ctx, text, markup);
     }
     m_screenContentsChanged = true;
+}
+
+void RFTestApp::handleDropEvent(int path_count, const char* paths[]) {
+    if ((path_count < 1) || !paths || !paths[0] || !paths[0][0]) { return; }
+    ::free(m_docData);
+    m_docData = StringUtil::loadTextFile(paths[0]);
+    m_docType = RF_DetectMarkupType(m_docData);
+    loadScreen(m_docData, m_docType);
 }
 
 void RFTestApp::cancelTyper() {
@@ -714,6 +726,9 @@ void RFTestApp::drawUI() {
                 }
                 ImGui::EndMenu();
             }
+            if (!m_docData) { ImGui::BeginDisabled(); }
+            if (ImGui::Selectable("previous loaded document")) { loadScreen(m_docData, m_docType); }
+            if (!m_docData) { ImGui::EndDisabled(); }
             ImGui::EndPopup();
         }
         ImGui::SameLine();
