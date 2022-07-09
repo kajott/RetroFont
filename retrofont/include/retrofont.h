@@ -81,6 +81,7 @@ typedef enum e_RF_MarkupType {
     RF_MT_NONE     = 0x99,  //!< no markup (plain text)
     RF_MT_INTERNAL = 0x60,  //!< RetroFont's internal markup system
     RF_MT_ANSI     = 0x1B,  //!< VT-100 / ANSI compatible Escape codes [TODO]
+    RF_MT_AUTO     = 0xFF,  //!< automatic detection (using heuristics)
 } RF_MarkupType;
 
 //! monitor types
@@ -354,6 +355,9 @@ void RF_AddChar(RF_Context* ctx, uint32_t codepoint);
 
 //! add a string of UTF-8 text, optionally with markup
 void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt);
+
+//! heuristically detect markup type in a text string
+RF_MarkupType RF_DetectMarkupType(const char* str);
 
 //! reset the markup parser
 void RF_ResetParser(RF_Context* ctx);

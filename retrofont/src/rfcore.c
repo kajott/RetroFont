@@ -644,6 +644,7 @@ extern bool RF_ParseInternalMarkup(RF_Context* ctx, uint8_t c);
 
 void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt) {
     if (!ctx || !ctx->screen || !ctx->system || !str || !str[0]) { return; }
+    if (mt == RF_MT_AUTO) { mt = RF_DetectMarkupType(str); }
     for (;;) {
         uint8_t c = (uint8_t) *str++;
         if (!c) { return; }  // end of string
