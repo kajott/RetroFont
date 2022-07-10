@@ -97,9 +97,10 @@ add_library (retrofont STATIC
     retrofont/src/rfcore.c
     retrofont/src/rfparse_int.c
     retrofont/src/rfparse_util.c
-    retrofont/src/fonts.c
     retrofont/src/systems.c
+    retrofont/src/fonts.c
     retrofont/src/fallbacks.c
+    retrofont/src/charsets.c
     ${SYSTEMS}
 )
 

@@ -232,7 +232,7 @@ int RFTestApp::run(int argc, char *argv[]) {
             if (m_typerPos > start) {
                 char old = m_typerStr[m_typerPos];
                 m_typerStr[m_typerPos] = '\0';
-                RF_AddText(m_ctx, &m_typerStr[start], m_typerType);
+                RF_AddText(m_ctx, &m_typerStr[start], m_typerCharset, m_typerType);
                 m_typerStr[m_typerPos] = old;
                 if (!old) { cancelTyper(); }  // EOS reached
             }
@@ -361,6 +361,8 @@ int RFTestApp::run(int argc, char *argv[]) {
     #ifndef NDEBUG
         fprintf(stderr, "exiting ...\n");
     #endif
+    cancelTyper();
+    ::free(m_docData);
     RF_FreeContext(m_ctx);
     glUseProgram(0);
     m_prog.free();
@@ -556,13 +558,13 @@ void RFTestApp::loadDefaultScreen(int type) {
         RF_ClearAll(m_ctx);
     }
     RF_MoveCursor(m_ctx, 0, 0);
-    if ((type == dsDefault)) {
+    if (type == dsDefault) {
         RF_AddText(m_ctx,
             (m_ctx && m_ctx->system && m_ctx->system->default_screen)
                                      ? m_ctx->system->default_screen
-                                     : DefaultDefaultScreen, RF_MT_INTERNAL);
+                                     : DefaultDefaultScreen, 0, RF_MT_INTERNAL);
     } else if ((type == dsPrevious) && m_docData) {
-        RF_AddText(m_ctx, m_docData, m_docType);
+        RF_AddText(m_ctx, m_docData, m_docCharset ? m_docCharset : m_docAutoCharset, m_docType);
     } else if (type == dsDemo) {
         srand(0x13375EED);
         RF_DemoScreen(m_ctx);
@@ -570,18 +572,19 @@ void RFTestApp::loadDefaultScreen(int type) {
     m_screenContentsChanged = false;
 }
 
-void RFTestApp::loadScreen(const char* text, RF_MarkupType markup) {
+void RFTestApp::loadScreen(const char* text, const RF_Charset* charset, RF_MarkupType markup) {
     cancelTyper();
     RF_ClearScreen(m_ctx, nullptr);
     RF_MoveCursor(m_ctx, 0, 0);
     if (m_baud) {
         m_typerStr = StringUtil::copy(text);
+        m_typerCharset = charset;
         m_typerType = markup;
         m_typerStartPos = m_typerPos = 0;
         m_typerStartTime = glfwGetTime();
         requestFrames(1);
     } else {
-        RF_AddText(m_ctx, text, markup);
+        RF_AddText(m_ctx, text, charset, markup);
     }
     m_screenContentsChanged = true;
 }
@@ -590,8 +593,9 @@ void RFTestApp::handleDropEvent(int path_count, const char* paths[]) {
     if ((path_count < 1) || !paths || !paths[0] || !paths[0][0]) { return; }
     ::free(m_docData);
     m_docData = StringUtil::loadTextFile(paths[0]);
+    m_docAutoCharset = RF_DetectCharset(m_docData);
     m_docType = RF_DetectMarkupType(m_docData);
-    loadScreen(m_docData, m_docType);
+    loadScreen(m_docData, m_docCharset ? m_docCharset : m_docAutoCharset, m_docType);
 }
 
 void RFTestApp::cancelTyper() {
@@ -608,7 +612,7 @@ int RFTestApp::getTyperPos() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void RFTestApp::drawUI() {
-    static constexpr size_t tempStrSize = 40;
+    static constexpr size_t tempStrSize = 80;
     static char tempStr[tempStrSize] = "";
 
     // main window begin
@@ -617,7 +621,7 @@ void RFTestApp::drawUI() {
         ImGui::GetMainViewport()->WorkPos.y +
         ImGui::GetMainViewport()->WorkSize.y),
         ImGuiCond_FirstUseEver, ImVec2(0.0f, 1.0f));
-    ImGui::SetNextWindowSize(ImVec2(470.0f, 240.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(470.0f, 262.0f), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Settings", nullptr, 0)) {
 
         ImGui::AlignTextToFramePadding();
@@ -713,7 +717,7 @@ void RFTestApp::drawUI() {
             { ImGui::OpenPopup("load_screen_popup"); }
         if (ImGui::BeginPopup("load_screen_popup")) {
             if (ImGui::Selectable("empty screen"))   { loadDefaultScreen(dsEmpty); }
-            if (ImGui::Selectable("default screen")) { loadScreen(DefaultDefaultScreen, RF_MT_INTERNAL); }
+            if (ImGui::Selectable("default screen")) { loadScreen(DefaultDefaultScreen, 0, RF_MT_INTERNAL); }
             if (ImGui::Selectable("attribute demo")) { loadDefaultScreen(dsDemo); }
             if (ImGui::BeginMenu("system default")) {
                 const char* scr = nullptr;
@@ -721,13 +725,15 @@ void RFTestApp::drawUI() {
                     if ((*p_sys)->default_screen == scr) { continue; }
                     scr = (*p_sys)->default_screen;
                     if (scr && ImGui::Selectable((*p_sys)->name)) {
-                        loadScreen(scr, RF_MT_INTERNAL);
+                        loadScreen(scr, 0, RF_MT_INTERNAL);
                     }
                 }
                 ImGui::EndMenu();
             }
             if (!m_docData) { ImGui::BeginDisabled(); }
-            if (ImGui::Selectable("previous loaded document")) { loadScreen(m_docData, m_docType); }
+            if (ImGui::Selectable("previous loaded document")) {
+                loadScreen(m_docData, m_docCharset ? m_docCharset : m_docAutoCharset, m_docType);
+            }
             if (!m_docData) { ImGui::EndDisabled(); }
             ImGui::EndPopup();
         }
@@ -752,7 +758,7 @@ void RFTestApp::drawUI() {
             if (ImGui::Selectable("immediately", &sel)) {
                 m_baud = 0;
                 if (m_typerStr) {
-                    RF_AddText(m_ctx, &m_typerStr[m_typerPos], m_typerType);
+                    RF_AddText(m_ctx, &m_typerStr[m_typerPos], m_typerCharset, m_typerType);
                 }
                 cancelTyper();
             }
@@ -760,6 +766,34 @@ void RFTestApp::drawUI() {
         }
         ImGui::PopItemWidth();
 
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("loaded document character set:");
+        ImGui::SameLine();
+        ImGui::PushItemWidth(234.0f);
+        auto charsetStr = [=] (const RF_Charset* charset) -> const char* {
+            if (charset) {
+                snprintf(tempStr, tempStrSize, "%s (%s)", charset->short_name, charset->long_name);
+            } else if (m_docAutoCharset) {
+                snprintf(tempStr, tempStrSize, "auto-detect (%s)", m_docAutoCharset->short_name);
+            } else {
+                strcpy(tempStr, "auto-detect");
+            }
+            return tempStr;
+        };
+        auto charsetItem = [=] (const RF_Charset* charset) {
+            bool sel = (m_docCharset == charset);
+            if (ImGui::Selectable(charsetStr(charset), &sel)) {
+                m_docCharset = charset;
+            }
+        };
+        if (ImGui::BeginCombo("##charset", charsetStr(m_docCharset))) {
+            charsetItem(nullptr);
+            for (const RF_Charset* cs = RF_Charsets;  cs->charset_id;  ++cs) {
+                charsetItem(cs);
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::PopItemWidth();
     }
     ImGui::End();
 

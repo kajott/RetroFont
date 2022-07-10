@@ -38,6 +38,7 @@ typedef struct s_RF_System         RF_System;
 typedef struct s_RF_Font           RF_Font;
 typedef struct s_RF_GlyphMapEntry  RF_GlyphMapEntry;
 typedef struct s_RF_FallbackGlyphs RF_FallbackGlyphs;
+typedef struct s_RF_Charset        RF_Charset;
 typedef struct s_RF_Context        RF_Context;
 
 // color-related constants and macros
@@ -102,6 +103,7 @@ typedef enum e_RF_MonitorType {
 #define RF_SIZE_DEFAULT ((uint16_t)(-1))       //!< system default size for RF_ResizeScreen()
 #define RF_SIZE_PIXELS  0x8000u                //!< system's default_screen_size is in pixels
 #define RF_SIZE_MASK    (RF_SIZE_PIXELS - 1u)  //!< mask to remove RF_SIZE_PIXELS flag
+#define RF_CHARSET_AUTO ((uint32_t)(-1))       //!< automatic character set detection
 
 //! 2D point coordinate
 struct s_RF_Coord {
@@ -236,6 +238,21 @@ struct s_RF_Font {
     uint16_t underline_row;             //!< row where underlining shall be done; 0 = no underline support
 };
 
+//! character set registry item
+struct s_RF_Charset {
+    uint32_t charset_id;          //!< internal character set ID (0 = end of list)
+    uint16_t codepage;            //!< DOS/Windows codepage number (if assigned; 0 otherwise)
+    const char* short_name;       //!< short/abbreviated character set name
+    const char* long_name;        //!< long human-readable character set name
+    const uint32_t* charmap;      //!< mapping table from 8-bit to Unicode codepoints (NULL = UTF-8)
+    const uint8_t* common_chars;  //!< commonly used character ranges in the 0x80..0xFF range
+                                  //!< (even bytes: start of range, odd bytes: end of range, inclusive;
+                                  //!< zero-terminated); can be NULL
+    const uint8_t* run_chars;     //!< zero-terminated list of pseudographics characters that are likely
+                                  //!< to be repeated multiple times (e.g. for underlines, box drawing etc.);
+                                  //!< can be NULL
+};
+
 //! fallback registry item
 struct s_RF_FallbackGlyphs {
     RF_Coord font_size;                 //!< font size in pixels (zero width = end of list)
@@ -290,6 +307,7 @@ struct s_RF_Context {
 extern const RF_Cell           RF_EmptyCell;             //!< cell with default contents
 extern const RF_System* const  RF_SystemList[];          //!< system registry
 extern const RF_Font           RF_FontList[];            //!< font registry
+extern const RF_Charset        RF_Charsets[];            //!< character set registry
 extern const uint8_t           RF_GlyphBitmaps[];        //!< \private glyph bitmaps
 extern const RF_FallbackGlyphs RF_FallbackGlyphsList[];  //!< \private fallback glyph map registry
 extern const RF_GlyphMapEntry  RF_FallbackMap[];         //!< \private fallback character map
@@ -353,8 +371,12 @@ void RF_Invalidate(RF_Context* ctx, bool with_border);
 //! RF_CP_* values are handled specially.
 void RF_AddChar(RF_Context* ctx, uint32_t codepoint);
 
-//! add a string of UTF-8 text, optionally with markup
-void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt);
+//! add a string of text, optionally with markup
+//! \param charset  character set to use (only 'charmap' field will be used); NULL = UTF-8
+void RF_AddText(RF_Context* ctx, const char* str, const RF_Charset* charset, RF_MarkupType mt);
+
+//! heuristically detect character set in a text string; *very* unreliable!
+const RF_Charset* RF_DetectCharset(const char* str);
 
 //! heuristically detect markup type in a text string
 RF_MarkupType RF_DetectMarkupType(const char* str);

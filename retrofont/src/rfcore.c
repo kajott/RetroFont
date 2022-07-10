@@ -512,6 +512,8 @@ void RF_AddChar(RF_Context* ctx, uint32_t codepoint) {
                 ctx->cursor_pos.y = ctx->screen_size.y - 1;
             }
         }
+    } else if (codepoint == 13) {
+        // ignore carriage return
     } else if (codepoint == RF_CP_BACKSPACE) {
         if (ctx->cursor_pos.x) {
             if (ctx->insert) {
@@ -642,7 +644,8 @@ void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uin
 
 extern bool RF_ParseInternalMarkup(RF_Context* ctx, uint8_t c);
 
-void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt) {
+void RF_AddText(RF_Context* ctx, const char* str, const RF_Charset* charset, RF_MarkupType mt) {
+    const uint32_t* charmap = charset ? charset->charmap : NULL;
     if (!ctx || !ctx->screen || !ctx->system || !str || !str[0]) { return; }
     if (mt == RF_MT_AUTO) { mt = RF_DetectMarkupType(str); }
     for (;;) {
@@ -684,6 +687,12 @@ void RF_AddText(RF_Context* ctx, const char* str, RF_MarkupType mt) {
         if (c == (uint8_t)mt) {
             // begin of escape sequence
             ctx->esc_count = 1;
+        } else if ((c == 8) || (c == 9) || (c == 10) || (c == 13) || (c == 127)) {
+            // pass control character through, regardless of character set
+            RF_AddChar(ctx, c);
+        } else if (charmap) {
+            // translate character by character map
+            RF_AddChar(ctx, charmap[c]);
         } else if (c < 0x80) {
             // normal 7-bit ASCII character
             RF_AddChar(ctx, c);

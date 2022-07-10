@@ -38,11 +38,14 @@ class RFTestApp {
     bool m_showDemo = false;
     bool m_screenContentsChanged = false;
     char* m_docData = nullptr;
+    const RF_Charset* m_docCharset = nullptr;
+    const RF_Charset* m_docAutoCharset = nullptr;
     RF_MarkupType m_docType = RF_MT_NONE;
 
     // automatic typewriter state
     char* m_typerStr = nullptr;
     int m_typerPos = 0;
+    const RF_Charset* m_typerCharset = nullptr;
     RF_MarkupType m_typerType = RF_MT_NONE;
     double m_typerStartTime = 0.0;
     int m_typerStartPos = 0;
@@ -101,7 +104,7 @@ class RFTestApp {
     void updateSize(bool force=false, bool forceDefault=false);
     void updateSize(int width, int height, bool force=false, bool forceDefault=false);
     void loadDefaultScreen(int type=dsAsConfigured);
-    void loadScreen(const char* text, RF_MarkupType markup=RF_MT_NONE);
+    void loadScreen(const char* text, const RF_Charset* charset=nullptr, RF_MarkupType markup=RF_MT_NONE);
     void cancelTyper();
     int getTyperPos();
 
