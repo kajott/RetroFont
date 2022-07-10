@@ -432,16 +432,16 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
             break;
         case GLFW_KEY_ENTER:
         case GLFW_KEY_KP_ENTER:
-            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_ENTER);     m_screenContentsChanged = true; }
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_ENTER);     screenChanged(); }
             break;
         case GLFW_KEY_TAB:
-            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_TAB);       m_screenContentsChanged = true; }
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_TAB);       screenChanged(); }
             break;
         case GLFW_KEY_BACKSPACE:
-            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_BACKSPACE); m_screenContentsChanged = true; }
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_BACKSPACE); screenChanged(); }
             break;
         case GLFW_KEY_DELETE:
-            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_DELETE);    m_screenContentsChanged = true; }
+            if (m_ctx) { RF_AddChar(m_ctx, RF_CP_DELETE);    screenChanged(); }
             break;
         case GLFW_KEY_INSERT:
             if (m_ctx) {
@@ -470,7 +470,7 @@ void RFTestApp::handleCharEvent(unsigned int codepoint) {
     if (m_io->WantCaptureKeyboard) { return; }
     cancelTyper();
     RF_AddChar(m_ctx, codepoint);
-    m_screenContentsChanged = true;
+    screenChanged();
 }
 
 void RFTestApp::handleMouseButtonEvent(int button, int action, int mods) {
@@ -548,6 +548,8 @@ void RFTestApp::updateSize(int width, int height, bool force, bool forceDefault)
 
 void RFTestApp::loadDefaultScreen(int type) {
     cancelTyper();
+    m_screenContentsChanged = false;
+    m_justLoadedDocument = false;
     if (type == dsAsConfigured) {
         type = m_defaultScreen;
     }
@@ -565,11 +567,11 @@ void RFTestApp::loadDefaultScreen(int type) {
                                      : DefaultDefaultScreen, 0, RF_MT_INTERNAL);
     } else if ((type == dsPrevious) && m_docData) {
         RF_AddText(m_ctx, m_docData, m_docCharset ? m_docCharset : m_docAutoCharset, m_docType);
+        m_justLoadedDocument = true;
     } else if (type == dsDemo) {
         srand(0x13375EED);
         RF_DemoScreen(m_ctx);
     }
-    m_screenContentsChanged = false;
 }
 
 void RFTestApp::loadScreen(const char* text, const RF_Charset* charset, RF_MarkupType markup) {
@@ -596,6 +598,7 @@ void RFTestApp::handleDropEvent(int path_count, const char* paths[]) {
     m_docAutoCharset = RF_DetectCharset(m_docData);
     m_docType = RF_DetectMarkupType(m_docData);
     loadScreen(m_docData, m_docCharset ? m_docCharset : m_docAutoCharset, m_docType);
+    m_justLoadedDocument = true;
 }
 
 void RFTestApp::cancelTyper() {
@@ -733,6 +736,7 @@ void RFTestApp::drawUI() {
             if (!m_docData) { ImGui::BeginDisabled(); }
             if (ImGui::Selectable("previous loaded document")) {
                 loadScreen(m_docData, m_docCharset ? m_docCharset : m_docAutoCharset, m_docType);
+                m_justLoadedDocument = true;
             }
             if (!m_docData) { ImGui::EndDisabled(); }
             ImGui::EndPopup();
@@ -784,6 +788,9 @@ void RFTestApp::drawUI() {
             bool sel = (m_docCharset == charset);
             if (ImGui::Selectable(charsetStr(charset), &sel)) {
                 m_docCharset = charset;
+                if (m_justLoadedDocument) {
+                    loadScreen(m_docData, m_docCharset ? m_docCharset : m_docAutoCharset, m_docType);
+                }
             }
         };
         if (ImGui::BeginCombo("##charset", charsetStr(m_docCharset))) {

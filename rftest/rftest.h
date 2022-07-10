@@ -37,6 +37,8 @@ class RFTestApp {
     bool m_showUI = true;
     bool m_showDemo = false;
     bool m_screenContentsChanged = false;
+    bool m_justLoadedDocument = false;
+    inline void screenChanged() { m_screenContentsChanged = true; m_justLoadedDocument = false; }
     char* m_docData = nullptr;
     const RF_Charset* m_docCharset = nullptr;
     const RF_Charset* m_docAutoCharset = nullptr;
