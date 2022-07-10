@@ -14,42 +14,42 @@ typedef struct s_RF_InternalMarkupCommand {
 } RF_InternalMarkupCommand;
 
 static void cmd_setxpos(RF_Context* ctx) {
-    RF_MoveCursor(ctx, (uint16_t)ctx->num_buf, ctx->cursor_pos.y);
+    RF_MoveCursor(ctx, (uint16_t)ctx->num[0], ctx->cursor_pos.y);
 }
 static void cmd_setxneg(RF_Context* ctx) {
-    int x = (int)ctx->screen_size.x - (int)ctx->num_buf;
+    int x = (int)ctx->screen_size.x - (int)ctx->num[0];
     RF_MoveCursor(ctx, (x > 0) ? (uint16_t)x : 0, ctx->cursor_pos.y);
 }
 static void cmd_centerx(RF_Context* ctx) {
-    int x = ((int)ctx->screen_size.x - (int)ctx->num_buf) >> 1;
+    int x = ((int)ctx->screen_size.x - (int)ctx->num[0]) >> 1;
     RF_MoveCursor(ctx, (x > 0) ? (uint16_t)x : 0, ctx->cursor_pos.y);
 }
 static void cmd_setypos(RF_Context* ctx) {
-    RF_MoveCursor(ctx, ctx->cursor_pos.x, (uint16_t)ctx->num_buf);
+    RF_MoveCursor(ctx, ctx->cursor_pos.x, (uint16_t)ctx->num[0]);
 }
 static void cmd_setyneg(RF_Context* ctx) {
-    int y = (int)ctx->screen_size.y - (int)ctx->num_buf;
+    int y = (int)ctx->screen_size.y - (int)ctx->num[0];
     RF_MoveCursor(ctx, ctx->cursor_pos.x, (y > 0) ? (uint16_t)y : 0);
 }
 static void cmd_centery(RF_Context* ctx) {
-    int y = ((int)ctx->screen_size.y - (int)ctx->num_buf) >> 1;
+    int y = ((int)ctx->screen_size.y - (int)ctx->num[0]) >> 1;
     RF_MoveCursor(ctx, ctx->cursor_pos.x, (y > 0) ? (uint16_t)y : 0);
 }
 
 static void cmd_setfg(RF_Context* ctx) {
-    ctx->attrib.fg = ctx->num_buf;
+    ctx->attrib.fg = ctx->num[0];
 }
 static void cmd_setbg(RF_Context* ctx) {
-    ctx->attrib.bg = ctx->num_buf;
+    ctx->attrib.bg = ctx->num[0];
 }
 static void cmd_setdfg(RF_Context* ctx) {
-    RF_SetForegroundColor(ctx, ctx->num_buf);
+    RF_SetForegroundColor(ctx, ctx->num[0]);
 }
 static void cmd_setdbg(RF_Context* ctx) {
-    RF_SetBackgroundColor(ctx, ctx->num_buf);
+    RF_SetBackgroundColor(ctx, ctx->num[0]);
 }
 static void cmd_setborder(RF_Context* ctx) {
-    RF_SetBorderColor(ctx, ctx->num_buf);
+    RF_SetBorderColor(ctx, ctx->num[0]);
 }
 
 static void cmd_reset(RF_Context* ctx) {
@@ -58,7 +58,7 @@ static void cmd_reset(RF_Context* ctx) {
 
 static void cmd_attrib(RF_Context* ctx) {
     uint32_t value = (((const RF_InternalMarkupCommand*)(ctx->esc_class))->letter == '+') ? 1 : 0;
-    switch (ctx->num_buf) {
+    switch (ctx->num[0]) {
         case 'B': case 'b': ctx->attrib.bold      = value; break;
         case 'D': case 'd': ctx->attrib.dim       = value; break;
         case 'U': case 'u': ctx->attrib.underline = value; break;
@@ -95,7 +95,7 @@ static void cmd_clrscr(RF_Context* ctx) {
 }
 
 static void cmd_unicode(RF_Context* ctx) {
-    RF_AddChar(ctx, ctx->num_buf);
+    RF_AddChar(ctx, ctx->num[0]);
 }
 
 const RF_InternalMarkupCommand RF_InternalMarkupCommands[] = {
@@ -140,7 +140,7 @@ bool RF_ParseInternalMarkup(RF_Context* ctx, uint8_t c) {
         // set up parser
         ctx->esc_class = (const void*)cmd;
         ctx->esc_remain = cmd->digits;
-        ctx->num_buf = 0;
+        ctx->num[0] = 0;
         if (cmd->digits) {
             return false;
         }
@@ -153,7 +153,7 @@ bool RF_ParseInternalMarkup(RF_Context* ctx, uint8_t c) {
     if (cmd->is_color && (ctx->esc_count == 2)) {
         if (c == '-') {
             // handle default color
-            ctx->num_buf = RF_COLOR_DEFAULT;
+            ctx->num[0] = RF_COLOR_DEFAULT;
             cmd->finalize_func(ctx);
             return true;
         } else if (c == '#') {
@@ -171,9 +171,9 @@ bool RF_ParseInternalMarkup(RF_Context* ctx, uint8_t c) {
             else if ((c >= 'a') && (c <= 'z')) { c -= 'a' - 10; }
             else                               { c = 0xFF; /* force invalid value */ }
             if (c >= cmd->base) { RF_AddChar(ctx, 0xFFFD); return true; }
-            ctx->num_buf = (ctx->num_buf * cmd->base) + c;
+            ctx->num[0] = (ctx->num[0] * cmd->base) + c;
         } else {
-            ctx->num_buf = (ctx->num_buf << 8) | c;
+            ctx->num[0] = (ctx->num[0] << 8) | c;
         }
         ctx->esc_remain--;
     }
@@ -187,7 +187,7 @@ bool RF_ParseInternalMarkup(RF_Context* ctx, uint8_t c) {
     // if the value is a color, and it was just a single digit (i.e. no
     // hexadecimal RGB value), convert it into a standard16 color code
     if (cmd->is_color && (ctx->esc_count == 2)) {
-        ctx->num_buf |= RF_COLOR_BLACK;
+        ctx->num[0] |= RF_COLOR_BLACK;
     }
 
     // run finalizer function

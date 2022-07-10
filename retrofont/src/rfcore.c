@@ -669,11 +669,11 @@ void RF_AddText(RF_Context* ctx, const char* str, const RF_Charset* charset, RF_
         // process UTF-8 continuation byte
         if (ctx->utf8_cb_count) {
             if ((c & 0xC0) == 0x80) {
-                ctx->num_buf = (ctx->num_buf << 6) | (c & 0x3F);
+                ctx->num[0] = (ctx->num[0] << 6) | (c & 0x3F);
                 ctx->utf8_cb_count--;
                 if (!ctx->utf8_cb_count) {
                     // end of UTF-8 sequence
-                    RF_AddChar(ctx, ctx->num_buf);
+                    RF_AddChar(ctx, ctx->num[0]);
                 }
                 continue;
             } else {
@@ -702,15 +702,15 @@ void RF_AddText(RF_Context* ctx, const char* str, const RF_Charset* charset, RF_
         } else if (c < 0xE0) {
             // leading bytes for 2-byte UTF-8 sequence
             ctx->utf8_cb_count = 1;
-            ctx->num_buf = c & 0x1F;
+            ctx->num[0] = c & 0x1F;
         } else if (c < 0xF0) {
             // leading bytes for 3-byte UTF-8 sequence
             ctx->utf8_cb_count = 2;
-            ctx->num_buf = c & 0x0F;
+            ctx->num[0] = c & 0x0F;
         } else if (c < 0xF8) {
             // leading bytes for 4-byte UTF-8 sequence
             ctx->utf8_cb_count = 3;
-            ctx->num_buf = c & 0x07;
+            ctx->num[0] = c & 0x07;
         } else {
             // invalid UTF-8 byte
             RF_AddChar(ctx, 0xFFFD);
@@ -721,7 +721,7 @@ void RF_AddText(RF_Context* ctx, const char* str, const RF_Charset* charset, RF_
 void RF_ResetParser(RF_Context* ctx) {
     if (!ctx) { return; }
     ctx->utf8_cb_count = ctx->esc_count = ctx->esc_remain = 0;
-    ctx->num_buf = 0;
+    memset((void*)ctx->num, 0, sizeof(ctx->num));
     ctx->esc_class = NULL;
 }
 

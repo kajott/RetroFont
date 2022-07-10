@@ -299,7 +299,8 @@ struct s_RF_Context {
     uint8_t utf8_cb_count;      //!< \private UTF-8 continuation byte count
     uint8_t esc_count;          //!< \private number of byte inside an escape sequence (0 = no escape)
     uint8_t esc_remain;         //!< \private number of characters of numbers to follow
-    uint32_t num_buf;           //!< \private number buffer (e.g. current UTF-8 codepoint)
+    #define RF_MAX_NUMS 16
+    uint32_t num[RF_MAX_NUMS];  //!< \private number buffer (e.g. current UTF-8 codepoint, or ESC CSI parameters)
     const void* esc_class;      //!< \private pointer to internal escape type descriptor
 };
 
