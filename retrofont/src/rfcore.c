@@ -643,6 +643,7 @@ void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uin
 ///////////////////////////////////////////////////////////////////////////////
 
 extern bool RF_ParseInternalMarkup(RF_Context* ctx, uint8_t c);
+extern bool RF_ParseANSIMarkup(RF_Context* ctx, uint8_t c);
 
 void RF_AddText(RF_Context* ctx, const char* str, const RF_Charset* charset, RF_MarkupType mt) {
     const uint32_t* charmap = charset ? charset->charmap : NULL;
@@ -656,7 +657,8 @@ void RF_AddText(RF_Context* ctx, const char* str, const RF_Charset* charset, RF_
             bool res;
             switch (mt) {
                 case RF_MT_INTERNAL: res = RF_ParseInternalMarkup(ctx, c); break;
-                default: res = true;  // unknown markup type -> exit markup mode
+                case RF_MT_ANSI:     res = RF_ParseANSIMarkup(ctx, c);     break;
+                default:             res = true;  // unknown markup type -> exit markup mode
             }
             if (res) {
                 ctx->esc_count = 0;  // parser returned false -> end of sequence
@@ -722,6 +724,7 @@ void RF_ResetParser(RF_Context* ctx) {
     if (!ctx) { return; }
     ctx->utf8_cb_count = ctx->esc_count = ctx->esc_remain = 0;
     memset((void*)ctx->num, 0, sizeof(ctx->num));
+    ctx->num_idx = ctx->esc_type = 0;
     ctx->esc_class = NULL;
 }
 

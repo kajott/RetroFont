@@ -96,6 +96,7 @@ set (FONTSPECS
 add_library (retrofont STATIC
     retrofont/src/rfcore.c
     retrofont/src/rfparse_int.c
+    retrofont/src/rfparse_ansi.c
     retrofont/src/rfparse_util.c
     retrofont/src/systems.c
     retrofont/src/fonts.c

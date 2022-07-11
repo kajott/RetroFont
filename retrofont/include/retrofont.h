@@ -81,7 +81,7 @@ typedef enum e_RF_FallbackMode {
 typedef enum e_RF_MarkupType {
     RF_MT_NONE     = 0x99,  //!< no markup (plain text)
     RF_MT_INTERNAL = 0x60,  //!< RetroFont's internal markup system
-    RF_MT_ANSI     = 0x1B,  //!< VT-100 / ANSI compatible Escape codes [TODO]
+    RF_MT_ANSI     = 0x1B,  //!< VT-100 / ANSI compatible Escape codes
     RF_MT_AUTO     = 0xFF,  //!< automatic detection (using heuristics)
 } RF_MarkupType;
 
@@ -301,6 +301,8 @@ struct s_RF_Context {
     uint8_t esc_remain;         //!< \private number of characters of numbers to follow
     #define RF_MAX_NUMS 16
     uint32_t num[RF_MAX_NUMS];  //!< \private number buffer (e.g. current UTF-8 codepoint, or ESC CSI parameters)
+    uint8_t num_idx;            //!< \private index in number buffer
+    uint8_t esc_type;           //!< \private internal escape type enumeration
     const void* esc_class;      //!< \private pointer to internal escape type descriptor
 };
 
