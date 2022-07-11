@@ -34,6 +34,9 @@ void pc_render_cell(RF_RenderCommand* cmd) {
     cmd->fg = pc_std_color((cmd->fg == RF_COLOR_DEFAULT) ? RF_COLOR_WHITE : cmd->fg);
     cmd->bg = pc_std_color((cmd->bg == RF_COLOR_DEFAULT) ? RF_COLOR_BLACK : cmd->bg);
 
+    // map bold attribute to bright color
+    if (cmd->cell->bold) { cmd->fg |= RF_COLOR_BRIGHT; }
+
     // map MDA color: any FG color becomes white, only white BG is white
     if (is_mda) {
         if ((cmd->fg & RF_COLOR_WHITE) != RF_COLOR_BLACK)
