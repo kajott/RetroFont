@@ -457,6 +457,36 @@ void RFTestApp::handleKeyEvent(int key, int scancode, int action, int mods) {
             m_showUI = !m_showUI;
             requestFrames(2);
             break;
+        case GLFW_KEY_F2:
+            if (m_ctx) {
+                m_mark0 = m_mark1;
+                m_mark1 = m_ctx->cursor_pos;
+            }
+            break;
+        case GLFW_KEY_F3:
+            if (m_ctx) {
+                RF_CopyRegionAB(m_ctx,
+                    std::min(m_mark0.x, m_mark1.x),
+                    std::min(m_mark0.y, m_mark1.y),
+                    std::max(m_mark0.x, m_mark1.x) + 1,
+                    std::max(m_mark0.y, m_mark1.y) + 1,
+                    m_ctx->cursor_pos.x,
+                    m_ctx->cursor_pos.y,
+                    &m_ctx->attrib);
+                screenChanged();
+            }
+            break;
+        case GLFW_KEY_F4:
+            if (m_ctx) {
+                RF_ClearRegionAB(m_ctx,
+                    std::min(m_mark0.x, m_mark1.x),
+                    std::min(m_mark0.y, m_mark1.y),
+                    std::max(m_mark0.x, m_mark1.x) + 1,
+                    std::max(m_mark0.y, m_mark1.y) + 1,
+                    &m_ctx->attrib);
+                screenChanged();
+            }
+            break;
         case GLFW_KEY_F9:
             m_showDemo = !m_showDemo;
             requestFrames(2);

@@ -43,6 +43,8 @@ class RFTestApp {
     const RF_Charset* m_docCharset = nullptr;
     const RF_Charset* m_docAutoCharset = nullptr;
     RF_MarkupType m_docType = RF_MT_NONE;
+    RF_Coord m_mark0 = {0,0};
+    RF_Coord m_mark1 = {0,0};
 
     // automatic typewriter state
     char* m_typerStr = nullptr;
