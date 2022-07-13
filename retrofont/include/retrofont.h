@@ -387,13 +387,27 @@ RF_MarkupType RF_DetectMarkupType(const char* str);
 //! reset the markup parser
 void RF_ResetParser(RF_Context* ctx);
 
+//! determine the address of a cell
+//! \returns NULL if the cell coordinates are invalid
+RF_Cell* RF_GetCell(RF_Context* ctx, int x, int y);
+
 //! fill a region with blanks
 //! \param attrib  attribute to use (NULL = use defaults)
-void RF_ClearRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, const RF_Cell* attrib);
+void RF_ClearRegionAB(RF_Context* ctx, int x0, int y0, int x1, int y1, const RF_Cell* attrib);
+//! same as RF_ClearRegionAB, but with position+size instead of rectangle
+void RF_ClearRegionPS(RF_Context* ctx, int x0, int y0, int w, int h, const RF_Cell* attrib);
 
-//! scroll a region vertically (positive = downward, negative = upward)
-//! \param attrib  attribute to use (NULL = autodetect)
-void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, int16_t dy, const RF_Cell* attrib);
+//! copy a rectangular region into another
+//! \param attrib  attribute to use for filling areas that are outside the source (NULL = use defaults)
+void RF_CopyRegionAB(RF_Context* ctx, int src_x0, int src_y0, int src_x1, int src_y1, int dest_x0, int dest_y0, const RF_Cell* attrib);
+//! same as RF_CopyRegionAB, but with position+size instead of rectangle
+void RF_CopyRegionPS(RF_Context* ctx, int src_x0, int src_y0, int dest_x0, int dest_y0, int w, int h, const RF_Cell* attrib);
+
+//! scroll a region (positive = down/right, negative = up/left)
+//! \param attrib  attribute to use for inserted rows/columns (NULL = use defaults)
+void RF_ScrollRegionAB(RF_Context* ctx, int x0, int y0, int x1, int y1, int dx, int dy, const RF_Cell* attrib);
+//! same as RF_ScrollRegionAB, but with position+size instead of rectangle
+void RF_ScrollRegionPS(RF_Context* ctx, int x0, int y0, int w, int h, int dx, int dy, const RF_Cell* attrib);
 
 //! render the screen (or rather, the "dirty" parts of it)
 //! \returns true if anything changed, false otherwise

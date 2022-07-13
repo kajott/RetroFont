@@ -113,7 +113,7 @@ bool RF_ParseANSIMarkup(RF_Context* ctx, uint8_t c) {
     }
 
     // handle CSI sequence
-    if ((ctx->esc_type == '[') || (ctx->esc_type == ']')) {
+    if ((ctx->esc_type == '[') || (ctx->esc_type == '?')) {
         if (isdigit(c)) {
             uint32_t n = ctx->num[ctx->num_idx];
             ctx->num[ctx->num_idx] = n * 10 + c - '0';
@@ -132,7 +132,7 @@ bool RF_ParseANSIMarkup(RF_Context* ctx, uint8_t c) {
             default: break;  // "unrecognized CSI sequence" error will be handled below
         }
     }
-    if ((ctx->esc_type == '[') || (ctx->esc_type == ']')) {
+    if ((ctx->esc_type == '[') || (ctx->esc_type == '?')) {
         #ifndef _NDEBUG
             printf("unrecognized CSI sequence: ESC [%s", (ctx->esc_type == '?') ? " ?" : "");
             for (uint8_t i = 0;  i <= ctx->num_idx;  ++i) { printf("%s %d", i ? " ;" : "", ctx->num[i]); }

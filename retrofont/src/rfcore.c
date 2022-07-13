@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "retrofont.h"
 
@@ -484,25 +485,20 @@ void RF_AddChar(RF_Context* ctx, uint32_t codepoint) {
             // scroll down first
             if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
                 ctx->cursor_pos.y = ctx->screen_size.y - 1;
-                RF_ScrollRegion(ctx, 0, 0, 0, 0, -1, &ctx->attrib);
+                RF_ScrollRegionAB(ctx, 0,0, ctx->screen_size.x,ctx->screen_size.y, 0,-1, &ctx->attrib);
             } else {
-                RF_ScrollRegion(ctx, 0, ctx->cursor_pos.y, ctx->screen_size.x, ctx->screen_size.y, 1, &ctx->attrib);
+                RF_ScrollRegionAB(ctx, 0,ctx->cursor_pos.y, ctx->screen_size.x,ctx->screen_size.y, 0,1, &ctx->attrib);
             }
             // copy remainder of current line onto next one
-            pos = &ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x];
-            for (uint16_t i = ctx->screen_size.x - ctx->cursor_pos.x;  i;  --i) {
-                *pos = pos[(int)ctx->cursor_pos.x - (int)ctx->screen_size.x];
-                pos->dirty = 1;
-                ++pos;
-            }
+            RF_CopyRegionAB(ctx, ctx->cursor_pos.x,ctx->cursor_pos.y-1, ctx->screen_size.x,ctx->cursor_pos.y, 0,ctx->cursor_pos.y, &ctx->attrib);
             // clear what remains
-            RF_ClearRegion(ctx, ctx->cursor_pos.x, ctx->cursor_pos.y - 1, ctx->screen_size.x, ctx->cursor_pos.y, &ctx->attrib);
-            RF_ClearRegion(ctx, ctx->screen_size.x - ctx->cursor_pos.x, ctx->cursor_pos.y, ctx->screen_size.x, ctx->cursor_pos.y + 1,
-                           &ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x + ctx->screen_size.x - ctx->cursor_pos.x - 1]);
+            RF_ClearRegionPS(ctx, ctx->cursor_pos.x, ctx->cursor_pos.y - 1, ctx->screen_size.x, 1, &ctx->attrib);
+            RF_ClearRegionPS(ctx, ctx->screen_size.x - ctx->cursor_pos.x, ctx->cursor_pos.y, ctx->screen_size.x, 1,
+                             &ctx->screen[ctx->cursor_pos.y * ctx->screen_size.x + ctx->screen_size.x - ctx->cursor_pos.x - 1]);
             ctx->cursor_pos.x = 0;
         } else if ((ctx->cursor_pos.y + 1) == ctx->screen_size.y) {
             // overwrite mode, at end of screen -> insert new line
-            RF_ScrollRegion(ctx, 0, 0, 0, 0, -1, &ctx->screen[ctx->screen_size.x * ctx->screen_size.y - 1]);
+            RF_ScrollRegionAB(ctx, 0,0, ctx->screen_size.x,ctx->screen_size.y, 0,-1, &ctx->screen[ctx->screen_size.x * ctx->screen_size.y - 1]);
             ctx->cursor_pos.x = 0;
         } else {
             // otherwise, only move cursor in overwrite mode
@@ -552,13 +548,13 @@ void RF_AddChar(RF_Context* ctx, uint32_t codepoint) {
             if (ctx->insert) {
                 if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
                     ctx->cursor_pos.y = ctx->screen_size.y - 1;
-                    RF_ScrollRegion(ctx, 0, 0, 0, 0, -1, &ctx->attrib);
+                    RF_ScrollRegionAB(ctx, 0,0, ctx->screen_size.x,ctx->screen_size.y, 0,-1, &ctx->attrib);
                 } else {
-                    RF_ScrollRegion(ctx, 0, ctx->cursor_pos.y, ctx->screen_size.x, ctx->screen_size.y, 1, &ctx->attrib);
+                    RF_ScrollRegionAB(ctx, 0,ctx->cursor_pos.y, ctx->screen_size.x,ctx->screen_size.y, 0,1, &ctx->attrib);
                 }
             } else {
                 if ((++(ctx->cursor_pos.y)) >= ctx->screen_size.y) {
-                    RF_ScrollRegion(ctx, 0, 0, 0, 0, -1, &ctx->attrib);
+                    RF_ScrollRegionAB(ctx, 0,0, ctx->screen_size.x,ctx->screen_size.y, 0,-1, &ctx->attrib);
                     --ctx->cursor_pos.y;
                 }
             }
@@ -570,74 +566,102 @@ void RF_AddChar(RF_Context* ctx, uint32_t codepoint) {
     }
 }
 
-void RF_ClearRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, const RF_Cell* attrib) {
+RF_Cell* RF_GetCell(RF_Context* ctx, int x, int y) {
+    return (ctx && ctx->screen
+         && (x >= 0) && (x < ctx->screen_size.x)
+         && (y >= 0) && (y < ctx->screen_size.y))
+         ? &ctx->screen[x + y * ctx->screen_size.x]
+         : NULL;
+}
+
+void RF_ClearRegionAB(RF_Context* ctx, int x0, int y0, int x1, int y1, const RF_Cell* attrib) {
     RF_Cell* c;
-    if (!x0 && !x1 && !y0 && !y1) { x1 = y1 = (uint16_t)(-1); }
-    if (!ctx || !ctx->screen
-    || (x0 >= ctx->screen_size.x) || (x1 <= x0)
-    || (y0 >= ctx->screen_size.y) || (y1 <= y0))
-        { return; }
-    if (x1 > ctx->screen_size.x) { x1 = ctx->screen_size.x; }
-    if (y1 > ctx->screen_size.y) { y1 = ctx->screen_size.y; }
+    if (!ctx || !ctx->screen) { return; }
+    if (x0 < 0) { x0 = 0; }
+    if (y0 < 0) { y0 = 0; }
+    if (x1 >= ctx->screen_size.x) { x1 = ctx->screen_size.x; }
+    if (y1 >= ctx->screen_size.y) { y1 = ctx->screen_size.y; }
+    if ((x1 <= x0) || (y1 <= y0)) { return; }
     if (!attrib) { attrib = &RF_EmptyCell; }
     c = &ctx->screen[x0 + y0 * ctx->screen_size.x];
     x1 -= x0;
-    for (uint16_t y = y0;  y < y1;  ++y) {
-        for (uint16_t x = x1;  x;  --x) {
+    for (y1 -= y0;  y1;  --y1) {
+        for (int x = x1;  x;  --x) {
             *c = *attrib;
             c->codepoint = 32;
             c->dirty = 1;
             ++c;
         }
-        c += ctx->screen_size.x - x1 + x0;
+        c += ctx->screen_size.x - x1;
     }
 }
+void RF_ClearRegionPS(RF_Context* ctx, int x0, int y0, int w, int h, const RF_Cell* attrib) {
+    RF_ClearRegionAB(ctx, x0,y0, x0+w,y0+h, attrib);
+}
 
-void RF_ScrollRegion(RF_Context* ctx, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, int16_t dy, const RF_Cell* attrib) {
-    uint16_t height, amount, stride, dx;
-    RF_Cell *dest;
-    const RF_Cell *src;
-    if (!x0 && !x1 && !y0 && !y1) { x1 = y1 = (uint16_t)(-1); }
-    if (!ctx || !ctx->screen || !dy
-    || (x0 >= ctx->screen_size.x) || (x1 <= x0)
-    || (y0 >= ctx->screen_size.y) || (y1 <= y0))
-        { return; }
-    if (x1 > ctx->screen_size.x) { x1 = ctx->screen_size.x; }
-    if (y1 > ctx->screen_size.y) { y1 = ctx->screen_size.y; }
-    height = y1 - y0;
-    amount = (uint16_t)((dy < 0) ? -dy : dy);
-    if (amount > height) { amount = height; }
-    stride = ctx->screen_size.x - x1 + x0;
-    dx = x1 - x0;
-    if (dy > 0) {
-        // scroll down
-        dest = &ctx->screen[(x1 - 1) + (y1 - 1) * ctx->screen_size.x];
-        src = &dest[-(int)(amount * ctx->screen_size.x)];
-        for (uint16_t y = height - amount;  y;  --y) {
-            for (uint16_t x = dx;  x;  --x) {
-                *dest = *src--;
-                dest->dirty = 1;
-                dest--;
+void RF_CopyRegionInt(RF_Context* ctx, int src_x0, int src_y0, int src_x1, int src_y1, int dest_x0, int dest_y0, int dest_x1, int dest_y1, const RF_Cell* attrib) {
+    int pad_l = 0, pad_r = 0, pad_t = 0, pad_b = 0;
+    int w, t, h;
+//printf("CR src=%d,%d~%d,%d(%dx%d) dest=%d,%d~%d,%d(%dx%d) pad=%d,%d~%d,%d\n", src_x0,src_y0,src_x1,src_y1,src_x1-src_x0,src_y1-src_y0, dest_x0,dest_y0,dest_x1,dest_y1,dest_x1-dest_x0,dest_y1-dest_y0, pad_l,pad_t,pad_r,pad_b);
+    if (!ctx || !ctx->screen) { return; }
+    if (dest_x0 < 0) { src_x0 -= dest_x0; dest_x0 = 0; }
+    if (dest_y0 < 0) { src_y0 -= dest_y0; dest_y0 = 0; }
+    t = dest_x1 - ctx->screen_size.x;  if (t > 0) { src_x1 -= t; dest_x1 = ctx->screen_size.x; }
+    t = dest_y1 - ctx->screen_size.y;  if (t > 0) { src_y1 -= t; dest_y1 = ctx->screen_size.y; }
+    if (src_x0 < 0) { pad_l = -src_x0; dest_x0 -= src_x0; src_x0 = 0; }
+    if (src_y0 < 0) { pad_t = -src_y0; dest_y0 -= src_y0; src_y0 = 0; }
+    t = src_x1 - ctx->screen_size.x;  if (t > 0) { pad_r = t; dest_x1 -= t; src_x1 = ctx->screen_size.x; }
+    t = src_y1 - ctx->screen_size.y;  if (t > 0) { pad_b = t; dest_y1 -= t; src_y1 = ctx->screen_size.y; }
+    w = dest_x1 - dest_x0;
+    h = dest_y1 - dest_y0;
+    assert((src_x1 - src_x0) == w);
+    assert((src_y1 - src_y0) == h);
+    if ((w > 0) && (h > 0) && ((src_x0 != dest_x0) || (src_y0 != dest_y0))) {
+        const RF_Cell* p_src  = &ctx->screen[src_x0  + src_y0  * ctx->screen_size.x];
+              RF_Cell* p_dest = &ctx->screen[dest_x0 + dest_y0 * ctx->screen_size.x];
+        int xdir = 1, stride = ctx->screen_size.x;
+        if (src_x0 < dest_x0) { p_src +=  w - 1;           p_dest +=  w - 1;           xdir = -1; }
+        if (src_y0 < dest_y0) { p_src += (h - 1) * stride; p_dest += (h - 1) * stride; stride = -stride; }
+        stride -= xdir * w;
+        for (int y = h;  y;  --y) {
+            for (int x = w;  x;  --x) {
+                *p_dest = *p_src;
+                p_dest->dirty = 1;
+                p_src  += xdir;
+                p_dest += xdir;
             }
-            dest -= stride;
-            src -= stride;
+            p_src  += stride;
+            p_dest += stride;
         }
-        RF_ClearRegion(ctx, x0, y0, x1, y0 + amount, attrib ? attrib : &ctx->screen[x0 + y0 * ctx->screen_size.x]);
-    } else {
-        // scroll up
-        dest = &ctx->screen[x0 + y0 * ctx->screen_size.x];
-        src = &dest[amount * ctx->screen_size.x];
-        for (uint16_t y = height - amount;  y;  --y) {
-            for (uint16_t x = dx;  x;  --x) {
-                *dest = *src++;
-                dest->dirty = 1;
-                dest++;
-            }
-            dest += stride;
-            src += stride;
-        }
-        RF_ClearRegion(ctx, x0, y1 - amount, x1, y1, attrib ? attrib : &ctx->screen[(x1 - 1) + (y1 - amount) * ctx->screen_size.x]);
     }
+    if (pad_t) { RF_ClearRegionPS(ctx, dest_x0 - pad_l, dest_y0 - pad_t, pad_l + w + pad_r, pad_t, attrib); }
+    if (pad_b) { RF_ClearRegionPS(ctx, dest_x0 - pad_l, dest_y1,         pad_l + w + pad_r, pad_b, attrib); }
+    if (pad_l) { RF_ClearRegionPS(ctx, dest_x0 - pad_l, dest_y0, pad_l, h, attrib); }
+    if (pad_r) { RF_ClearRegionPS(ctx, dest_x1,         dest_y0, pad_r, h, attrib); }
+}
+void RF_CopyRegionAB(RF_Context* ctx, int src_x0, int src_y0, int src_x1, int src_y1, int dest_x0, int dest_y0, const RF_Cell* attrib) {
+    RF_CopyRegionInt(ctx, src_x0,src_y0, src_x1,src_y1, dest_x0,dest_y0, dest_x0+src_x1-src_x0,dest_y0+src_y1-src_y0, attrib);
+}
+void RF_CopyRegionPS(RF_Context* ctx, int src_x0, int src_y0, int dest_x0, int dest_y0, int w, int h, const RF_Cell* attrib) {
+    RF_CopyRegionInt(ctx, src_x0,src_y0, src_x0+w,src_y0+h, dest_x0,dest_y0, dest_x0+w,dest_y0+h, attrib);
+}
+
+void RF_ScrollRegionAB(RF_Context* ctx, int x0, int y0, int x1, int y1, int dx, int dy, const RF_Cell* attrib) {
+    int sx0 = x0, sy0 = y0, tx0 = x0, ty0 = y0, w = x1 - x0, h = y1 - y0;
+//printf("SR %d,%d~%d,%d(%dx%d) by %d,%d\n", x0,y0, x1,y1, w,h, dx,dy);
+    if (!ctx || !ctx->screen || (!dx && !dy) || (w <= 0) || (h <= 0)) { return; }
+    if (dx > 0) { tx0 += dx; w -= dx; }
+    if (dx < 0) { sx0 -= dx; w += dx; }
+    if (dy > 0) { ty0 += dy; h -= dy; }
+    if (dy < 0) { sy0 -= dy; h += dy; }
+    RF_CopyRegionPS(ctx, sx0,sy0, tx0,ty0, w,h, attrib);
+    RF_ClearRegionAB(ctx, x0,ty0,  tx0,ty0+h, attrib);  // left
+    RF_ClearRegionAB(ctx, tx0+w,y0, x1,ty0+h, attrib);  // right
+    RF_ClearRegionAB(ctx, x0,y0,    x1,ty0, attrib);  // top
+    RF_ClearRegionAB(ctx, x0,ty0+h, x1,y1,  attrib);  // bottom
+}
+void RF_ScrollRegionPS(RF_Context* ctx, int x0, int y0, int w, int h, int dx, int dy, const RF_Cell* attrib) {
+    RF_ScrollRegionAB(ctx, x0,y0, x0+w,y0+h, dx,dy, attrib);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
