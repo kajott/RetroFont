@@ -625,6 +625,9 @@ void RFTestApp::handleDropEvent(int path_count, const char* paths[]) {
     if ((path_count < 1) || !paths || !paths[0] || !paths[0][0]) { return; }
     ::free(m_docData);
     m_docData = StringUtil::loadTextFile(paths[0]);
+    char* eof;
+    eof = const_cast<char*>(strstr(m_docData, "\x1A" "SAUCE00"));  if (eof) { *eof = '\0'; }
+    eof = const_cast<char*>(strstr(m_docData, "\x1A" "COMNT"));    if (eof) { *eof = '\0'; }
     m_docAutoCharset = RF_DetectCharset(m_docData);
     m_docType = RF_DetectMarkupType(m_docData);
     loadScreen(m_docData, m_docCharset ? m_docCharset : m_docAutoCharset, m_docType);
