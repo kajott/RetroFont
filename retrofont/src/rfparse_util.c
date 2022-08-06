@@ -38,7 +38,7 @@ const RF_Charset* RF_DetectCharset(const char* str) {
             else if ((c & 0xE0) == 0xC0) { utf8_cb_count = 1; }
             else if ((c & 0xF0) == 0xE0) { utf8_cb_count = 2; }
             else if ((c & 0xF8) == 0xF0) { utf8_cb_count = 3; }
-            else { valid_utf8 = (c < 0xF8); }
+            else { valid_utf8 = (c < 0x80); }
         }
     } while (c);
     // if it's valid UTF-8, use the first charset (which is always UTF-8 by convention)

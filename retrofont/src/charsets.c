@@ -74,7 +74,7 @@ const uint32_t charmap_cp1252[256] = {
     0x00F0, 0x00F1, 0x00F2, 0x00F3, 0x00F4, 0x00F5, 0x00F6, 0x00F7,  // F0-F7
     0x00F8, 0x00F9, 0x00FA, 0x00FB, 0x00FC, 0x00FD, 0x00FE, 0x00FF,  // F8-FF
 };
-const uint8_t common_cp1252[] = { 0xC0,0xFF, 0 };
+const uint8_t common_cp1252[] = { 0xC0,0xFF, 0xAF,0xAF, 0 };
 
 const RF_Charset RF_Charsets[] = {
     { RF_MAKE_ID('U','T','F','8'), 65001, "utf8",   "Unicode UTF-8",                               NULL,           NULL,          NULL },
