@@ -35,6 +35,7 @@ static const GLfloat MonitorTints[_RF_MONITOR_COUNT][4] = {
     { 0.00f, 1.00f, 0.25f, 1.f },  // RF_MONITOR_LONG
     { 1.25f, 1.00f, 0.25f, 1.f },  // RF_MONITOR_AMBER
     { 1.00f, 1.00f, 0.95f, 1.f },  // RF_MONITOR_WHITE
+    { 0.70f, 1.00f, 1.30f, 1.f },  // RF_MONITOR_BLUE
     { 1.00f, 0.00f, 0.00f, 1.f },  // RF_MONITOR_RED
 };
 

@@ -84,7 +84,7 @@ class RFTestApp {
     inline static constexpr std::array<const char*, mtMax> MonitorTypeStrings = {{
         "automatic", "color",
         "green monochrome", "long-persistence green",
-        "amber monochrome", "white monochrome",
+        "amber monochrome", "white monochrome", "blue monochrome",
         "red plasma"
     }};
     int m_monitorType = mtAuto;

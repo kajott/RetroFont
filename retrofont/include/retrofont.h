@@ -95,7 +95,8 @@ typedef enum e_RF_MonitorType {
     RF_MONITOR_LONG  = 2,  //!< long-persistence green black&white monitor (P2 phosphor)
     RF_MONITOR_AMBER = 3,  //!< amber black&white monitor (P3 phosphor)
     RF_MONITOR_WHITE = 4,  //!< white black&white monitor (P4 phosphor)
-    RF_MONITOR_RED   = 5,  //!< red plasma screen
+    RF_MONITOR_BLUE  = 5,  //!< blue black&white monitor (P5 phosphor)
+    RF_MONITOR_RED   = 6,  //!< red plasma screen
    _RF_MONITOR_COUNT       //!< number of defined monitor types
 } RF_MonitorType;
 
