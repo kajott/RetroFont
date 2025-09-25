@@ -34,3 +34,13 @@
 - [X] Robotron KC85/KC87/Z1013
 - [ ] Teletext
 - [ ] VT-100/220
+
+### buggy ANSIs
+- [ ] general: strip lines off the end of the document
+- [ ] `pc_1screen_rubik`: charset misdetection
+- [ ] `pc_1screen_vamp`: charset misdetection
+- [ ] `pc_1screen_ghoul`: charset misdetection
+- [ ] `pc_1screen_gunshot`: charset misdetection
+- [ ] `pc_1screen_knightess`: charset misdetection
+- [ ] `amiga_1screen_vector`: requires bright colors instead of bold
+- [ ] `amiga_1screen_war`: requires DOS palette instead of KS1.x colors

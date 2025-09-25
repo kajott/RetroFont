@@ -169,7 +169,7 @@ if __name__ == "__main__":
                     defmap = None
                     continue
 
-                m = re.match(f'defmap\s+"([^"]+)"', line, flags=re.I)
+                m = re.match(r'defmap\s+"([^"]+)"', line, flags=re.I)
                 if m:
                     defmap = m.group(1)
                     maps[defmap] = {}
@@ -231,7 +231,7 @@ if __name__ == "__main__":
                                 map_glyph(maps[defmap] if defmap else fonts[-1].glyphs, d, glyph)
                     continue
 
-                m = re.match(f'usemap\s+"([^"]+)"', line, flags=re.I)
+                m = re.match(r'usemap\s+"([^"]+)"', line, flags=re.I)
                 if m:
                     if not fonts:
                         err("'usemap' command invalid without an active font")
@@ -250,7 +250,7 @@ if __name__ == "__main__":
                         map_glyph(fonts[-1].glyphs, cp, glyph)
                     continue
 
-                m = re.match(f'underline\s+(\d+)', line, flags=re.I)
+                m = re.match(r'underline\s+(\d+)', line, flags=re.I)
                 if m:
                     if not fonts:
                         err("'usemap' command invalid without an active font")

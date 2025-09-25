@@ -76,6 +76,7 @@ set (SYSTEMS
     retrofont/src/sys_zx.c
     retrofont/src/sys_cpc.c
     retrofont/src/sys_robotron.c
+    retrofont/src/sys_decvt.c
 )
 
 set (FONTSPECS
@@ -91,6 +92,7 @@ set (FONTSPECS
     fonts.in/saa505x.fontspec
     fonts.in/cpc.fontspec
     fonts.in/robotron.fontspec
+    fonts.in/decvt.fontspec
 )
 
 add_library (retrofont STATIC

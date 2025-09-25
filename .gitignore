@@ -13,4 +13,6 @@ vswhere.exe
 ninja.exe
 cmake-*
 
-.cache.*
+**/*.cache.*
+
+imgui.ini
